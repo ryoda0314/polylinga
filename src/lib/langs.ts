@@ -41,15 +41,9 @@ export function langClass(lang: Lang): string {
   return `t-${lang}`;
 }
 
-export const ACCENTS = ["pen", "ink", "pine", "brick"] as const;
+/** Accent colours, named after the rain in the app icon. The first is the default. */
+export const ACCENTS = ["rain", "ink", "hydrangea", "dusk"] as const;
 export type Accent = (typeof ACCENTS)[number];
-
-export const ACCENT_LABEL: Record<Accent, string> = {
-  pen: "ペン",
-  ink: "墨",
-  pine: "松",
-  brick: "煉瓦",
-};
 
 export function isAccent(value: unknown): value is Accent {
   return typeof value === "string" && (ACCENTS as readonly string[]).includes(value);

@@ -10,6 +10,8 @@ import { WordAddForm, WordActions } from "./WordControls";
 
 export const metadata = { title: "メモ" };
 
+const STAGE_LEVEL = { new: 0, seen: 1, understood: 2, used: 3 } as const;
+
 type WordRow = {
   id: string;
   text: string;
@@ -53,10 +55,17 @@ export default async function MemoPage() {
           ) : (
             words.map((w) => {
               const stage = wordStage(w);
+              const level = STAGE_LEVEL[stage];
               return (
                 <div key={w.id} className={styles.row}>
                   <div className={styles.rowText}>
-                    <span className={styles.kind} data-stage={stage}>
+                    {/* A small rain gauge: one more drop for each stage the word has reached. */}
+                    <span className={styles.gauge} data-stage={stage}>
+                      <span className={styles.drops} aria-hidden="true">
+                        {[0, 1, 2, 3].map((k) => (
+                          <span key={k} className={k <= level ? styles.dropOn : styles.dropOff} />
+                        ))}
+                      </span>
                       {t.words.stages[stage]}
                     </span>
                     <span className={`${styles.rowMain} ${langClass(settings.targetLang)}`}>
@@ -73,6 +82,7 @@ export default async function MemoPage() {
               );
             })
           )}
+          {words.length > 0 ? <p className={styles.note}>{t.words.gauge}</p> : null}
         </section>
       </div>
     </>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { Logo } from "@/components/Logo";
 import { requireUser } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { LANG_NATIVE_NAME, langClass } from "@/lib/langs";
@@ -8,7 +9,7 @@ import { pickCluster } from "@/lib/shower";
 import { ShowerPlayer } from "./_shower/ShowerPlayer";
 import styles from "./app.module.css";
 
-export const metadata = { title: "シャワー" };
+export const metadata = { title: "浴びる" };
 
 export default async function ShowerPage() {
   const settings = await requireSettings();
@@ -19,9 +20,7 @@ export default async function ShowerPage() {
   return (
     <>
       <header className={styles.topbar}>
-        <Link href="/" className={styles.wordmark}>
-          PolyLinga
-        </Link>
+        <Logo size="sm" href="/" />
         <Link href="/app/me" className={styles.pair}>
           <span className={langClass(settings.nativeLang)}>{LANG_NATIVE_NAME[settings.nativeLang]}</span>
           <Icon name="arrow" size={16} />

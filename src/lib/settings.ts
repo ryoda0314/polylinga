@@ -31,7 +31,7 @@ export const getSettings = cache(async (): Promise<Settings | null> => {
   return {
     nativeLang: data.native_lang as Lang,
     targetLang: data.target_lang as Lang,
-    accent: isAccent(data.accent) ? data.accent : "pen",
+    accent: isAccent(data.accent) ? data.accent : "rain",
     speechRate: typeof data.speech_rate === "number" ? data.speech_rate : 1,
   };
 });

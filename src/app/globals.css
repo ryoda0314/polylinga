@@ -1,18 +1,30 @@
-/* PolyLinga: white paper, ink, one accent the learner picks. No gradients, no shadows; hairlines separate. */
+/* ことのあめ: words falling like rain. The colours come from the app icon: a barely warm paper, a deep
+   navy ink, the icon's blue as the one accent the learner picks, and its violet for patterns that come back.
+   No gradients or shadows inside the app; hairlines separate. */
 :root {
-  --paper: #ffffff;
-  --surface: #f3f4f6;
-  --ink: #16181d;
-  --ink-2: #3d414c;
-  --muted: #5b6070;
-  --faint: #8a8f9c;
-  --line: #e2e3e6;
-  --line-2: #d5d7dd;
+  --paper: #fcfbf8;
+  --surface: #f1f4f8;
+  --ink: #172033;
+  --ink-2: #3b4558;
+  --muted: #5c6578;
+  --faint: #8c94a5;
+  --line: #e4e7ec;
+  --line-2: #d4d9e1;
   --danger: #b42318;
   --danger-tint: #fdf0ee;
 
-  --accent: #2f4bd6;
-  --tint: #e8ecfb;
+  --accent: #0a64f0;
+  --tint: #e6f0ff;
+  /* A pattern meeting the learner again. */
+  --again: #6a4fe0;
+  --again-tint: #efebff;
+
+  /* The icon's rain, for decoration only. */
+  --rain-blue: #0470fd;
+  --rain-sky: #4ea7fd;
+  --rain-violet: #a792fa;
+  --rain-pink: #e79dfa;
+  --rain-peach: #fec9a8;
 
   --radius: 12px;
   --tap: 44px;
@@ -23,13 +35,15 @@
   --font-zh: var(--font-noto-sc), "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-en: var(--font-plex), "Helvetica Neue", sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+  --font-mincho: var(--font-shippori), "Hiragino Mincho ProN", "Yu Mincho", serif;
 
   color-scheme: light;
 }
 
-[data-accent="ink"] { --accent: #16181d; --tint: #ececee; }
-[data-accent="pine"] { --accent: #0f766e; --tint: #e3f1ef; }
-[data-accent="brick"] { --accent: #b4441c; --tint: #f7e9e3; }
+/* The learner's accent (settings). rain is the default above. */
+[data-accent="ink"] { --accent: #172033; --tint: #eceef2; }
+[data-accent="hydrangea"] { --accent: #6a4fe0; --tint: #efebff; }
+[data-accent="dusk"] { --accent: #b9462a; --tint: #fbede8; }
 
 * { box-sizing: border-box; }
 
@@ -77,7 +91,11 @@ h1, h2, h3 { text-wrap: balance; }
 }
 .btn-quiet:disabled { color: var(--faint); cursor: default; }
 
-.mark { background: var(--tint); color: var(--accent); border-radius: 0.15em; padding: 0 0.1em; }
+.mark { background: var(--tint); color: var(--accent); border-radius: 0.15em; padding: 0 0.1em; animation: mark-in 0.5s ease-out both; }
+@keyframes mark-in { from { background: transparent; color: inherit; } }
+
+/* The wordmark: ことのあめ in mincho. */
+.wordmark-kana { font-family: var(--font-mincho); font-weight: 700; letter-spacing: 0.06em; }
 
 .label { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0; }
 
@@ -94,4 +112,4 @@ h1, h2, h3 { text-wrap: balance; }
 ruby { ruby-position: over; }
 rt { font-family: var(--font-en); font-size: 0.42em; font-weight: 400; color: var(--muted); letter-spacing: 0; }
 /* A word the learner has in their memo: met again. */
-.hl-memo { text-decoration: underline dotted var(--accent); text-decoration-thickness: 2px; text-underline-offset: 0.28em; }
+.hl-memo { text-decoration: underline dotted var(--again); text-decoration-thickness: 2px; text-underline-offset: 0.28em; }

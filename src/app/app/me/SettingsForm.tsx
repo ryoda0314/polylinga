@@ -7,10 +7,10 @@ import { saveSettings, type SettingsState } from "../actions";
 import styles from "../app.module.css";
 
 const ACCENT_HEX: Record<Accent, string> = {
-  pen: "#2F4BD6",
-  ink: "#16181D",
-  pine: "#0F766E",
-  brick: "#B4441C",
+  rain: "#0A64F0",
+  ink: "#172033",
+  hydrangea: "#6A4FE0",
+  dusk: "#B9462A",
 };
 
 export function SettingsForm({

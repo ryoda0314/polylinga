@@ -22,6 +22,8 @@ export type ShowerSentence = {
   reading: string[] | null;
   audio: Audio;
   mark: Range | null;
+  /** The same pattern's part in the learner's own language, lit together with `mark` after they ask. */
+  glossMark: Range | null;
   seenBefore: boolean;
   /** Where words from the learner's memo appear in `text`. */
   memoHits: Range[];
@@ -29,11 +31,12 @@ export type ShowerSentence = {
 
 export type ShowerCluster = {
   patternId: string;
-  form: string;
-  meaning: string | null;
-  examples: string | null;
+  /** What the pattern does, in plain words in the learner's language (誘う, もし〜なら). No grammar notation. */
+  label: string | null;
   /** True when the learner has bathed in this pattern before. */
   again: boolean;
+  /** Whole days since it last came round, when it is coming back. */
+  againDays: number | null;
   sentences: ShowerSentence[];
 };
 
@@ -52,10 +55,10 @@ export async function pickCluster(
 ): Promise<ShowerCluster | null> {
   const { supabase } = await getSession();
   const [{ data: patterns }, { data: functions }, { data: counts }, { data: exposures }] = await Promise.all([
-    supabase.from("pl_patterns").select("id, form, meaning, examples, function_id").eq("lang", target),
-    supabase.from("pl_functions").select("id, position"),
+    supabase.from("pl_patterns").select("id, function_id").eq("lang", target),
+    supabase.from("pl_functions").select("id, position, label"),
     supabase.rpc("pl_pattern_counts", { target }),
-    supabase.from("pl_exposures").select("pattern_id, times, next_at").eq("user_id", userId),
+    supabase.from("pl_exposures").select("pattern_id, times, last_at, next_at").eq("user_id", userId),
   ]);
 
   const position = new Map((functions ?? []).map((f) => [f.id, f.position as number]));
@@ -104,17 +107,16 @@ export async function pickCluster(
     .sort((a, b) => a.order - b.order)
     .slice(0, CLUSTER_SIZE);
 
-  const [{ data: rows }, words] = await Promise.all([
-    supabase
-      .from("pl_sentences")
-      .select("id, ja, en, ko, zh, zh_pinyin")
-      .in(
-        "id",
-        chosen.map((c) => c.sentenceId),
-      ),
+  const chosenIds = chosen.map((c) => c.sentenceId);
+  const [{ data: rows }, { data: glossRows }, words] = await Promise.all([
+    supabase.from("pl_sentences").select("id, ja, en, ko, zh, zh_pinyin").in("id", chosenIds),
+    supabase.from("pl_sentence_patterns").select("sentence_id, start_index, end_index").in("sentence_id", chosenIds).eq("lang", native),
     memoWords(userId, target),
   ]);
   const byId = new Map((rows ?? []).map((r) => [String(r.id), r as Record<string, string>]));
+  const glossMark = new Map(
+    (glossRows ?? []).map((m) => [m.sentence_id as string, { start: m.start_index as number, end: m.end_index as number }]),
+  );
 
   const sentences: ShowerSentence[] = chosen
     .filter((c) => byId.has(c.sentenceId))
@@ -128,19 +130,21 @@ export async function pickCluster(
         reading: readingFor(text, target, row.zh_pinyin),
         audio: sentenceAudio(text, target, c.sentenceId),
         mark: c.mark,
+        glossMark: glossMark.get(c.sentenceId) ?? null,
         seenBefore: lastSeen.has(c.sentenceId),
         memoHits: findMemoHits(text, words),
       };
     });
   if (sentences.length < MIN_CLUSTER) return null;
 
-  const meaning = (pattern.meaning ?? {}) as Record<string, string>;
+  const fn = (functions ?? []).find((f) => f.id === pattern.function_id);
+  const label = ((fn?.label ?? {}) as Record<string, string>)[native] ?? null;
+  const lastAt = exposure.get(pattern.id)?.last_at;
   return {
     patternId: pattern.id,
-    form: pattern.form,
-    meaning: meaning[native] ?? null,
-    examples: pattern.examples ?? null,
+    label,
     again: exposure.has(pattern.id),
+    againDays: lastAt ? Math.floor((now - new Date(lastAt).getTime()) / 86_400_000) : null,
     sentences,
   };
 }

@@ -20,6 +20,6 @@
   font-size: 11px;
 }
 
-.active { color: var(--ink); font-weight: 600; }
+.active { color: var(--accent); font-weight: 600; }
 
 

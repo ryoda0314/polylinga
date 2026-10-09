@@ -20,7 +20,8 @@ export function BottomNav({
       active: pathname.startsWith("/app/write") || pathname.startsWith("/app/s/"),
     },
     { href: "/app/memo", label: labels.memo, icon: "bookmark" as const, active: pathname.startsWith("/app/memo") },
-    { href: "/app/me", label: labels.me, icon: "user" as const, active: pathname.startsWith("/app/me") },
+    // Exact segment: "/app/memo" also starts with "/app/me".
+    { href: "/app/me", label: labels.me, icon: "user" as const, active: pathname === "/app/me" || pathname.startsWith("/app/me/") },
   ];
 
   return (

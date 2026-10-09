@@ -3,7 +3,8 @@
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 .fresh, .again { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
 .fresh { color: var(--muted); }
-.again { color: var(--accent); }
+/* A pattern coming back: the icon's violet. */
+.again { color: var(--again); }
 .toggles { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 .toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
 .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
@@ -12,13 +13,29 @@
 .lead { margin: 0; font-size: 15px; line-height: 1.8; color: var(--ink-2); }
 .empty { margin: 0; padding: 24px 0; font-size: 15px; line-height: 1.8; color: var(--muted); }
 
-/* The pile: sentences arrive one by one and stay, so they can be compared. */
+/* The rain: each sentence falls in from above, lands, and stays, so they pile up and can be compared. */
 .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .item {
   display: flex; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line);
-  animation: arrive 0.35s ease-out both;
+  animation: rain-fall 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-@keyframes arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes rain-fall {
+  from { opacity: 0; transform: translateY(-44px); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+/* The drop beside each sentence: it lands just after the sentence, and turns blue while it plays. */
+.drop {
+  flex-shrink: 0; align-self: stretch; width: 3px; margin-block: 6px; border-radius: 2px;
+  background: var(--line-2); transform-origin: top;
+  animation: drop-land 0.45s 0.25s ease-out both;
+  transition: background-color 0.3s;
+}
+@keyframes drop-land { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.playing .drop { background: var(--accent); }
+/* Moving on: the old rain runs off before the next one falls. */
+.list[data-leaving] .item { animation: rain-leave 0.35s ease-in both; }
+@keyframes rain-leave { to { opacity: 0; transform: translateY(16px); } }
 .itemMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .sentence {
   all: unset; cursor: pointer; font-size: 23px; font-weight: 500; line-height: 1.75; color: var(--ink);
@@ -30,17 +47,27 @@
 .seen { font-size: 11px; color: var(--faint); }
 
 .play {
+  position: relative;
   flex-shrink: 0; width: var(--tap); height: var(--tap); border-radius: 50%;
   border: 1px solid var(--line-2); background: var(--paper); color: var(--ink);
   display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
 }
 .playOn { border-color: var(--accent); background: var(--accent); color: #fff; }
+/* While it speaks, ripples spread from the button like a raindrop on water. */
+.playOn::before, .playOn::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%; border: 1.5px solid var(--accent);
+  animation: ripple 1.6s ease-out infinite; pointer-events: none;
+}
+.playOn::after { animation-delay: 0.8s; }
+@keyframes ripple { from { transform: scale(1); opacity: 0.55; } to { transform: scale(1.9); opacity: 0; } }
 
 .after { display: flex; flex-direction: column; gap: 12px; }
-.answer { display: flex; flex-direction: column; gap: 8px; padding: 18px; background: var(--surface); border-radius: var(--radius); }
-.form { font-size: 22px; font-weight: 600; overflow-wrap: anywhere; }
-.meaning { margin: 0; font-size: 15px; line-height: 1.7; }
-.examples { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.answer { display: flex; flex-direction: column; gap: 6px; padding: 18px; background: var(--surface); border-radius: var(--radius); }
+.answerMain { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.answerNote { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+
+/* A memo word fell again. */
+.memoNote { margin: 0; font-size: 13px; line-height: 1.7; color: var(--again); font-weight: 500; }
 
 .try { display: flex; flex-direction: column; gap: 8px; padding: 16px 0; border-top: 1px solid var(--line); }
 .textarea {

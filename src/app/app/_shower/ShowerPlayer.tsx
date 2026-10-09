@@ -15,8 +15,9 @@ import { WordSheet } from "./WordSheet";
 const GAP_MS = 700;
 
 /**
- * One "ひと浴び": sentences that share a pattern arrive one at a time with their audio and stay on screen,
- * so the learner can compare them and find the common part. Nothing is explained until they ask.
+ * One rain: sentences that share a pattern fall in one at a time with their audio and stay on screen,
+ * so the learner can compare them and find the common part. Nothing is explained until they ask, and then
+ * only by lighting the matching parts of the sentence and its translation.
  */
 export function ShowerPlayer({
   initial,
@@ -108,11 +109,17 @@ export function ShowerPlayer({
   const allShown = shown >= cluster.sentences.length;
   const targetClass = langClass(target);
   const nativeClass = langClass(native);
+  const visible = cluster.sentences.slice(0, shown);
+  // Memo words that turned up in this rain: meeting them again is the point, so say so.
+  const metWords = [...new Set(visible.flatMap((s) => s.memoHits.map((h) => s.text.slice(h.start, h.end))))];
+  const badge = cluster.again
+    ? t.shower.again + (cluster.againDays && cluster.againDays >= 1 ? t.shower.againDays(cluster.againDays) : "")
+    : t.shower.fresh;
 
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
-        <span className={cluster.again ? styles.again : styles.fresh}>{cluster.again ? t.shower.again : t.shower.fresh}</span>
+        <span className={cluster.again ? styles.again : styles.fresh}>{badge}</span>
         <div className={styles.toggles}>
           <label className={styles.toggle}>
             <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
@@ -133,19 +140,25 @@ export function ShowerPlayer({
           </button>
         </div>
       ) : (
-        <ol className={styles.list} aria-live="polite">
-          {cluster.sentences.slice(0, shown).map((s, i) => {
+        <ol className={styles.list} aria-live="polite" data-leaving={pending || undefined}>
+          {visible.map((s, i) => {
             const highlights: Highlight[] = [
               ...s.memoHits.map((h) => ({ ...h, kind: "memo" as const })),
               ...(revealed && s.mark ? [{ ...s.mark, kind: "mark" as const }] : []),
             ];
+            const glossHighlights: Highlight[] = revealed && s.glossMark ? [{ ...s.glossMark, kind: "mark" }] : [];
             return (
               <li key={s.id} className={i === playing ? `${styles.item} ${styles.playing}` : styles.item}>
+                <span className={styles.drop} aria-hidden="true" />
                 <div className={styles.itemMain}>
                   <button type="button" className={`${styles.sentence} ${targetClass}`} onClick={() => setSheetFor(s)}>
                     <SentenceText text={s.text} highlights={highlights} reading={s.reading} />
                   </button>
-                  {hideGloss ? null : <span className={`${styles.gloss} ${nativeClass}`}>{s.gloss}</span>}
+                  {hideGloss ? null : (
+                    <span className={`${styles.gloss} ${nativeClass}`}>
+                      <SentenceText text={s.gloss} highlights={glossHighlights} />
+                    </span>
+                  )}
                   {s.seenBefore ? <span className={styles.seen}>{t.shower.seenBefore}</span> : null}
                 </div>
                 <button
@@ -162,6 +175,12 @@ export function ShowerPlayer({
         </ol>
       )}
 
+      {metWords.length > 0 ? (
+        <p className={styles.memoNote}>
+          {t.shower.memoMet(metWords.join("・"))}
+        </p>
+      ) : null}
+
       {shown > 0 && !allShown && !autoplay ? (
         <button type="button" className="btn-quiet" onClick={showNext}>
           {t.shower.next}
@@ -173,9 +192,8 @@ export function ShowerPlayer({
           {revealed ? (
             <section className={styles.answer}>
               <h2 className="label">{t.shower.revealed}</h2>
-              <div className={`${styles.form} ${targetClass}`}>{cluster.form}</div>
-              {cluster.meaning ? <p className={`${styles.meaning} ${nativeClass}`}>{cluster.meaning}</p> : null}
-              {cluster.examples ? <div className={`${styles.examples} ${targetClass}`}>{cluster.examples}</div> : null}
+              {cluster.label ? <p className={`${styles.answerMain} ${nativeClass}`}>{cluster.label}</p> : null}
+              <p className={styles.answerNote}>{t.shower.answerNote}</p>
             </section>
           ) : (
             <button type="button" className="btn-quiet" onClick={() => setRevealed(true)}>
@@ -183,7 +201,7 @@ export function ShowerPlayer({
             </button>
           )}
           {trying ? (
-            <TryForm patternId={cluster.patternId} form={cluster.form} native={native} target={target} />
+            <TryForm patternId={cluster.patternId} native={native} target={target} />
           ) : (
             <button type="button" className="btn-quiet" onClick={() => setTrying(true)}>
               {t.shower.tryIt}

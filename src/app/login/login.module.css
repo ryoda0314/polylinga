@@ -7,7 +7,6 @@
   padding: 48px 16px;
   background: var(--surface);
 }
-.wordmark { font-size: 18px; font-weight: 600; text-decoration: none; color: var(--ink); }
 .card {
   width: 100%;
   max-width: 420px;

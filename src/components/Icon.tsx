@@ -29,15 +29,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M13 6l6 6-6 6" />
     </>
   ),
-  // A shower head with falling lines: the example-sentence shower.
+  // A cloud with rain falling from it, like the app icon: the rain of example sentences.
   shower: (
     <>
-      <path d="M4 9a8 8 0 0 1 16 0z" />
-      <path d="M8 13v2" />
-      <path d="M12 13v4" />
-      <path d="M16 13v2" />
-      <path d="M10 19v1" />
-      <path d="M14 19v1" />
+      <path d="M7 13.5h10a3.5 3.5 0 0 0 .2-7A5 5 0 0 0 7.7 7.6 3 3 0 0 0 7 13.5z" />
+      <path d="M9 17v2.5" />
+      <path d="M12 16.5v4" />
+      <path d="M15 17v2.5" />
     </>
   ),
   copy: (

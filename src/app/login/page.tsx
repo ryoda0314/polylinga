@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./LoginForm";
@@ -17,12 +18,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <div className={styles.page}>
-      <Link href="/" className={styles.wordmark}>
-        PolyLinga
-      </Link>
+      <Logo size="md" />
       <div className={styles.card}>
         <h1 className={styles.h1}>はじめる・ログイン</h1>
-        <p className={styles.lead}>旧 PolyLinga のアカウントも、そのまま使えます。</p>
+        <p className={styles.lead}>前のアプリ PolyLinga のアカウントも、そのまま使えます。</p>
         {error ? <p className={styles.error}>ログインできませんでした。もう一度お試しください。</p> : null}
         <LoginForm />
       </div>

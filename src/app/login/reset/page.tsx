@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { getSession } from "@/lib/auth";
 import styles from "../login.module.css";
 import { ResetForm } from "./ResetForm";
@@ -11,9 +12,7 @@ export default async function ResetPage() {
 
   return (
     <div className={styles.page}>
-      <Link href="/" className={styles.wordmark}>
-        PolyLinga
-      </Link>
+      <Logo size="md" />
       <div className={styles.card}>
         <h1 className={styles.h1}>新しいパスワード</h1>
         {user ? (

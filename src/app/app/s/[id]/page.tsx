@@ -7,7 +7,7 @@ import { SpeakButton } from "@/components/SpeakButton";
 import type { CorrectionResult } from "@/lib/ai";
 import { audioUrl } from "@/lib/audio";
 import { requireUser } from "@/lib/auth";
-import { approvedPatterns, loadSentences, patternExamples, type ShownSentence } from "@/lib/corpus";
+import { approvedPatterns, functionLabels, loadSentences, patternExamples, type ShownSentence } from "@/lib/corpus";
 import { diffRanges } from "@/lib/diff";
 import { getDict, type Dict } from "@/lib/i18n";
 import { isLang, langClass, type Lang } from "@/lib/langs";
@@ -41,19 +41,17 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const target: Lang = saying.target_lang;
   const t = getDict(native);
 
-  const [{ data: correctionRows }, left, patterns] = await Promise.all([
+  const [{ data: correctionRows }, left] = await Promise.all([
     supabase
       .from("pl_corrections")
       .select("id, input, corrected, result, created_at")
       .eq("saying_id", id)
       .order("created_at", { ascending: false }),
     usesLeft(user.id, "corrections"),
-    approvedPatterns(target),
   ]);
   const corrections = (correctionRows ?? []) as CorrectionRow[];
   const latest = corrections[0];
-  const practiced = saying.pattern_id ? patterns.find((p) => p.id === saying.pattern_id) : undefined;
-  const title = saying.intent ?? (practiced ? t.write.fromShower(practiced.form) : "");
+  const title = saying.intent ?? (saying.pattern_id ? t.write.fromShower : "");
 
   const writeForm = (
     <WriteForm
@@ -166,13 +164,19 @@ function ExampleRow({
   const marks: Highlight[] = sentence.marks
     .filter((m) => !onlyPattern || m.patternId === onlyPattern)
     .map((m) => ({ start: m.start, end: m.end, kind: "mark" }));
+  // Each example belongs to one function, so its translation has one matching part: light it too.
+  const glossMarks: Highlight[] = marks.length
+    ? sentence.glossMarks.map((m) => ({ start: m.start, end: m.end, kind: "mark" }))
+    : [];
   return (
     <div className={styles.row}>
       <div className={styles.rowText}>
         <span className={`${styles.exampleText} ${langClass(lang)}`}>
           <SentenceText text={sentence.text} highlights={marks} reading={sentence.reading} />
         </span>
-        <span className={`${styles.gloss} ${langClass(native)}`}>{sentence.gloss}</span>
+        <span className={`${styles.gloss} ${langClass(native)}`}>
+          <SentenceText text={sentence.gloss} highlights={glossMarks} />
+        </span>
       </div>
       <SpeakButton
         text={sentence.text}
@@ -263,8 +267,9 @@ async function PatternsView({
 }) {
   const found = correction.result.patterns ?? [];
   if (found.length === 0) return null;
-  const [patterns, examples] = await Promise.all([
+  const [patterns, labels, examples] = await Promise.all([
     approvedPatterns(target),
+    functionLabels(),
     patternExamples(
       found.map((f) => f.id),
       target,
@@ -272,26 +277,19 @@ async function PatternsView({
     ),
   ]);
 
+  // No grammar notation here either: what the pattern does in plain words, then sentences that share it.
   return (
     <section className={styles.stack}>
       <h2 className={styles.sectionTitle}>{t.saying.patternsTitle}</h2>
       {found.map((f) => {
         const pattern = patterns.find((p) => p.id === f.id);
         if (!pattern) return null;
+        const label = labels.get(pattern.functionId)?.[native];
         const list = examples.get(f.id) ?? [];
         return (
           <div key={f.id} className={styles.patternBlock}>
-            <div className={styles.panel}>
-              <div className={`${styles.patternForm} ${langClass(target)}`}>{pattern.form}</div>
-              {pattern.meaning[native] ? (
-                <p className={`${styles.patternMeaning} ${langClass(native)}`}>{pattern.meaning[native]}</p>
-              ) : null}
-              {pattern.examples ? (
-                <div className={`${styles.patternEx} ${langClass(target)}`}>{pattern.examples}</div>
-              ) : null}
-            </div>
+            {label ? <h3 className={`${styles.patternLabel} ${langClass(native)}`}>{label}</h3> : null}
             <div>
-              <h3 className="label">{t.saying.patternExamples}</h3>
               {list.length === 0 ? (
                 <p className={styles.empty}>{t.saying.noPatternExamples}</p>
               ) : (

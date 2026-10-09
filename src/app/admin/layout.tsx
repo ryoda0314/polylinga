@@ -10,7 +10,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     <div className={styles.shell}>
       <header className={styles.header}>
         <Link href="/admin/library" className={styles.brand}>
-          PolyLinga 管理
+          ことのあめ 管理
         </Link>
         <Link href="/app" className={styles.headerLink}>
           アプリに戻る

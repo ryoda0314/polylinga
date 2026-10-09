@@ -7,7 +7,7 @@ import { tryPattern, type FormState } from "../actions";
 import styles from "./shower.module.css";
 
 /** "これで言ってみる": write a sentence with the pattern just bathed in; the action opens the corrected result. */
-export function TryForm({ patternId, form, native, target }: { patternId: string; form: string; native: Lang; target: Lang }) {
+export function TryForm({ patternId, native, target }: { patternId: string; native: Lang; target: Lang }) {
   const t = getDict(native);
   const action = useMemo(() => tryPattern.bind(null, patternId), [patternId]);
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, { error: null });
@@ -15,7 +15,7 @@ export function TryForm({ patternId, form, native, target }: { patternId: string
   return (
     <form action={formAction} className={styles.try}>
       <label htmlFor="try-text" className="label">
-        {t.shower.tryLabel(form)}
+        {t.shower.tryLabel}
       </label>
       <textarea id="try-text" name="text" required maxLength={200} className={`${styles.textarea} ${langClass(target)}`} />
       <p className={styles.note}>{t.shower.tryHint}</p>

@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
   const t = getDict(settings?.nativeLang ?? LAUNCH_NATIVE);
 
   return (
-    <div className={styles.shell} data-accent={settings?.accent ?? "pen"}>
+    <div className={styles.shell} data-accent={settings?.accent ?? "rain"}>
       <main className={styles.main}>{children}</main>
       <BottomNav labels={t.nav} />
     </div>

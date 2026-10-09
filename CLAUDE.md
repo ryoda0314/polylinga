@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# PolyLinga
+# ことのあめ（旧 PolyLinga）
 
 Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fit the shower
 (浴びる → 気づく → 言ってみる → また出会う) does not get built. No quizzes, no forced review, no grammar lessons.
@@ -46,5 +46,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 ## Conventions
 
 - UI copy goes in `src/lib/i18n/ja.ts`, written plainly from the learner's side. Client components get strings as props.
-- Colors come from the tokens in `src/app/globals.css`; the accent is `var(--accent)` / `var(--tint)` and follows `data-accent`.
+- Colors come from the tokens in `src/app/globals.css`, taken from the app icon (`src/app/icon.png`, `public/icons/`):
+  the accent is `var(--accent)` / `var(--tint)` and follows `data-accent` (rain, ink, hydrangea, dusk); `var(--again)` marks a
+  pattern or memo word coming back. No gradients inside the app; the icon is the one exception. The wordmark ことのあめ
+  is mincho (`.wordmark-kana`, `<Logo>`); everything else is IBM Plex.
 - Writes that later get read aloud or counted (corrections, usage) go through the service-role client, never the learner's.

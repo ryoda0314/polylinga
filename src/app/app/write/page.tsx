@@ -60,7 +60,7 @@ export default async function WritePage() {
                   {row.pl_corrections[0]?.corrected ?? t.write.notTried}
                 </span>
                 <span className={`${styles.rowSub} ${langClass(settings.nativeLang)}`}>
-                  {row.intent ?? (row.pl_patterns ? t.write.fromShower(row.pl_patterns.form) : "")}
+                  {row.intent ?? (row.pl_patterns ? t.write.fromShower : "")}
                 </span>
               </span>
               <Icon name="arrow" size={18} />

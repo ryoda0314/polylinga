@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { Logo } from "@/components/Logo";
+import { Rain } from "@/components/Rain";
 import { requireUser } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { LANG_NATIVE_NAME, langClass } from "@/lib/langs";
@@ -18,6 +20,13 @@ export default async function StartPage({ searchParams }: PageProps<"/start">) {
 
   return (
     <main className={styles.page}>
+      <div className={styles.sky}>
+        <Rain />
+        <div className={styles.brand}>
+          <Logo size="lg" href={null} />
+          <p className={styles.tagline}>{t.app.tagline}</p>
+        </div>
+      </div>
       <form action={chooseTarget} className={styles.card}>
         <h1 className={styles.h1}>{t.start.title}</h1>
         <p className={styles.lead}>{t.start.lead}</p>

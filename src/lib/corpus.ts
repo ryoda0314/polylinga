@@ -14,6 +14,7 @@ export type Mark = { patternId: string; start: number; end: number };
 export type Pattern = {
   id: string;
   lang: Lang;
+  functionId: string;
   form: string;
   meaning: Partial<Record<Lang, string>>;
   examples: string | null;
@@ -25,6 +26,8 @@ export type ShownSentence = {
   text: string;
   gloss: string;
   marks: Mark[];
+  /** The same patterns' parts in the learner's own language, so both can be lit together. */
+  glossMarks: Mark[];
   reading: string[] | null;
   audio: Audio;
 };
@@ -52,13 +55,14 @@ export function sentenceAudio(text: string, lang: Lang, sentenceId: string): Aud
   return { src: audioUrl(text, lang), fallback: `/api/tts?sentence=${sentenceId}&lang=${lang}` };
 }
 
-function show(sentence: Sentence, marks: Mark[], target: Lang, native: Lang): ShownSentence {
+function show(sentence: Sentence, marks: Mark[], glossMarks: Mark[], target: Lang, native: Lang): ShownSentence {
   const text = sentence[target];
   return {
     id: sentence.id,
     text,
     gloss: sentence[native],
     marks,
+    glossMarks,
     reading: readingFor(text, target, sentence.zhPinyin),
     audio: sentenceAudio(text, target, sentence.id),
   };
@@ -86,18 +90,22 @@ export async function loadSentences(ids: string[], target: Lang, native: Lang): 
     supabase.from("pl_sentences").select("id, ja, en, ko, zh, zh_pinyin").in("id", ids),
     supabase
       .from("pl_sentence_patterns")
-      .select("sentence_id, pattern_id, start_index, end_index")
+      .select("sentence_id, pattern_id, lang, start_index, end_index")
       .in("sentence_id", ids)
-      .eq("lang", target),
+      .in("lang", [target, native]),
   ]);
   const byId = new Map((rows ?? []).map((r) => [String(r.id), toSentence(r)]));
   const marks = new Map<string, Mark[]>();
+  const glossMarks = new Map<string, Mark[]>();
   for (const r of markRows ?? []) {
-    const list = marks.get(r.sentence_id) ?? [];
+    const into = r.lang === target ? marks : glossMarks;
+    const list = into.get(r.sentence_id) ?? [];
     list.push({ patternId: r.pattern_id, start: r.start_index, end: r.end_index });
-    marks.set(r.sentence_id, list);
+    into.set(r.sentence_id, list);
   }
-  return ids.filter((id) => byId.has(id)).map((id) => show(byId.get(id)!, marks.get(id) ?? [], target, native));
+  return ids
+    .filter((id) => byId.has(id))
+    .map((id) => show(byId.get(id)!, marks.get(id) ?? [], glossMarks.get(id) ?? [], target, native));
 }
 
 export const approvedPatterns = cache(async (lang: Lang): Promise<Pattern[]> => {
@@ -109,10 +117,17 @@ export const approvedPatterns = cache(async (lang: Lang): Promise<Pattern[]> => 
   return (data ?? []).map((r) => ({
     id: String(r.id),
     lang: r.lang as Lang,
+    functionId: String(r.function_id),
     form: String(r.form),
     meaning: (r.meaning ?? {}) as Pattern["meaning"],
     examples: (r.examples as string | null) ?? null,
   }));
+});
+
+/** What each function does, in plain words per language (誘う, もし〜なら): shown instead of grammar notation. */
+export const functionLabels = cache(async (): Promise<Map<string, Partial<Record<Lang, string>>>> => {
+  const { data } = await (await db()).from("pl_functions").select("id, label");
+  return new Map((data ?? []).map((f) => [String(f.id), (f.label ?? {}) as Partial<Record<Lang, string>>]));
 });
 
 /** Up to `per` approved example sentences for each pattern, skipping the ones in `exclude`. */
