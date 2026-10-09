@@ -1,0 +1,1410 @@
+[
+  {
+    "id": "permission",
+    "position": 7,
+    "brief": "相手に許可を求める。「〜してもいい？」",
+    "label": {
+      "ja": "許可をもらう",
+      "en": "Asking permission",
+      "ko": "허락 구하기",
+      "zh": "征求许可"
+    }
+  },
+  {
+    "id": "dont",
+    "position": 8,
+    "brief": "相手にやめてほしいと言う。「〜しないで」",
+    "label": {
+      "ja": "やめてと言う",
+      "en": "Asking someone not to",
+      "ko": "하지 말라고 하기",
+      "zh": "请别人别做"
+    }
+  },
+  {
+    "id": "must",
+    "position": 9,
+    "brief": "しなければならないことを言う。「〜しなきゃ」",
+    "label": {
+      "ja": "しなきゃいけないこと",
+      "en": "Must / have to",
+      "ko": "해야 하는 일",
+      "zh": "必须做的事"
+    }
+  },
+  {
+    "id": "no-need",
+    "position": 10,
+    "brief": "しなくてもいいと言う。「〜しなくていいよ」",
+    "label": {
+      "ja": "しなくていいと言う",
+      "en": "Don't have to",
+      "ko": "안 해도 된다고 하기",
+      "zh": "不用做"
+    }
+  },
+  {
+    "id": "plan",
+    "position": 11,
+    "brief": "予定やつもりを言う。「〜するつもり」「〜する予定」",
+    "label": {
+      "ja": "予定・つもり",
+      "en": "Plans and intentions",
+      "ko": "계획 말하기",
+      "zh": "打算"
+    }
+  },
+  {
+    "id": "doing-now",
+    "position": 12,
+    "brief": "今していることを言う。「今〜してる」",
+    "label": {
+      "ja": "今していること",
+      "en": "What you're doing now",
+      "ko": "지금 하고 있는 일",
+      "zh": "正在做的事"
+    }
+  },
+  {
+    "id": "not-yet",
+    "position": 13,
+    "brief": "まだしていないと言う。「まだ〜してない」",
+    "label": {
+      "ja": "まだしていない",
+      "en": "Not yet",
+      "ko": "아직 안 했다",
+      "zh": "还没做"
+    }
+  },
+  {
+    "id": "already",
+    "position": 14,
+    "brief": "もう終わったと言う。「もう〜した」",
+    "label": {
+      "ja": "もうした",
+      "en": "Already done",
+      "ko": "벌써 했다",
+      "zh": "已经做了"
+    }
+  },
+  {
+    "id": "just-did",
+    "position": 15,
+    "brief": "したばかりだと言う。「〜したばかり」「さっき〜した」",
+    "label": {
+      "ja": "したばかり",
+      "en": "Just did",
+      "ko": "방금 했다",
+      "zh": "刚做了"
+    }
+  },
+  {
+    "id": "reason",
+    "position": 16,
+    "brief": "理由を添えて言う。「〜だから」",
+    "label": {
+      "ja": "理由を言う",
+      "en": "Giving a reason",
+      "ko": "이유 말하기",
+      "zh": "说明理由"
+    }
+  },
+  {
+    "id": "apologize",
+    "position": 17,
+    "brief": "したことを謝る。「〜してごめん」",
+    "label": {
+      "ja": "謝る",
+      "en": "Apologizing",
+      "ko": "사과하기",
+      "zh": "道歉"
+    }
+  },
+  {
+    "id": "thank",
+    "position": 18,
+    "brief": "してくれたことにお礼を言う。「〜してくれてありがとう」",
+    "label": {
+      "ja": "お礼を言う",
+      "en": "Thanking",
+      "ko": "고마움 전하기",
+      "zh": "道谢"
+    }
+  },
+  {
+    "id": "if",
+    "position": 19,
+    "brief": "条件を言う。「もし〜なら」「〜たら」",
+    "label": {
+      "ja": "もし〜なら",
+      "en": "If",
+      "ko": "만약 ~라면",
+      "zh": "如果"
+    }
+  },
+  {
+    "id": "when",
+    "position": 20,
+    "brief": "ときを言う。「〜するとき」",
+    "label": {
+      "ja": "〜するとき",
+      "en": "When",
+      "ko": "~할 때",
+      "zh": "…的时候"
+    }
+  },
+  {
+    "id": "after",
+    "position": 21,
+    "brief": "順番を言う。「〜してから」",
+    "label": {
+      "ja": "〜してから",
+      "en": "After",
+      "ko": "~하고 나서",
+      "zh": "…之后"
+    }
+  },
+  {
+    "id": "before",
+    "position": 22,
+    "brief": "前に何をするか言う。「〜する前に」",
+    "label": {
+      "ja": "〜する前に",
+      "en": "Before",
+      "ko": "~하기 전에",
+      "zh": "…之前"
+    }
+  },
+  {
+    "id": "while",
+    "position": 23,
+    "brief": "同時にしていることを言う。「〜しながら」",
+    "label": {
+      "ja": "〜しながら",
+      "en": "While doing",
+      "ko": "~하면서",
+      "zh": "一边…一边"
+    }
+  },
+  {
+    "id": "but",
+    "position": 24,
+    "brief": "逆のことをつなぐ。「〜けど」",
+    "label": {
+      "ja": "〜けど",
+      "en": "But / though",
+      "ko": "~지만",
+      "zh": "但是"
+    }
+  },
+  {
+    "id": "looks",
+    "position": 25,
+    "brief": "見た感じや様子から言う。「〜そう」「〜みたい」",
+    "label": {
+      "ja": "〜そう・〜みたい",
+      "en": "Looks like / seems",
+      "ko": "~것 같다",
+      "zh": "好像"
+    }
+  },
+  {
+    "id": "think",
+    "position": 26,
+    "brief": "自分の考えを言う。「〜と思う」",
+    "label": {
+      "ja": "〜と思う",
+      "en": "I think",
+      "ko": "~라고 생각해",
+      "zh": "我觉得"
+    }
+  },
+  {
+    "id": "compare",
+    "position": 27,
+    "brief": "二つを比べる。「AはBより〜」",
+    "label": {
+      "ja": "比べる",
+      "en": "Comparing",
+      "ko": "비교하기",
+      "zh": "比较"
+    }
+  },
+  {
+    "id": "most",
+    "position": 28,
+    "brief": "一番を言う。「一番〜」",
+    "label": {
+      "ja": "一番〜",
+      "en": "The most",
+      "ko": "제일",
+      "zh": "最"
+    }
+  },
+  {
+    "id": "like",
+    "position": 29,
+    "brief": "好きなことを言う。「〜するのが好き」",
+    "label": {
+      "ja": "好きなこと",
+      "en": "Likes",
+      "ko": "좋아하는 것",
+      "zh": "喜欢"
+    }
+  },
+  {
+    "id": "good-at",
+    "position": 30,
+    "brief": "得意・上手だと言う。「〜が得意」「〜が上手」",
+    "label": {
+      "ja": "得意なこと",
+      "en": "Being good at",
+      "ko": "잘하는 것",
+      "zh": "擅长"
+    }
+  },
+  {
+    "id": "try",
+    "position": 31,
+    "brief": "試しにしてみる。「〜してみる」",
+    "label": {
+      "ja": "〜してみる",
+      "en": "Trying something",
+      "ko": "~해 보다",
+      "zh": "试试"
+    }
+  },
+  {
+    "id": "advice",
+    "position": 32,
+    "brief": "助言する。「〜したほうがいいよ」",
+    "label": {
+      "ja": "〜したほうがいい",
+      "en": "Giving advice",
+      "ko": "조언하기",
+      "zh": "建议"
+    }
+  },
+  {
+    "id": "how-about",
+    "position": 33,
+    "brief": "提案して勧める。「〜はどう？」",
+    "label": {
+      "ja": "〜はどう？",
+      "en": "How about ~?",
+      "ko": "~는 어때?",
+      "zh": "…怎么样？"
+    }
+  },
+  {
+    "id": "opinion",
+    "position": 34,
+    "brief": "相手の意見を聞く。「〜はどう思う？」",
+    "label": {
+      "ja": "意見を聞く",
+      "en": "Asking someone's opinion",
+      "ko": "의견 묻기",
+      "zh": "问看法"
+    }
+  },
+  {
+    "id": "how-to",
+    "position": 35,
+    "brief": "やり方を聞く。「どうやって〜するの？」",
+    "label": {
+      "ja": "やり方を聞く",
+      "en": "Asking how to",
+      "ko": "방법 묻기",
+      "zh": "问怎么做"
+    }
+  },
+  {
+    "id": "where",
+    "position": 36,
+    "brief": "場所を聞く。「〜はどこ？」「どこで〜？」",
+    "label": {
+      "ja": "場所を聞く",
+      "en": "Asking where",
+      "ko": "장소 묻기",
+      "zh": "问地点"
+    }
+  },
+  {
+    "id": "when-q",
+    "position": 37,
+    "brief": "いつか聞く。「いつ〜？」",
+    "label": {
+      "ja": "いつか聞く",
+      "en": "Asking when",
+      "ko": "언제인지 묻기",
+      "zh": "问时间"
+    }
+  },
+  {
+    "id": "why",
+    "position": 38,
+    "brief": "理由を聞く。「なんで〜の？」",
+    "label": {
+      "ja": "理由を聞く",
+      "en": "Asking why",
+      "ko": "이유 묻기",
+      "zh": "问原因"
+    }
+  },
+  {
+    "id": "how-long",
+    "position": 39,
+    "brief": "時間や量を聞く。「どのくらい〜？」",
+    "label": {
+      "ja": "どのくらいか聞く",
+      "en": "How long / how much",
+      "ko": "얼마나",
+      "zh": "多久・多少"
+    }
+  },
+  {
+    "id": "wish",
+    "position": 40,
+    "brief": "願いを言う。「〜だったらいいな」",
+    "label": {
+      "ja": "〜だったらいいな",
+      "en": "Wishing",
+      "ko": "~면 좋겠다",
+      "zh": "要是…就好了"
+    }
+  },
+  {
+    "id": "almost",
+    "position": 41,
+    "brief": "もう少しでそうなるところだった。「もう少しで〜するところだった」",
+    "label": {
+      "ja": "もう少しで〜",
+      "en": "Almost",
+      "ko": "~할 뻔했다",
+      "zh": "差点儿"
+    }
+  },
+  {
+    "id": "keep",
+    "position": 42,
+    "brief": "ずっと続いていることを言う。「ずっと〜してる」",
+    "label": {
+      "ja": "ずっと〜している",
+      "en": "Have been / keep doing",
+      "ko": "계속 ~하고 있다",
+      "zh": "一直"
+    }
+  },
+  {
+    "id": "realize",
+    "position": 43,
+    "brief": "気づき・驚きを言う。「〜なんだ」「〜じゃん」",
+    "label": {
+      "ja": "気づき・驚き",
+      "en": "Realizing",
+      "ko": "~구나 / ~네",
+      "zh": "原来"
+    }
+  },
+  {
+    "id": "confirm",
+    "position": 44,
+    "brief": "相手に確かめる。「〜でしょ？」「〜だよね？」",
+    "label": {
+      "ja": "確かめる",
+      "en": "Checking (right?)",
+      "ko": "~지?",
+      "zh": "…吧？"
+    }
+  },
+  {
+    "id": "heard",
+    "position": 45,
+    "brief": "人から聞いたことを伝える。「〜らしいよ」「〜って聞いた」",
+    "label": {
+      "ja": "聞いた話を伝える",
+      "en": "I heard that",
+      "ko": "~대 / ~래",
+      "zh": "听说"
+    }
+  },
+  {
+    "id": "too",
+    "position": 46,
+    "brief": "度を越していると言う。「〜すぎる」",
+    "label": {
+      "ja": "〜すぎる",
+      "en": "Too much",
+      "ko": "너무 ~하다",
+      "zh": "太…了"
+    }
+  },
+  {
+    "id": "so",
+    "position": 47,
+    "brief": "だからこうしたと結果を言う。「だから〜した」",
+    "label": {
+      "ja": "だから〜した",
+      "en": "So / that's why",
+      "ko": "그래서",
+      "zh": "所以"
+    }
+  },
+  {
+    "id": "decide",
+    "position": 48,
+    "brief": "決めたことを言う。「〜することにした」",
+    "label": {
+      "ja": "〜することにした",
+      "en": "Deciding",
+      "ko": "~하기로 했다",
+      "zh": "决定"
+    }
+  },
+  {
+    "id": "become",
+    "position": 49,
+    "brief": "変化を言う。「〜になった」「〜するようになった」",
+    "label": {
+      "ja": "変わったこと",
+      "en": "Becoming / getting to",
+      "ko": "~게 됐다",
+      "zh": "变得"
+    }
+  },
+  {
+    "id": "want-you-to",
+    "position": 50,
+    "brief": "相手にしてほしいことを言う。「〜してほしい」",
+    "label": {
+      "ja": "〜してほしい",
+      "en": "Wanting someone to",
+      "ko": "~해 줬으면 좋겠다",
+      "zh": "希望你…"
+    }
+  },
+  {
+    "id": "did-past",
+    "position": 51,
+    "brief": "過去にしたことを言う。「昨日〜した」",
+    "label": {
+      "ja": "したことを言う",
+      "en": "Saying what you did",
+      "ko": "한 일 말하기",
+      "zh": "说做过的事"
+    }
+  },
+  {
+    "id": "will-do",
+    "position": 52,
+    "brief": "これからすることを言う。「あとで〜するね」",
+    "label": {
+      "ja": "これからすること",
+      "en": "Saying what you'll do",
+      "ko": "할 일 말하기",
+      "zh": "说要做的事"
+    }
+  },
+  {
+    "id": "was-doing",
+    "position": 53,
+    "brief": "そのときしていたことを言う。「〜してた」",
+    "label": {
+      "ja": "〜してた",
+      "en": "What you were doing",
+      "ko": "~하고 있었어",
+      "zh": "那时在做的事"
+    }
+  },
+  {
+    "id": "used-to",
+    "position": 54,
+    "brief": "前はよくしていたことを言う。「前は〜してた」",
+    "label": {
+      "ja": "前は〜してた",
+      "en": "Used to",
+      "ko": "예전엔 ~했어",
+      "zh": "以前常常…"
+    }
+  },
+  {
+    "id": "not-do",
+    "position": 55,
+    "brief": "しないと言う。「今日は〜しない」",
+    "label": {
+      "ja": "しないと言う",
+      "en": "Saying you don't / won't",
+      "ko": "안 한다고 하기",
+      "zh": "说不做"
+    }
+  },
+  {
+    "id": "didnt",
+    "position": 56,
+    "brief": "しなかったと言う。「〜しなかった」",
+    "label": {
+      "ja": "しなかった",
+      "en": "Didn't",
+      "ko": "안 했어",
+      "zh": "没做"
+    }
+  },
+  {
+    "id": "cant",
+    "position": 57,
+    "brief": "できないと言う。「〜できない」",
+    "label": {
+      "ja": "できない",
+      "en": "Can't",
+      "ko": "못 해",
+      "zh": "做不了"
+    }
+  },
+  {
+    "id": "who",
+    "position": 58,
+    "brief": "誰か聞く。「誰が〜？」「誰と〜？」",
+    "label": {
+      "ja": "誰か聞く",
+      "en": "Asking who",
+      "ko": "누구인지 묻기",
+      "zh": "问是谁"
+    }
+  },
+  {
+    "id": "what",
+    "position": 59,
+    "brief": "何か聞く。「何〜？」",
+    "label": {
+      "ja": "何か聞く",
+      "en": "Asking what",
+      "ko": "뭔지 묻기",
+      "zh": "问什么"
+    }
+  },
+  {
+    "id": "which",
+    "position": 60,
+    "brief": "どれ・どっちか聞く。「どっちが〜？」",
+    "label": {
+      "ja": "どっちか聞く",
+      "en": "Asking which",
+      "ko": "어느 쪽인지 묻기",
+      "zh": "问哪个"
+    }
+  },
+  {
+    "id": "price",
+    "position": 61,
+    "brief": "値段を聞く・言う。「〜っていくら？」",
+    "label": {
+      "ja": "値段",
+      "en": "Asking the price",
+      "ko": "가격 묻기",
+      "zh": "问价格"
+    }
+  },
+  {
+    "id": "how-many",
+    "position": 62,
+    "brief": "数を聞く。「何個〜？」「何人〜？」",
+    "label": {
+      "ja": "数を聞く",
+      "en": "Asking how many",
+      "ko": "몇 개인지 묻기",
+      "zh": "问数量"
+    }
+  },
+  {
+    "id": "is-there",
+    "position": 63,
+    "brief": "あるか・いるか聞く。「〜ある？」",
+    "label": {
+      "ja": "あるか聞く",
+      "en": "Is there…?",
+      "ko": "있는지 묻기",
+      "zh": "有没有"
+    }
+  },
+  {
+    "id": "at-place",
+    "position": 64,
+    "brief": "今いる場所を言う。「今〜にいる」",
+    "label": {
+      "ja": "いる場所",
+      "en": "Saying where you are",
+      "ko": "어디 있는지 말하기",
+      "zh": "说自己在哪儿"
+    }
+  },
+  {
+    "id": "heading",
+    "position": 65,
+    "brief": "向かっているところを言う。「今〜に向かってる」",
+    "label": {
+      "ja": "向かってる",
+      "en": "On my way",
+      "ko": "가는 중이야",
+      "zh": "在去…的路上"
+    }
+  },
+  {
+    "id": "arrived",
+    "position": 66,
+    "brief": "着いたと伝える。「〜に着いた！」",
+    "label": {
+      "ja": "着いた",
+      "en": "Arrived",
+      "ko": "도착했어",
+      "zh": "到了"
+    }
+  },
+  {
+    "id": "do-for-you",
+    "position": 67,
+    "brief": "相手のためにしてあげる。「〜してあげる」",
+    "label": {
+      "ja": "してあげる",
+      "en": "Doing something for someone",
+      "ko": "~해 줄게",
+      "zh": "我帮你…"
+    }
+  },
+  {
+    "id": "did-for-me",
+    "position": 68,
+    "brief": "してもらったことを言う。「〜してくれた」",
+    "label": {
+      "ja": "してくれた",
+      "en": "Someone did it for me",
+      "ko": "~해 줬어",
+      "zh": "…帮我…了"
+    }
+  },
+  {
+    "id": "offer",
+    "position": 69,
+    "brief": "手伝いを申し出る。「〜しようか？」",
+    "label": {
+      "ja": "申し出る",
+      "en": "Offering",
+      "ko": "~해 줄까?",
+      "zh": "要我…吗"
+    }
+  },
+  {
+    "id": "decline",
+    "position": 70,
+    "brief": "やんわり断る。「今日はちょっと〜」",
+    "label": {
+      "ja": "やんわり断る",
+      "en": "Declining softly",
+      "ko": "부드럽게 거절하기",
+      "zh": "委婉拒绝"
+    }
+  },
+  {
+    "id": "agree",
+    "position": 71,
+    "brief": "同意する。「〜だよね」",
+    "label": {
+      "ja": "同意する",
+      "en": "Agreeing",
+      "ko": "맞장구치기",
+      "zh": "表示同意"
+    }
+  },
+  {
+    "id": "disagree",
+    "position": 72,
+    "brief": "そう思わないと言う。「〜とは思わない」",
+    "label": {
+      "ja": "そう思わない",
+      "en": "I don't think so",
+      "ko": "그렇게 생각 안 해",
+      "zh": "我不觉得"
+    }
+  },
+  {
+    "id": "glad",
+    "position": 73,
+    "brief": "嬉しいと言う。「〜て嬉しい」",
+    "label": {
+      "ja": "嬉しい",
+      "en": "Glad that",
+      "ko": "~해서 좋아",
+      "zh": "…很开心"
+    }
+  },
+  {
+    "id": "too-bad",
+    "position": 74,
+    "brief": "残念だと言う。「〜て残念」",
+    "label": {
+      "ja": "残念",
+      "en": "Too bad",
+      "ko": "~해서 아쉬워",
+      "zh": "…好可惜"
+    }
+  },
+  {
+    "id": "worried",
+    "position": 75,
+    "brief": "心配を言う。「〜か心配」",
+    "label": {
+      "ja": "心配",
+      "en": "Worried",
+      "ko": "~할까 봐 걱정이야",
+      "zh": "担心…"
+    }
+  },
+  {
+    "id": "surprised",
+    "position": 76,
+    "brief": "驚いたと言う。「〜てびっくりした」",
+    "label": {
+      "ja": "びっくりした",
+      "en": "Surprised",
+      "ko": "~해서 깜짝 놀랐어",
+      "zh": "…吓了一跳"
+    }
+  },
+  {
+    "id": "wish-well",
+    "position": 77,
+    "brief": "相手のことを願う。「〜うまくいくといいね」",
+    "label": {
+      "ja": "うまくいくといいね",
+      "en": "Hoping it goes well",
+      "ko": "잘되길 바라",
+      "zh": "祝…顺利"
+    }
+  },
+  {
+    "id": "cheer-on",
+    "position": 78,
+    "brief": "応援する。「〜頑張って！」",
+    "label": {
+      "ja": "頑張って",
+      "en": "Cheering someone on",
+      "ko": "~ 화이팅",
+      "zh": "…加油"
+    }
+  },
+  {
+    "id": "congrats",
+    "position": 79,
+    "brief": "お祝いを言う。「〜おめでとう！」",
+    "label": {
+      "ja": "おめでとう",
+      "en": "Congratulating",
+      "ko": "~ 축하해",
+      "zh": "恭喜"
+    }
+  },
+  {
+    "id": "complain",
+    "position": 80,
+    "brief": "不満を言う。「いつも〜てばっかり」",
+    "label": {
+      "ja": "愚痴を言う",
+      "en": "Complaining",
+      "ko": "불평하기",
+      "zh": "抱怨"
+    }
+  },
+  {
+    "id": "often",
+    "position": 81,
+    "brief": "よくすることを言う。「よく〜する」",
+    "label": {
+      "ja": "よくする",
+      "en": "Often",
+      "ko": "자주 ~해",
+      "zh": "经常…"
+    }
+  },
+  {
+    "id": "never",
+    "position": 82,
+    "brief": "一度もないと言う。「一度も〜したことない」",
+    "label": {
+      "ja": "一度もない",
+      "en": "Never",
+      "ko": "한 번도 ~ 안 했어",
+      "zh": "从来没…"
+    }
+  },
+  {
+    "id": "always",
+    "position": 83,
+    "brief": "いつもすることを言う。「いつも〜してる」",
+    "label": {
+      "ja": "いつも",
+      "en": "Always",
+      "ko": "항상 ~해",
+      "zh": "总是…"
+    }
+  },
+  {
+    "id": "a-little",
+    "position": 84,
+    "brief": "少しだけ言う。「ちょっと〜」",
+    "label": {
+      "ja": "ちょっと",
+      "en": "A little",
+      "ko": "좀 ~해",
+      "zh": "有点…"
+    }
+  },
+  {
+    "id": "very",
+    "position": 85,
+    "brief": "強調する。「すごく〜」",
+    "label": {
+      "ja": "すごく",
+      "en": "Really / so",
+      "ko": "진짜 ~해",
+      "zh": "超…"
+    }
+  },
+  {
+    "id": "not-very",
+    "position": 86,
+    "brief": "あまりと言う。「あまり〜ない」",
+    "label": {
+      "ja": "あまり〜ない",
+      "en": "Not very",
+      "ko": "별로 ~ 안 해",
+      "zh": "不太…"
+    }
+  },
+  {
+    "id": "same",
+    "position": 87,
+    "brief": "同じだと言う。「〜と同じ」",
+    "label": {
+      "ja": "同じ",
+      "en": "The same as",
+      "ko": "~랑 똑같아",
+      "zh": "跟…一样"
+    }
+  },
+  {
+    "id": "different",
+    "position": 88,
+    "brief": "違うと言う。「〜と違う」",
+    "label": {
+      "ja": "違う",
+      "en": "Different from",
+      "ko": "~랑 달라",
+      "zh": "跟…不一样"
+    }
+  },
+  {
+    "id": "purpose",
+    "position": 89,
+    "brief": "目的を言う。「〜するために」",
+    "label": {
+      "ja": "目的",
+      "en": "In order to",
+      "ko": "~하려고",
+      "zh": "为了…"
+    }
+  },
+  {
+    "id": "by-means",
+    "position": 90,
+    "brief": "手段を言う。「〜で行く」",
+    "label": {
+      "ja": "手段",
+      "en": "By (bus, train…)",
+      "ko": "~로 가",
+      "zh": "坐…去"
+    }
+  },
+  {
+    "id": "with-someone",
+    "position": 91,
+    "brief": "誰とするか言う。「〜と一緒に」",
+    "label": {
+      "ja": "誰と一緒に",
+      "en": "With someone",
+      "ko": "~랑 같이",
+      "zh": "跟…一起"
+    }
+  },
+  {
+    "id": "until",
+    "position": 92,
+    "brief": "いつまでか言う。「〜まで」",
+    "label": {
+      "ja": "〜まで",
+      "en": "Until",
+      "ko": "~까지",
+      "zh": "到…"
+    }
+  },
+  {
+    "id": "since",
+    "position": 93,
+    "brief": "そのときから続いていることを言う。「〜してから（ずっと）」",
+    "label": {
+      "ja": "〜してから",
+      "en": "Since",
+      "ko": "~ 이후로",
+      "zh": "自从…"
+    }
+  },
+  {
+    "id": "as-soon-as",
+    "position": 94,
+    "brief": "すぐ続けて起きることを言う。「〜したらすぐ」",
+    "label": {
+      "ja": "したらすぐ",
+      "en": "As soon as",
+      "ko": "~자마자",
+      "zh": "一…就…"
+    }
+  },
+  {
+    "id": "even-if",
+    "position": 95,
+    "brief": "それでもと言う。「〜ても」",
+    "label": {
+      "ja": "〜ても",
+      "en": "Even if",
+      "ko": "~아/어도",
+      "zh": "就算…也…"
+    }
+  },
+  {
+    "id": "not-but",
+    "position": 96,
+    "brief": "AではなくBと言う。「〜じゃなくて〜」",
+    "label": {
+      "ja": "じゃなくて",
+      "en": "Not A but B",
+      "ko": "~ 아니고",
+      "zh": "不是…是…"
+    }
+  },
+  {
+    "id": "might",
+    "position": 97,
+    "brief": "かもしれないと言う。「〜かも」",
+    "label": {
+      "ja": "〜かも",
+      "en": "Might",
+      "ko": "~지도 몰라",
+      "zh": "可能…"
+    }
+  },
+  {
+    "id": "must-be",
+    "position": 98,
+    "brief": "きっとそうだと言う。「きっと〜だよ」",
+    "label": {
+      "ja": "きっと",
+      "en": "I'm sure",
+      "ko": "분명 ~ㄹ 거야",
+      "zh": "肯定…"
+    }
+  },
+  {
+    "id": "supposed-to",
+    "position": 99,
+    "brief": "予定どおりにならなかったことを言う。「〜するはずだった」",
+    "label": {
+      "ja": "〜するはずだった",
+      "en": "Was supposed to",
+      "ko": "~하기로 했는데",
+      "zh": "本来要…"
+    }
+  },
+  {
+    "id": "change-plan",
+    "position": 100,
+    "brief": "予定を変える。「やっぱり〜にする」",
+    "label": {
+      "ja": "やっぱり",
+      "en": "Changing plans",
+      "ko": "그냥 ~할게",
+      "zh": "还是…吧"
+    }
+  },
+  {
+    "id": "waiting",
+    "position": 101,
+    "brief": "待っていると伝える。「〜で待ってるね」",
+    "label": {
+      "ja": "待ってるね",
+      "en": "I'll be waiting",
+      "ko": "기다릴게",
+      "zh": "我等你"
+    }
+  },
+  {
+    "id": "let-me-know",
+    "position": 102,
+    "brief": "教えてほしいと頼む。「〜たら教えて」",
+    "label": {
+      "ja": "〜たら教えて",
+      "en": "Let me know when",
+      "ko": "~면 알려 줘",
+      "zh": "…的话告诉我"
+    }
+  },
+  {
+    "id": "what-mean",
+    "position": 103,
+    "brief": "意味を聞く。「〜ってどういう意味？」",
+    "label": {
+      "ja": "意味を聞く",
+      "en": "What does it mean?",
+      "ko": "무슨 뜻이야?",
+      "zh": "是什么意思"
+    }
+  },
+  {
+    "id": "how-say",
+    "position": 104,
+    "brief": "言い方を聞く。「〜って何て言うの？」",
+    "label": {
+      "ja": "言い方を聞く",
+      "en": "How do you say it?",
+      "ko": "뭐라고 해?",
+      "zh": "怎么说"
+    }
+  },
+  {
+    "id": "dont-know",
+    "position": 105,
+    "brief": "わからないと言う。「〜かわからない」",
+    "label": {
+      "ja": "わからない",
+      "en": "I don't know",
+      "ko": "~ㄴ지 모르겠어",
+      "zh": "不知道…"
+    }
+  },
+  {
+    "id": "forgot",
+    "position": 106,
+    "brief": "忘れたと言う。「〜忘れた」",
+    "label": {
+      "ja": "忘れた",
+      "en": "Forgot",
+      "ko": "~ 깜빡했어",
+      "zh": "忘了…"
+    }
+  },
+  {
+    "id": "need",
+    "position": 107,
+    "brief": "必要だと言う。「〜が必要」「〜いる」",
+    "label": {
+      "ja": "必要",
+      "en": "Need",
+      "ko": "~ 필요해",
+      "zh": "需要…"
+    }
+  },
+  {
+    "id": "careful",
+    "position": 108,
+    "brief": "気をつけてと言う。「〜気をつけて」",
+    "label": {
+      "ja": "気をつけて",
+      "en": "Be careful",
+      "ko": "~ 조심해",
+      "zh": "小心…"
+    }
+  },
+  {
+    "id": "hurry",
+    "position": 109,
+    "brief": "急かす。「早く〜して」",
+    "label": {
+      "ja": "急かす",
+      "en": "Hurry up",
+      "ko": "빨리 ~해",
+      "zh": "快点…"
+    }
+  },
+  {
+    "id": "sounds",
+    "position": 110,
+    "brief": "話を聞いて反応する。「〜そうだね」",
+    "label": {
+      "ja": "〜そうだね",
+      "en": "That sounds…",
+      "ko": "~겠다",
+      "zh": "听起来…"
+    }
+  },
+  {
+    "id": "because-of",
+    "position": 111,
+    "brief": "原因を言う。「〜のせいで」",
+    "label": {
+      "ja": "〜のせいで",
+      "en": "Because of",
+      "ko": "~ 때문에",
+      "zh": "都怪…"
+    }
+  },
+  {
+    "id": "thanks-to",
+    "position": 112,
+    "brief": "おかげを言う。「〜のおかげで」",
+    "label": {
+      "ja": "〜のおかげで",
+      "en": "Thanks to",
+      "ko": "~ 덕분에",
+      "zh": "多亏…"
+    }
+  },
+  {
+    "id": "easy-to",
+    "position": 113,
+    "brief": "しやすいと言う。「〜しやすい」",
+    "label": {
+      "ja": "しやすい",
+      "en": "Easy to",
+      "ko": "~하기 쉬워",
+      "zh": "很好…"
+    }
+  },
+  {
+    "id": "hard-to",
+    "position": 114,
+    "brief": "しにくいと言う。「〜しにくい」",
+    "label": {
+      "ja": "しにくい",
+      "en": "Hard to",
+      "ko": "~하기 어려워",
+      "zh": "不好…"
+    }
+  },
+  {
+    "id": "start-doing",
+    "position": 115,
+    "brief": "始めたことを言う。「〜し始めた」",
+    "label": {
+      "ja": "し始めた",
+      "en": "Started doing",
+      "ko": "~하기 시작했어",
+      "zh": "开始…了"
+    }
+  },
+  {
+    "id": "finished",
+    "position": 116,
+    "brief": "終わったことを言う。「〜し終わった」",
+    "label": {
+      "ja": "し終わった",
+      "en": "Finished doing",
+      "ko": "다 ~했어",
+      "zh": "…完了"
+    }
+  },
+  {
+    "id": "ended-up",
+    "position": 117,
+    "brief": "思わずそうなったと言う。「〜しちゃった」",
+    "label": {
+      "ja": "〜しちゃった",
+      "en": "Ended up doing",
+      "ko": "~해 버렸어",
+      "zh": "…了（不小心）"
+    }
+  },
+  {
+    "id": "in-advance",
+    "position": 118,
+    "brief": "前もってしておく。「〜しておく」",
+    "label": {
+      "ja": "〜しておく",
+      "en": "Doing in advance",
+      "ko": "~해 놓을게",
+      "zh": "先…好"
+    }
+  },
+  {
+    "id": "let-me",
+    "position": 119,
+    "brief": "させてほしいと頼む。「〜させて」",
+    "label": {
+      "ja": "〜させて",
+      "en": "Let me",
+      "ko": "~하게 해 줘",
+      "zh": "让我…"
+    }
+  },
+  {
+    "id": "got-done-to",
+    "position": 120,
+    "brief": "されたことを言う。「〜された」",
+    "label": {
+      "ja": "〜された",
+      "en": "Had something done to you",
+      "ko": "~당했어",
+      "zh": "被…了"
+    }
+  },
+  {
+    "id": "even-though",
+    "position": 121,
+    "brief": "期待と違ったことを言う。「〜のに」",
+    "label": {
+      "ja": "〜のに",
+      "en": "Even though",
+      "ko": "~는데도",
+      "zh": "明明…"
+    }
+  },
+  {
+    "id": "no-wonder",
+    "position": 122,
+    "brief": "納得する。「どうりで〜」",
+    "label": {
+      "ja": "どうりで",
+      "en": "No wonder",
+      "ko": "어쩐지",
+      "zh": "怪不得"
+    }
+  },
+  {
+    "id": "by-the-way",
+    "position": 123,
+    "brief": "話題を変える。「そういえば〜」",
+    "label": {
+      "ja": "そういえば",
+      "en": "By the way",
+      "ko": "그러고 보니",
+      "zh": "对了"
+    }
+  },
+  {
+    "id": "actually",
+    "position": 124,
+    "brief": "本当のことを言う。「実は〜」",
+    "label": {
+      "ja": "実は",
+      "en": "Actually",
+      "ko": "사실은",
+      "zh": "其实"
+    }
+  },
+  {
+    "id": "only",
+    "position": 125,
+    "brief": "それだけと言う。「〜だけ」",
+    "label": {
+      "ja": "〜だけ",
+      "en": "Only",
+      "ko": "~만",
+      "zh": "只…"
+    }
+  },
+  {
+    "id": "also",
+    "position": 126,
+    "brief": "同じくと言う。「〜も」",
+    "label": {
+      "ja": "〜も",
+      "en": "Also / too",
+      "ko": "~도",
+      "zh": "也…"
+    }
+  },
+  {
+    "id": "again",
+    "position": 127,
+    "brief": "繰り返しを言う。「また〜」",
+    "label": {
+      "ja": "また",
+      "en": "Again",
+      "ko": "또 ~",
+      "zh": "又…"
+    }
+  },
+  {
+    "id": "first-time",
+    "position": 128,
+    "brief": "初めてのことを言う。「初めて〜した」",
+    "label": {
+      "ja": "初めて",
+      "en": "For the first time",
+      "ko": "처음으로 ~했어",
+      "zh": "第一次…"
+    }
+  },
+  {
+    "id": "how-was",
+    "position": 129,
+    "brief": "感想を聞く。「〜どうだった？」",
+    "label": {
+      "ja": "感想を聞く",
+      "en": "How was it?",
+      "ko": "~ 어땠어?",
+      "zh": "…怎么样"
+    }
+  },
+  {
+    "id": "do-you-know",
+    "position": 130,
+    "brief": "知っているか聞く。「〜知ってる？」",
+    "label": {
+      "ja": "知ってる？",
+      "en": "Do you know…?",
+      "ko": "~ 알아?",
+      "zh": "你知道…吗"
+    }
+  },
+  {
+    "id": "remember",
+    "position": 131,
+    "brief": "覚えているか聞く。「〜覚えてる？」",
+    "label": {
+      "ja": "覚えてる？",
+      "en": "Do you remember…?",
+      "ko": "~ 기억나?",
+      "zh": "你还记得…吗"
+    }
+  },
+  {
+    "id": "promise",
+    "position": 132,
+    "brief": "約束する。「〜って約束ね」",
+    "label": {
+      "ja": "約束",
+      "en": "Promising",
+      "ko": "약속하기",
+      "zh": "说好了"
+    }
+  },
+  {
+    "id": "meet-at",
+    "position": 133,
+    "brief": "待ち合わせを決める。「〜時に〜で会おう」",
+    "label": {
+      "ja": "待ち合わせ",
+      "en": "Meeting up",
+      "ko": "만날 약속 정하기",
+      "zh": "约见面"
+    }
+  },
+  {
+    "id": "running-late",
+    "position": 134,
+    "brief": "遅れると伝える。「ちょっと遅れる」",
+    "label": {
+      "ja": "遅れる",
+      "en": "Running late",
+      "ko": "늦을 것 같아",
+      "zh": "要晚一点"
+    }
+  }
+]

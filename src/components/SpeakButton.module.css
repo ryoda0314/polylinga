@@ -1,0 +1,20 @@
+.button {
+  flex-shrink: 0;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.lg { width: 64px; height: 64px; }
+.solid { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.loading { opacity: 0.6; }
+.playing { border-color: var(--accent); color: var(--accent); }
+.solid.playing { color: #fff; opacity: 0.85; }
+.error { border-color: var(--danger); color: var(--danger); }

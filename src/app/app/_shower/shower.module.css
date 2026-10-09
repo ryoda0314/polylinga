@@ -1,0 +1,90 @@
+.wrap { display: flex; flex-direction: column; gap: 20px; }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.fresh, .again { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
+.fresh { color: var(--muted); }
+.again { color: var(--accent); }
+.toggles { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.intro { display: flex; flex-direction: column; gap: 20px; padding: 24px 0; }
+.lead { margin: 0; font-size: 15px; line-height: 1.8; color: var(--ink-2); }
+.empty { margin: 0; padding: 24px 0; font-size: 15px; line-height: 1.8; color: var(--muted); }
+
+/* The pile: sentences arrive one by one and stay, so they can be compared. */
+.list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.item {
+  display: flex; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line);
+  animation: arrive 0.35s ease-out both;
+}
+@keyframes arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.itemMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.sentence {
+  all: unset; cursor: pointer; font-size: 23px; font-weight: 500; line-height: 1.75; color: var(--ink);
+  overflow-wrap: anywhere; border-radius: 6px;
+}
+.sentence:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.playing .sentence { color: var(--accent); }
+.gloss { font-size: 14px; color: var(--muted); }
+.seen { font-size: 11px; color: var(--faint); }
+
+.play {
+  flex-shrink: 0; width: var(--tap); height: var(--tap); border-radius: 50%;
+  border: 1px solid var(--line-2); background: var(--paper); color: var(--ink);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.playOn { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.after { display: flex; flex-direction: column; gap: 12px; }
+.answer { display: flex; flex-direction: column; gap: 8px; padding: 18px; background: var(--surface); border-radius: var(--radius); }
+.form { font-size: 22px; font-weight: 600; overflow-wrap: anywhere; }
+.meaning { margin: 0; font-size: 15px; line-height: 1.7; }
+.examples { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+
+.try { display: flex; flex-direction: column; gap: 8px; padding: 16px 0; border-top: 1px solid var(--line); }
+.textarea {
+  width: 100%; min-height: 96px; padding: 14px; resize: vertical;
+  border: 1.5px solid var(--ink); border-radius: var(--radius); font-size: 18px; line-height: 1.6; background: var(--paper);
+}
+.note { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+.error { margin: 0; font-size: 14px; color: var(--danger); }
+.saved { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+/* Word sheet */
+.backdrop {
+  position: fixed; inset: 0; z-index: 20; background: color-mix(in srgb, var(--ink) 32%, transparent);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  width: 100%; max-width: 560px; max-height: 88dvh; overflow-y: auto;
+  background: var(--paper); border-radius: 16px 16px 0 0;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 14px; outline: none;
+}
+.sheetHead { display: flex; align-items: center; justify-content: space-between; }
+.sheetTitle { margin: 0; font-size: 15px; font-weight: 600; }
+.close {
+  width: var(--tap); height: var(--tap); border: 0; background: transparent; color: var(--ink);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin-right: -10px;
+}
+.sheetSentence { margin: 0; font-size: 20px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 40px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 999px;
+  background: var(--paper); color: var(--ink); font-size: 16px; cursor: pointer;
+}
+.chipOn { border-color: var(--accent); background: var(--tint); color: var(--accent); font-weight: 600; }
+.others { display: flex; flex-direction: column; }
+.otherRow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.otherText { font-size: 18px; line-height: 1.7; overflow-wrap: anywhere; }
+.memoForm { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.input {
+  min-height: 48px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: var(--radius);
+  font-size: 17px; background: var(--paper);
+}
+.subLabel { font-size: 12px; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .item { animation: none; }
+}

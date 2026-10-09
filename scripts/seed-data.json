@@ -1,0 +1,926 @@
+{
+  "functions": [
+    {
+      "id": "invite",
+      "position": 1,
+      "label": {
+        "ja": "誘う",
+        "en": "Inviting",
+        "ko": "권유하기",
+        "zh": "邀请"
+      }
+    },
+    {
+      "id": "want",
+      "position": 2,
+      "label": {
+        "ja": "したいことを言う",
+        "en": "Saying what you want",
+        "ko": "바람 말하기",
+        "zh": "表达愿望"
+      }
+    },
+    {
+      "id": "can",
+      "position": 3,
+      "label": {
+        "ja": "できるかを言う・聞く",
+        "en": "Ability and possibility",
+        "ko": "가능 말하기",
+        "zh": "能不能"
+      }
+    },
+    {
+      "id": "request",
+      "position": 4,
+      "label": {
+        "ja": "頼む",
+        "en": "Asking a favor",
+        "ko": "부탁하기",
+        "zh": "请求"
+      }
+    },
+    {
+      "id": "experience",
+      "position": 5,
+      "label": {
+        "ja": "経験を聞く",
+        "en": "Asking about experience",
+        "ko": "경험 묻기",
+        "zh": "询问经历"
+      }
+    },
+    {
+      "id": "lets",
+      "position": 6,
+      "label": {
+        "ja": "一緒にしようと言う",
+        "en": "Suggesting \"let's\"",
+        "ko": "함께 하자고 하기",
+        "zh": "提议一起做"
+      }
+    }
+  ],
+  "patterns": [
+    {
+      "id": "ja-naii",
+      "lang": "ja",
+      "form": "〜ない？",
+      "examples": "行く → 行かない？ · 食べる → 食べない？",
+      "meaning": {
+        "ja": "「〜しない？」と気軽に誘う言い方",
+        "en": "\"Why don't we ~?\" — a casual invitation",
+        "ko": "'~하지 않을래?'처럼 가볍게 권하는 말",
+        "zh": "“要不要～？”，随意的邀请"
+      },
+      "function_id": "invite"
+    },
+    {
+      "id": "en-wanna",
+      "lang": "en",
+      "form": "Wanna + V?",
+      "examples": "go → Wanna go? · eat → Wanna grab something to eat?",
+      "meaning": {
+        "ja": "「〜しない？」と気軽に誘う言い方（want to のくだけた形）",
+        "en": "A casual invitation (spoken form of \"want to\")",
+        "ko": "가볍게 권하는 말 (want to의 구어체)",
+        "zh": "随意的邀请（want to 的口语形式）"
+      },
+      "function_id": "invite"
+    },
+    {
+      "id": "ko-eullae",
+      "lang": "ko",
+      "form": "V + (으)ㄹ래?",
+      "examples": "가다 → 갈래 · 먹다 → 먹을래 · 보다 → 볼래",
+      "meaning": {
+        "ja": "「〜する？」と気軽に誘う言い方。パッチムがなければ ㄹ래、あれば 을래",
+        "en": "\"Wanna ~?\" — a casual invitation. ㄹ래 after a vowel, 을래 after a final consonant",
+        "ko": "가볍게 권하거나 의향을 묻는 말",
+        "zh": "随意地邀请或询问对方意向。无收音用 ㄹ래，有收音用 을래"
+      },
+      "function_id": "invite"
+    },
+    {
+      "id": "zh-yaobuyao",
+      "lang": "zh",
+      "form": "要不要 + V？",
+      "examples": "去 → 要不要去？ · 吃饭 → 要不要一起吃饭？",
+      "meaning": {
+        "ja": "「〜する？」と気軽に誘う言い方",
+        "en": "\"Do you want to ~?\" — a casual invitation",
+        "ko": "'~할래?'처럼 가볍게 권하는 말",
+        "zh": "随意地邀请对方"
+      },
+      "function_id": "invite"
+    },
+    {
+      "id": "ja-tai",
+      "lang": "ja",
+      "form": "V + たい",
+      "examples": "行く → 行きたい · 食べる → 食べたい",
+      "meaning": {
+        "ja": "「〜したい」自分の希望を言う",
+        "en": "\"I want to ~\" — saying what you want to do",
+        "ko": "'~하고 싶다' 자신의 바람을 말하기",
+        "zh": "“想～”，表达自己的愿望"
+      },
+      "function_id": "want"
+    },
+    {
+      "id": "en-want-to",
+      "lang": "en",
+      "form": "I want to + V",
+      "examples": "go → I want to go · eat → I want to eat",
+      "meaning": {
+        "ja": "「〜したい」自分の希望を言う",
+        "en": "Saying what you want to do",
+        "ko": "'~하고 싶어' 자신의 바람을 말하기",
+        "zh": "表达自己想做的事"
+      },
+      "function_id": "want"
+    },
+    {
+      "id": "ko-go-sipeo",
+      "lang": "ko",
+      "form": "V + 고 싶어",
+      "examples": "가다 → 가고 싶어 · 먹다 → 먹고 싶어",
+      "meaning": {
+        "ja": "「〜したい」。動詞の語幹に 고 싶어 を付ける",
+        "en": "\"I want to ~\" — add 고 싶어 to the verb stem",
+        "ko": "자신의 바람을 말하기",
+        "zh": "“想～”，在动词词干后加 고 싶어"
+      },
+      "function_id": "want"
+    },
+    {
+      "id": "zh-xiang",
+      "lang": "zh",
+      "form": "想 + V",
+      "examples": "去 → 想去 · 吃 → 想吃",
+      "meaning": {
+        "ja": "「〜したい」。動詞の前に 想 を置く",
+        "en": "\"want to ~\" — put 想 before the verb",
+        "ko": "'~하고 싶다'. 동사 앞에 想을 붙인다",
+        "zh": "表达愿望"
+      },
+      "function_id": "want"
+    },
+    {
+      "id": "ja-kanou",
+      "lang": "ja",
+      "form": "〜られる／〜える",
+      "examples": "来る → 来られる · 行く → 行ける · 撮る → 撮れる",
+      "meaning": {
+        "ja": "「〜できる」できるかどうかを言う・聞く",
+        "en": "\"can ~\" — the potential form of a verb",
+        "ko": "'~할 수 있다' 가능을 나타내는 형태",
+        "zh": "“能～”，动词的可能形"
+      },
+      "function_id": "can"
+    },
+    {
+      "id": "en-can",
+      "lang": "en",
+      "form": "Can you / I + V?",
+      "examples": "come → Can you come? · take → Can I take photos?",
+      "meaning": {
+        "ja": "「〜できる？」できるかどうかを聞く",
+        "en": "Asking whether something is possible",
+        "ko": "'~할 수 있어?' 가능한지 묻기",
+        "zh": "询问能不能做某事"
+      },
+      "function_id": "can"
+    },
+    {
+      "id": "ko-su-isseo",
+      "lang": "ko",
+      "form": "V + (으)ㄹ 수 있어",
+      "examples": "오다 → 올 수 있어 · 찍다 → 찍을 수 있어",
+      "meaning": {
+        "ja": "「〜できる」。パッチムがなければ ㄹ 수 있어、あれば 을 수 있어",
+        "en": "\"can ~\" — ㄹ 수 있어 after a vowel, 을 수 있어 after a final consonant",
+        "ko": "가능을 나타내는 말",
+        "zh": "“能～”。无收音用 ㄹ 수 있어，有收音用 을 수 있어"
+      },
+      "function_id": "can"
+    },
+    {
+      "id": "zh-neng",
+      "lang": "zh",
+      "form": "能 + V",
+      "examples": "来 → 能来吗？ · 拍照 → 能拍照吗？",
+      "meaning": {
+        "ja": "「〜できる」。動詞の前に 能 を置く。質問するときは文末に 吗",
+        "en": "\"can ~\" — put 能 before the verb; add 吗 to ask",
+        "ko": "'~할 수 있다'. 동사 앞에 能, 질문은 끝에 吗",
+        "zh": "表示能力或可能"
+      },
+      "function_id": "can"
+    },
+    {
+      "id": "ja-tekureru",
+      "lang": "ja",
+      "form": "〜てくれる？",
+      "examples": "待つ → 待ってくれる？ · 言う → 言ってくれる？",
+      "meaning": {
+        "ja": "「〜してくれる？」気軽にお願いする",
+        "en": "\"Could you ~ (for me)?\" — a casual request",
+        "ko": "'~해 줄래?' 가볍게 부탁하기",
+        "zh": "“可以帮我～吗？”，随意地请求"
+      },
+      "function_id": "request"
+    },
+    {
+      "id": "en-could-you",
+      "lang": "en",
+      "form": "Could you + V?",
+      "examples": "wait → Could you wait? · say → Could you say that again?",
+      "meaning": {
+        "ja": "「〜してくれる？」ていねいめのお願い",
+        "en": "A polite request",
+        "ko": "'~해 줄래요?' 정중하게 부탁하기",
+        "zh": "礼貌地请求"
+      },
+      "function_id": "request"
+    },
+    {
+      "id": "ko-a-jullae",
+      "lang": "ko",
+      "form": "V + 아/어 줄래?",
+      "examples": "기다리다 → 기다려 줄래? · 찍다 → 찍어 줄래?",
+      "meaning": {
+        "ja": "「〜してくれる？」。動詞の 아/어 形に 줄래? を付ける",
+        "en": "\"Could you ~ for me?\" — the 아/어 form of a verb + 줄래?",
+        "ko": "가볍게 부탁하기",
+        "zh": "“可以帮我～吗？”。动词的 아/어 形 + 줄래?"
+      },
+      "function_id": "request"
+    },
+    {
+      "id": "zh-keyi",
+      "lang": "zh",
+      "form": "可以 + V + 吗？",
+      "examples": "等 → 可以等我一下吗？ · 说 → 可以再说一遍吗？",
+      "meaning": {
+        "ja": "「〜してもらえる？」。可以 … 吗？でお願いする",
+        "en": "\"Could you ~?\" — ask with 可以 … 吗？",
+        "ko": "'~해 줄 수 있어?'. 可以 … 吗？로 부탁하기",
+        "zh": "礼貌地请求"
+      },
+      "function_id": "request"
+    },
+    {
+      "id": "ja-takotoaru",
+      "lang": "ja",
+      "form": "〜たことある？",
+      "examples": "行く → 行ったことある？ · 見る → 見たことある？",
+      "meaning": {
+        "ja": "「〜したことある？」経験を聞く",
+        "en": "\"Have you ever ~?\" — asking about experience",
+        "ko": "'~한 적 있어?' 경험 묻기",
+        "zh": "“～过吗？”，询问经历"
+      },
+      "function_id": "experience"
+    },
+    {
+      "id": "en-have-you-ever",
+      "lang": "en",
+      "form": "Have you ever + past participle?",
+      "examples": "be → Have you ever been to …? · see → Have you ever seen …?",
+      "meaning": {
+        "ja": "「〜したことある？」経験を聞く",
+        "en": "Asking about experience",
+        "ko": "'~해 본 적 있어?' 경험 묻기",
+        "zh": "询问经历"
+      },
+      "function_id": "experience"
+    },
+    {
+      "id": "ko-jeok-isseo",
+      "lang": "ko",
+      "form": "V-(으)ㄴ 적 있어?",
+      "examples": "가 보다 → 가 본 적 있어? · 만들어 보다 → 만들어 본 적 있어? · 보다 → 본 적 있어?",
+      "meaning": {
+        "ja": "「〜したことある？」。動詞の (으)ㄴ 形に 적 있어? を付けて経験を聞く。「〜してみたことある？」は 아/어 본 적 있어?",
+        "en": "\"Have you ever ~?\" — the (으)ㄴ form of a verb + 적 있어?. \"Have you ever tried ~?\" is 아/어 본 적 있어?",
+        "ko": "경험 묻기. '~해 본 적 있어?'는 해 본 경험을 물을 때",
+        "zh": "“～过吗？”。动词的 (으)ㄴ 形 + 적 있어?。“试过～吗？”用 아/어 본 적 있어?"
+      },
+      "function_id": "experience"
+    },
+    {
+      "id": "zh-guo",
+      "lang": "zh",
+      "form": "V + 过",
+      "examples": "去 → 去过 · 看 → 看过",
+      "meaning": {
+        "ja": "「〜したことがある」。動詞のあとに 过",
+        "en": "Experience: put 过 after the verb",
+        "ko": "경험: 동사 뒤에 过",
+        "zh": "表示经历"
+      },
+      "function_id": "experience"
+    },
+    {
+      "id": "ja-ou",
+      "lang": "ja",
+      "form": "〜（よ）う",
+      "examples": "行く → 行こう · する → しよう · 会う → 会おう",
+      "meaning": {
+        "ja": "「〜しよう」相手を誘って一緒にする",
+        "en": "\"Let's ~\" — the volitional form",
+        "ko": "'~하자' 함께 하자고 하기",
+        "zh": "“～吧”，提议一起做"
+      },
+      "function_id": "lets"
+    },
+    {
+      "id": "en-lets",
+      "lang": "en",
+      "form": "Let's + V",
+      "examples": "go → Let's go · stop → Let's stop here",
+      "meaning": {
+        "ja": "「〜しよう」一緒にしようと言う",
+        "en": "Suggesting doing something together",
+        "ko": "'~하자' 함께 하자고 하기",
+        "zh": "提议一起做某事"
+      },
+      "function_id": "lets"
+    },
+    {
+      "id": "ko-ja",
+      "lang": "ko",
+      "form": "V + 자",
+      "examples": "가다 → 가자 · 하다 → 하자 · 만나다 → 만나자",
+      "meaning": {
+        "ja": "「〜しよう」。くだけた言い方。語幹に 자",
+        "en": "\"Let's ~\" — casual; add 자 to the stem",
+        "ko": "함께 하자고 하기 (반말)",
+        "zh": "“～吧”。非正式，词干加 자"
+      },
+      "function_id": "lets"
+    },
+    {
+      "id": "zh-ba",
+      "lang": "zh",
+      "form": "V + 吧",
+      "examples": "去 → 一起去吧 · 到这里 → 就到这里吧",
+      "meaning": {
+        "ja": "「〜しよう」。文末に 吧",
+        "en": "\"Let's ~\" — add 吧 at the end",
+        "ko": "'~하자'. 문장 끝에 吧",
+        "zh": "表示提议"
+      },
+      "function_id": "lets"
+    }
+  ],
+  "sentences": [
+    {
+      "key": "invite-cafe",
+      "topic": "invite",
+      "ja": "明日カフェ行かない？",
+      "en": "Wanna go to a café tomorrow?",
+      "ko": "내일 카페 갈래?",
+      "zh": "明天要不要去咖啡厅？",
+      "marks": {
+        "ja": [
+          "ja-naii",
+          "ない"
+        ],
+        "en": [
+          "en-wanna",
+          "Wanna"
+        ],
+        "ko": [
+          "ko-eullae",
+          "갈래"
+        ],
+        "zh": [
+          "zh-yaobuyao",
+          "要不要"
+        ]
+      }
+    },
+    {
+      "key": "invite-meal",
+      "topic": "invite",
+      "ja": "一緒にご飯食べない？",
+      "en": "Wanna grab something to eat together?",
+      "ko": "같이 밥 먹을래?",
+      "zh": "要不要一起吃饭？",
+      "marks": {
+        "ja": [
+          "ja-naii",
+          "ない"
+        ],
+        "en": [
+          "en-wanna",
+          "Wanna"
+        ],
+        "ko": [
+          "ko-eullae",
+          "먹을래"
+        ],
+        "zh": [
+          "zh-yaobuyao",
+          "要不要"
+        ]
+      }
+    },
+    {
+      "key": "invite-movie",
+      "topic": "invite",
+      "ja": "週末、映画見ない？",
+      "en": "Wanna watch a movie this weekend?",
+      "ko": "주말에 영화 볼래?",
+      "zh": "周末要不要看电影？",
+      "marks": {
+        "ja": [
+          "ja-naii",
+          "ない"
+        ],
+        "en": [
+          "en-wanna",
+          "Wanna"
+        ],
+        "ko": [
+          "ko-eullae",
+          "볼래"
+        ],
+        "zh": [
+          "zh-yaobuyao",
+          "要不要"
+        ]
+      }
+    },
+    {
+      "key": "invite-walk",
+      "topic": "invite",
+      "ja": "あとで一緒に散歩しない？",
+      "en": "Wanna go for a walk together later?",
+      "ko": "이따가 같이 산책할래?",
+      "zh": "待会儿要不要一起去散步？",
+      "marks": {
+        "ja": [
+          "ja-naii",
+          "ない"
+        ],
+        "en": [
+          "en-wanna",
+          "Wanna"
+        ],
+        "ko": [
+          "ko-eullae",
+          "할래"
+        ],
+        "zh": [
+          "zh-yaobuyao",
+          "要不要"
+        ]
+      }
+    },
+    {
+      "key": "want-korea",
+      "topic": "want",
+      "ja": "韓国に行きたい。",
+      "en": "I want to go to Korea.",
+      "ko": "한국에 가고 싶어.",
+      "zh": "我想去韩国。",
+      "marks": {
+        "ja": [
+          "ja-tai",
+          "たい"
+        ],
+        "en": [
+          "en-want-to",
+          "want to"
+        ],
+        "ko": [
+          "ko-go-sipeo",
+          "고 싶어"
+        ],
+        "zh": [
+          "zh-xiang",
+          "想"
+        ]
+      }
+    },
+    {
+      "key": "want-strawberry",
+      "topic": "want",
+      "ja": "いちごが食べたい。",
+      "en": "I want to eat strawberries.",
+      "ko": "딸기 먹고 싶어.",
+      "zh": "我想吃草莓。",
+      "marks": {
+        "ja": [
+          "ja-tai",
+          "たい"
+        ],
+        "en": [
+          "en-want-to",
+          "want to"
+        ],
+        "ko": [
+          "ko-go-sipeo",
+          "고 싶어"
+        ],
+        "zh": [
+          "zh-xiang",
+          "想"
+        ]
+      }
+    },
+    {
+      "key": "want-speak-better",
+      "topic": "want",
+      "ja": "もっと上手に話したい。",
+      "en": "I want to speak better.",
+      "ko": "더 잘 말하고 싶어.",
+      "zh": "我想说得更好。",
+      "marks": {
+        "ja": [
+          "ja-tai",
+          "たい"
+        ],
+        "en": [
+          "en-want-to",
+          "want to"
+        ],
+        "ko": [
+          "ko-go-sipeo",
+          "고 싶어"
+        ],
+        "zh": [
+          "zh-xiang",
+          "想"
+        ]
+      }
+    },
+    {
+      "key": "want-sleep-early",
+      "topic": "want",
+      "ja": "今日は早く寝たい。",
+      "en": "I want to go to bed early today.",
+      "ko": "오늘은 일찍 자고 싶어.",
+      "zh": "今天我想早点睡。",
+      "marks": {
+        "ja": [
+          "ja-tai",
+          "たい"
+        ],
+        "en": [
+          "en-want-to",
+          "want to"
+        ],
+        "ko": [
+          "ko-go-sipeo",
+          "고 싶어"
+        ],
+        "zh": [
+          "zh-xiang",
+          "想"
+        ]
+      }
+    },
+    {
+      "key": "can-come",
+      "topic": "can",
+      "ja": "明日は来られる？",
+      "en": "Can you come tomorrow?",
+      "ko": "내일 올 수 있어?",
+      "zh": "你明天能来吗？",
+      "marks": {
+        "ja": [
+          "ja-kanou",
+          "来られる"
+        ],
+        "en": [
+          "en-can",
+          "Can"
+        ],
+        "ko": [
+          "ko-su-isseo",
+          "수 있어"
+        ],
+        "zh": [
+          "zh-neng",
+          "能"
+        ]
+      }
+    },
+    {
+      "key": "can-photo",
+      "topic": "can",
+      "ja": "ここで写真撮れる？",
+      "en": "Can I take photos here?",
+      "ko": "여기서 사진 찍을 수 있어?",
+      "zh": "这里能拍照吗？",
+      "marks": {
+        "ja": [
+          "ja-kanou",
+          "撮れる"
+        ],
+        "en": [
+          "en-can",
+          "Can"
+        ],
+        "ko": [
+          "ko-su-isseo",
+          "수 있어"
+        ],
+        "zh": [
+          "zh-neng",
+          "能"
+        ]
+      }
+    },
+    {
+      "key": "can-alone",
+      "topic": "can",
+      "ja": "一人で行ける？",
+      "en": "Can you go by yourself?",
+      "ko": "혼자 갈 수 있어?",
+      "zh": "你一个人能去吗？",
+      "marks": {
+        "ja": [
+          "ja-kanou",
+          "行ける"
+        ],
+        "en": [
+          "en-can",
+          "Can"
+        ],
+        "ko": [
+          "ko-su-isseo",
+          "수 있어"
+        ],
+        "zh": [
+          "zh-neng",
+          "能"
+        ]
+      }
+    },
+    {
+      "key": "can-finish",
+      "topic": "can",
+      "ja": "明日までに終わらせられる？",
+      "en": "Can you finish it by tomorrow?",
+      "ko": "내일까지 끝낼 수 있어?",
+      "zh": "明天之前能做完吗？",
+      "marks": {
+        "ja": [
+          "ja-kanou",
+          "終わらせられる"
+        ],
+        "en": [
+          "en-can",
+          "Can"
+        ],
+        "ko": [
+          "ko-su-isseo",
+          "수 있어"
+        ],
+        "zh": [
+          "zh-neng",
+          "能"
+        ]
+      }
+    },
+    {
+      "key": "request-wait",
+      "topic": "request",
+      "ja": "ちょっと待ってくれる？",
+      "en": "Could you wait a moment?",
+      "ko": "잠깐 기다려 줄래?",
+      "zh": "你可以等我一下吗？",
+      "marks": {
+        "ja": [
+          "ja-tekureru",
+          "てくれる"
+        ],
+        "en": [
+          "en-could-you",
+          "Could you"
+        ],
+        "ko": [
+          "ko-a-jullae",
+          "줄래"
+        ],
+        "zh": [
+          "zh-keyi",
+          "可以"
+        ]
+      }
+    },
+    {
+      "key": "request-again",
+      "topic": "request",
+      "ja": "もう一回言ってくれる？",
+      "en": "Could you say that again?",
+      "ko": "한 번 더 말해 줄래?",
+      "zh": "你可以再说一遍吗？",
+      "marks": {
+        "ja": [
+          "ja-tekureru",
+          "てくれる"
+        ],
+        "en": [
+          "en-could-you",
+          "Could you"
+        ],
+        "ko": [
+          "ko-a-jullae",
+          "줄래"
+        ],
+        "zh": [
+          "zh-keyi",
+          "可以"
+        ]
+      }
+    },
+    {
+      "key": "request-photo",
+      "topic": "request",
+      "ja": "写真撮ってくれる？",
+      "en": "Could you take a photo for me?",
+      "ko": "사진 좀 찍어 줄래?",
+      "zh": "你可以帮我拍张照吗？",
+      "marks": {
+        "ja": [
+          "ja-tekureru",
+          "てくれる"
+        ],
+        "en": [
+          "en-could-you",
+          "Could you"
+        ],
+        "ko": [
+          "ko-a-jullae",
+          "줄래"
+        ],
+        "zh": [
+          "zh-keyi",
+          "可以"
+        ]
+      }
+    },
+    {
+      "key": "ever-korea",
+      "topic": "experience",
+      "ja": "韓国に行ったことある？",
+      "en": "Have you ever been to Korea?",
+      "ko": "한국에 가 본 적 있어?",
+      "zh": "你去过韩国吗？",
+      "marks": {
+        "ja": [
+          "ja-takotoaru",
+          "たことある"
+        ],
+        "en": [
+          "en-have-you-ever",
+          "Have you ever"
+        ],
+        "ko": [
+          "ko-jeok-isseo",
+          "적 있어"
+        ],
+        "zh": [
+          "zh-guo",
+          "过"
+        ]
+      }
+    },
+    {
+      "key": "ever-kimchi",
+      "topic": "experience",
+      "ja": "キムチ作ったことある？",
+      "en": "Have you ever made kimchi?",
+      "ko": "김치 만들어 본 적 있어?",
+      "zh": "你做过泡菜吗？",
+      "marks": {
+        "ja": [
+          "ja-takotoaru",
+          "たことある"
+        ],
+        "en": [
+          "en-have-you-ever",
+          "Have you ever"
+        ],
+        "ko": [
+          "ko-jeok-isseo",
+          "적 있어"
+        ],
+        "zh": [
+          "zh-guo",
+          "过"
+        ]
+      }
+    },
+    {
+      "key": "ever-movie",
+      "topic": "experience",
+      "ja": "その映画、見たことある？",
+      "en": "Have you ever seen that movie?",
+      "ko": "그 영화 본 적 있어?",
+      "zh": "那部电影你看过吗？",
+      "marks": {
+        "ja": [
+          "ja-takotoaru",
+          "たことある"
+        ],
+        "en": [
+          "en-have-you-ever",
+          "Have you ever"
+        ],
+        "ko": [
+          "ko-jeok-isseo",
+          "적 있어"
+        ],
+        "zh": [
+          "zh-guo",
+          "过"
+        ]
+      }
+    },
+    {
+      "key": "lets-go",
+      "topic": "lets",
+      "ja": "一緒に行こう。",
+      "en": "Let's go together.",
+      "ko": "같이 가자.",
+      "zh": "我们一起去吧。",
+      "marks": {
+        "ja": [
+          "ja-ou",
+          "行こう"
+        ],
+        "en": [
+          "en-lets",
+          "Let's"
+        ],
+        "ko": [
+          "ko-ja",
+          "자"
+        ],
+        "zh": [
+          "zh-ba",
+          "吧"
+        ]
+      }
+    },
+    {
+      "key": "lets-stop",
+      "topic": "lets",
+      "ja": "今日はここまでにしよう。",
+      "en": "Let's stop here for today.",
+      "ko": "오늘은 여기까지 하자.",
+      "zh": "今天就到这里吧。",
+      "marks": {
+        "ja": [
+          "ja-ou",
+          "しよう"
+        ],
+        "en": [
+          "en-lets",
+          "Let's"
+        ],
+        "ko": [
+          "ko-ja",
+          "자"
+        ],
+        "zh": [
+          "zh-ba",
+          "吧"
+        ]
+      }
+    },
+    {
+      "key": "lets-meet",
+      "topic": "lets",
+      "ja": "また今度会おう。",
+      "en": "Let's meet up again sometime.",
+      "ko": "다음에 또 만나자.",
+      "zh": "我们下次再见吧。",
+      "marks": {
+        "ja": [
+          "ja-ou",
+          "会おう"
+        ],
+        "en": [
+          "en-lets",
+          "Let's"
+        ],
+        "ko": [
+          "ko-ja",
+          "자"
+        ],
+        "zh": [
+          "zh-ba",
+          "吧"
+        ]
+      }
+    }
+  ]
+}

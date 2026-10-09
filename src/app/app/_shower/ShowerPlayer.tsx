@@ -1,0 +1,203 @@
+"use client";
+
+import { useEffect, useRef, useState, useTransition } from "react";
+import { playToEnd, stopAudio } from "@/components/audio";
+import { Icon } from "@/components/Icon";
+import { SentenceText, type Highlight } from "@/components/SentenceText";
+import { getDict } from "@/lib/i18n";
+import { langClass, type Lang } from "@/lib/langs";
+import type { ShowerCluster, ShowerSentence } from "@/lib/shower";
+import { nextCluster } from "../actions";
+import styles from "./shower.module.css";
+import { TryForm } from "./TryForm";
+import { WordSheet } from "./WordSheet";
+
+const GAP_MS = 700;
+
+/**
+ * One "ひと浴び": sentences that share a pattern arrive one at a time with their audio and stay on screen,
+ * so the learner can compare them and find the common part. Nothing is explained until they ask.
+ */
+export function ShowerPlayer({
+  initial,
+  native,
+  target,
+  rate,
+}: {
+  initial: ShowerCluster | null;
+  native: Lang;
+  target: Lang;
+  rate: number;
+}) {
+  const t = getDict(native);
+  const [cluster, setCluster] = useState(initial);
+  const [shown, setShown] = useState(0);
+  const [playing, setPlaying] = useState<number | null>(null);
+  const [autoplay, setAutoplay] = useState(true);
+  const [hideGloss, setHideGloss] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [trying, setTrying] = useState(false);
+  const [sheetFor, setSheetFor] = useState<ShowerSentence | null>(null);
+  const [pending, startTransition] = useTransition();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const runRef = useRef(0); // bumping it stops whatever flow is running
+
+  useEffect(() => () => stopAudio(audioRef.current), []);
+
+  function element() {
+    // Created on the first tap; later plays on the same element are allowed on mobile.
+    if (!audioRef.current) audioRef.current = new Audio();
+    return audioRef.current;
+  }
+
+  async function flowFrom(c: ShowerCluster, index: number) {
+    const run = ++runRef.current;
+    const el = element();
+    for (let i = index; i < c.sentences.length; i++) {
+      if (run !== runRef.current) return;
+      setShown((n) => Math.max(n, i + 1));
+      setPlaying(i);
+      await playToEnd(el, c.sentences[i].audio, c.sentences[i].text, target, rate);
+      if (run !== runRef.current) return;
+      setPlaying(null);
+      if (i < c.sentences.length - 1) await new Promise((r) => setTimeout(r, GAP_MS));
+    }
+  }
+
+  function start() {
+    if (!cluster) return;
+    element();
+    if (autoplay) void flowFrom(cluster, 0);
+    else setShown(1);
+  }
+
+  async function playOne(i: number) {
+    if (!cluster) return;
+    const run = ++runRef.current;
+    setPlaying(i);
+    await playToEnd(element(), cluster.sentences[i].audio, cluster.sentences[i].text, target, rate);
+    if (run === runRef.current) setPlaying(null);
+  }
+
+  function showNext() {
+    if (!cluster) return;
+    setShown((n) => Math.min(n + 1, cluster.sentences.length));
+  }
+
+  function goNext() {
+    if (!cluster) return;
+    runRef.current++;
+    stopAudio(audioRef.current);
+    setPlaying(null);
+    const finished = { patternId: cluster.patternId, sentenceIds: cluster.sentences.map((s) => s.id) };
+    startTransition(async () => {
+      const next = await nextCluster(finished);
+      setCluster(next);
+      setRevealed(false);
+      setTrying(false);
+      setShown(0);
+      window.scrollTo({ top: 0 });
+      if (next) {
+        if (autoplay) void flowFrom(next, 0);
+        else setShown(1);
+      }
+    });
+  }
+
+  if (!cluster) return <p className={styles.empty}>{t.shower.empty}</p>;
+  const allShown = shown >= cluster.sentences.length;
+  const targetClass = langClass(target);
+  const nativeClass = langClass(native);
+
+  return (
+    <div className={styles.wrap}>
+      <div className={styles.toolbar}>
+        <span className={cluster.again ? styles.again : styles.fresh}>{cluster.again ? t.shower.again : t.shower.fresh}</span>
+        <div className={styles.toggles}>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
+            {t.shower.autoplay}
+          </label>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={hideGloss} onChange={(e) => setHideGloss(e.target.checked)} />
+            {t.shower.hideGloss}
+          </label>
+        </div>
+      </div>
+
+      {shown === 0 ? (
+        <div className={styles.intro}>
+          <p className={styles.lead}>{t.shower.lead}</p>
+          <button type="button" className="btn" onClick={start}>
+            {t.shower.start}
+          </button>
+        </div>
+      ) : (
+        <ol className={styles.list} aria-live="polite">
+          {cluster.sentences.slice(0, shown).map((s, i) => {
+            const highlights: Highlight[] = [
+              ...s.memoHits.map((h) => ({ ...h, kind: "memo" as const })),
+              ...(revealed && s.mark ? [{ ...s.mark, kind: "mark" as const }] : []),
+            ];
+            return (
+              <li key={s.id} className={i === playing ? `${styles.item} ${styles.playing}` : styles.item}>
+                <div className={styles.itemMain}>
+                  <button type="button" className={`${styles.sentence} ${targetClass}`} onClick={() => setSheetFor(s)}>
+                    <SentenceText text={s.text} highlights={highlights} reading={s.reading} />
+                  </button>
+                  {hideGloss ? null : <span className={`${styles.gloss} ${nativeClass}`}>{s.gloss}</span>}
+                  {s.seenBefore ? <span className={styles.seen}>{t.shower.seenBefore}</span> : null}
+                </div>
+                <button
+                  type="button"
+                  className={i === playing ? `${styles.play} ${styles.playOn}` : styles.play}
+                  onClick={() => playOne(i)}
+                  aria-label={t.common.play}
+                >
+                  <Icon name="speaker" size={20} />
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+
+      {shown > 0 && !allShown && !autoplay ? (
+        <button type="button" className="btn-quiet" onClick={showNext}>
+          {t.shower.next}
+        </button>
+      ) : null}
+
+      {allShown ? (
+        <div className={styles.after}>
+          {revealed ? (
+            <section className={styles.answer}>
+              <h2 className="label">{t.shower.revealed}</h2>
+              <div className={`${styles.form} ${targetClass}`}>{cluster.form}</div>
+              {cluster.meaning ? <p className={`${styles.meaning} ${nativeClass}`}>{cluster.meaning}</p> : null}
+              {cluster.examples ? <div className={`${styles.examples} ${targetClass}`}>{cluster.examples}</div> : null}
+            </section>
+          ) : (
+            <button type="button" className="btn-quiet" onClick={() => setRevealed(true)}>
+              {t.shower.reveal}
+            </button>
+          )}
+          {trying ? (
+            <TryForm patternId={cluster.patternId} form={cluster.form} native={native} target={target} />
+          ) : (
+            <button type="button" className="btn-quiet" onClick={() => setTrying(true)}>
+              {t.shower.tryIt}
+            </button>
+          )}
+          <button type="button" className="btn" onClick={goNext} disabled={pending}>
+            {pending ? t.shower.loading : t.shower.nextCluster}
+          </button>
+        </div>
+      ) : null}
+
+      {sheetFor ? (
+        <WordSheet sentence={sheetFor} native={native} target={target} rate={rate} onClose={() => setSheetFor(null)} />
+      ) : null}
+    </div>
+  );
+}

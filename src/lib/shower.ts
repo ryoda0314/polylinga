@@ -1,0 +1,215 @@
+import "server-only";
+import { getSession } from "@/lib/auth";
+import { sentenceAudio, type Audio } from "@/lib/corpus";
+import type { Range } from "@/lib/diff";
+import type { Lang } from "@/lib/langs";
+import { readingFor } from "@/lib/reading";
+import { findMemoHits, nextReturn } from "@/lib/shower-core";
+
+export { findMemoHits };
+
+// The example-sentence shower. One "ひと浴び" is a few sentences that share a pattern; the learner
+// notices the common part on their own and can check afterwards. Patterns come back after a while
+// with sentences they have not met yet: that is how they "meet again", with no quiz involved.
+
+const CLUSTER_SIZE = 4;
+const MIN_CLUSTER = 2;
+
+export type ShowerSentence = {
+  id: string;
+  text: string;
+  gloss: string;
+  reading: string[] | null;
+  audio: Audio;
+  mark: Range | null;
+  seenBefore: boolean;
+  /** Where words from the learner's memo appear in `text`. */
+  memoHits: Range[];
+};
+
+export type ShowerCluster = {
+  patternId: string;
+  form: string;
+  meaning: string | null;
+  examples: string | null;
+  /** True when the learner has bathed in this pattern before. */
+  again: boolean;
+  sentences: ShowerSentence[];
+};
+
+async function memoWords(userId: string, lang: Lang): Promise<string[]> {
+  const { supabase } = await getSession();
+  const { data } = await supabase.from("pl_words").select("text").eq("user_id", userId).eq("lang", lang);
+  return (data ?? []).map((w) => String(w.text));
+}
+
+/** Choose and load the next cluster for this learner, avoiding the pattern they just had. */
+export async function pickCluster(
+  userId: string,
+  target: Lang,
+  native: Lang,
+  avoidPatternId: string | null,
+): Promise<ShowerCluster | null> {
+  const { supabase } = await getSession();
+  const [{ data: patterns }, { data: functions }, { data: counts }, { data: exposures }] = await Promise.all([
+    supabase.from("pl_patterns").select("id, form, meaning, examples, function_id").eq("lang", target),
+    supabase.from("pl_functions").select("id, position"),
+    supabase.rpc("pl_pattern_counts", { target }),
+    supabase.from("pl_exposures").select("pattern_id, times, next_at").eq("user_id", userId),
+  ]);
+
+  const position = new Map((functions ?? []).map((f) => [f.id, f.position as number]));
+  const size = new Map(((counts ?? []) as { pattern_id: string; n: number }[]).map((c) => [c.pattern_id, Number(c.n)]));
+  const usable = (patterns ?? []).filter((p) => p.id !== avoidPatternId && (size.get(p.id) ?? 0) >= MIN_CLUSTER);
+  if (usable.length === 0) return null;
+
+  const exposure = new Map((exposures ?? []).map((e) => [e.pattern_id, e]));
+  const now = Date.now();
+  const due = usable
+    .filter((p) => exposure.get(p.id)?.next_at && new Date(exposure.get(p.id)!.next_at).getTime() <= now)
+    .sort((a, b) => new Date(exposure.get(a.id)!.next_at).getTime() - new Date(exposure.get(b.id)!.next_at).getTime());
+  const fresh = usable
+    .filter((p) => !exposure.has(p.id))
+    .sort(
+      (a, b) =>
+        (position.get(a.function_id) ?? 999) - (position.get(b.function_id) ?? 999) || a.id.localeCompare(b.id),
+    );
+  const soonest = [...usable].sort(
+    (a, b) =>
+      new Date(exposure.get(a.id)?.next_at ?? 0).getTime() - new Date(exposure.get(b.id)?.next_at ?? 0).getTime(),
+  );
+  const pattern = due[0] ?? fresh[0] ?? soonest[0];
+
+  // Sentences of this pattern the learner has not seen come first, then the ones seen longest ago.
+  const { data: markRows } = await supabase
+    .from("pl_sentence_patterns")
+    .select("sentence_id, start_index, end_index")
+    .eq("pattern_id", pattern.id)
+    .eq("lang", target);
+  const candidates = (markRows ?? []).map((m) => ({
+    sentenceId: m.sentence_id as string,
+    mark: { start: m.start_index as number, end: m.end_index as number },
+  }));
+  const { data: seenRows } = await supabase
+    .from("pl_seen")
+    .select("sentence_id, last_at")
+    .eq("user_id", userId)
+    .in(
+      "sentence_id",
+      candidates.map((c) => c.sentenceId),
+    );
+  const lastSeen = new Map((seenRows ?? []).map((s) => [s.sentence_id, new Date(s.last_at).getTime()]));
+  const chosen = [...candidates]
+    .map((c) => ({ ...c, order: lastSeen.get(c.sentenceId) ?? -Math.random() }))
+    .sort((a, b) => a.order - b.order)
+    .slice(0, CLUSTER_SIZE);
+
+  const [{ data: rows }, words] = await Promise.all([
+    supabase
+      .from("pl_sentences")
+      .select("id, ja, en, ko, zh, zh_pinyin")
+      .in(
+        "id",
+        chosen.map((c) => c.sentenceId),
+      ),
+    memoWords(userId, target),
+  ]);
+  const byId = new Map((rows ?? []).map((r) => [String(r.id), r as Record<string, string>]));
+
+  const sentences: ShowerSentence[] = chosen
+    .filter((c) => byId.has(c.sentenceId))
+    .map((c) => {
+      const row = byId.get(c.sentenceId)!;
+      const text = row[target];
+      return {
+        id: c.sentenceId,
+        text,
+        gloss: row[native],
+        reading: readingFor(text, target, row.zh_pinyin),
+        audio: sentenceAudio(text, target, c.sentenceId),
+        mark: c.mark,
+        seenBefore: lastSeen.has(c.sentenceId),
+        memoHits: findMemoHits(text, words),
+      };
+    });
+  if (sentences.length < MIN_CLUSTER) return null;
+
+  const meaning = (pattern.meaning ?? {}) as Record<string, string>;
+  return {
+    patternId: pattern.id,
+    form: pattern.form,
+    meaning: meaning[native] ?? null,
+    examples: pattern.examples ?? null,
+    again: exposure.has(pattern.id),
+    sentences,
+  };
+}
+
+/** Remember a finished cluster: when the pattern returns, which sentences were seen, which memo words were met. */
+export async function recordCluster(userId: string, target: Lang, patternId: string, sentenceIds: string[]) {
+  const { supabase } = await getSession();
+  const ids = sentenceIds.slice(0, CLUSTER_SIZE);
+  const nowIso = new Date().toISOString();
+
+  const [{ data: exposure }, { data: seenRows }, { data: rows }, { data: words }] = await Promise.all([
+    supabase.from("pl_exposures").select("times").eq("user_id", userId).eq("pattern_id", patternId).maybeSingle(),
+    supabase.from("pl_seen").select("sentence_id, times").eq("user_id", userId).in("sentence_id", ids),
+    supabase.from("pl_sentences").select(`id, ${target}`).in("id", ids),
+    supabase.from("pl_words").select("id, text, encounters").eq("user_id", userId).eq("lang", target),
+  ]);
+
+  const times = (exposure?.times ?? 0) + 1;
+  const seen = new Map((seenRows ?? []).map((s) => [s.sentence_id, s.times as number]));
+  const texts = (rows ?? []).map((r) => String((r as Record<string, unknown>)[target] ?? ""));
+
+  const writes: PromiseLike<unknown>[] = [
+    supabase
+      .from("pl_exposures")
+      .upsert({ user_id: userId, pattern_id: patternId, times, last_at: nowIso, next_at: nextReturn(times) }),
+    supabase.from("pl_seen").upsert(
+      (rows ?? []).map((r) => ({
+        user_id: userId,
+        sentence_id: r.id,
+        times: (seen.get(r.id) ?? 0) + 1,
+        last_at: nowIso,
+      })),
+    ),
+  ];
+  for (const w of words ?? []) {
+    const met = texts.filter((t) => findMemoHits(t, [String(w.text)]).length > 0).length;
+    if (met > 0) {
+      writes.push(
+        supabase
+          .from("pl_words")
+          .update({ encounters: (w.encounters as number) + met, last_seen_at: nowIso })
+          .eq("id", w.id),
+      );
+    }
+  }
+  await Promise.all(writes);
+}
+
+/** Other approved sentences that contain a word, for the word sheet. */
+export async function sentencesWith(word: string, target: Lang, native: Lang, excludeId: string | null) {
+  const { supabase } = await getSession();
+  const needle = word.replace(/[%_\\]/g, (c) => `\\${c}`);
+  let query = supabase
+    .from("pl_sentences")
+    .select("id, ja, en, ko, zh, zh_pinyin")
+    .ilike(target, `%${needle}%`)
+    .limit(6);
+  if (excludeId) query = query.neq("id", excludeId);
+  const { data } = await query;
+  return (data ?? []).slice(0, 5).map((r) => {
+    const row = r as Record<string, string>;
+    const text = row[target];
+    return {
+      id: String(r.id),
+      text,
+      gloss: row[native],
+      reading: readingFor(text, target, row.zh_pinyin),
+      audio: sentenceAudio(text, target, String(r.id)),
+      hits: findMemoHits(text, [word]),
+    };
+  });
+}
