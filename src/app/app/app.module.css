@@ -138,30 +138,3 @@
 .segment:has(input:checked) { background: var(--ink); color: var(--paper); font-weight: 600; }
 .segment:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
 .saved { margin: 0; font-size: 14px; color: var(--muted); }
-
-/* Memo words */
-.input {
-  min-height: 48px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: var(--radius);
-  font-size: 17px; background: var(--paper);
-}
-.gauge { display: inline-flex; align-items: flex-end; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--accent); }
-.gauge[data-stage="new"] { color: var(--muted); }
-.drops { display: inline-flex; align-items: flex-end; gap: 3px; }
-.dropOn, .dropOff { display: block; width: 3px; border-radius: 2px; }
-.dropOn { background: var(--accent); }
-.dropOff { background: var(--line-2); }
-.drops > :nth-child(1) { height: 7px; }
-.drops > :nth-child(2) { height: 10px; }
-.drops > :nth-child(3) { height: 13px; }
-.drops > :nth-child(4) { height: 16px; }
-.wordActions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-.check { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 12px; color: var(--ink-2); cursor: pointer; }
-.check input { width: 18px; height: 18px; accent-color: var(--accent); }
-.iconButton {
-  width: var(--tap); height: var(--tap); border: 0; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
-}
-.smallDanger {
-  min-height: 40px; padding: 0 12px; border: 1px solid var(--danger); border-radius: 8px;
-  background: var(--paper); color: var(--danger); font-size: 13px; cursor: pointer;
-}

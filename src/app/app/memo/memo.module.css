@@ -1,0 +1,134 @@
+/* The memo: words the learner typed in, growing as the rain brings them back. Flat, hairlines, the accent for
+   growth and the icon's violet for "met again". */
+
+/* Typing a word in */
+.addForm { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: var(--surface); border-radius: var(--radius); }
+.addRow { display: flex; gap: 8px; }
+.addRow :global(.btn) { flex-shrink: 0; }
+.addWord {
+  flex: 1; min-width: 0; min-height: 52px; padding: 0 14px; border: 1.5px solid var(--ink); border-radius: var(--radius);
+  font-size: 20px; background: var(--paper);
+}
+.addNote {
+  min-height: 44px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: var(--radius);
+  font-size: 15px; background: var(--paper);
+}
+.formHint, .formSaved, .formError { margin: 0; font-size: 12px; line-height: 1.7; }
+.formHint { color: var(--muted); }
+.formSaved { color: var(--accent); font-weight: 600; }
+.formError { color: var(--danger); }
+
+/* Met again lately */
+.recentWrap { display: flex; flex-direction: column; gap: 10px; }
+.recent { display: flex; gap: 10px; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; scrollbar-width: none; }
+.recent::-webkit-scrollbar { display: none; }
+.recentCard {
+  flex: 0 0 auto; min-width: 128px; max-width: 200px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  padding: 12px 14px; border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.recentWord { font-size: 19px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+.recentWhen { font-size: 12px; font-weight: 600; color: var(--again); }
+
+/* The list */
+.listHead { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.listHead h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.count { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tools { display: flex; flex-direction: column; gap: 10px; padding: 12px 0 4px; }
+.filters { display: flex; gap: 6px; overflow-x: auto; margin: 0 -20px; padding: 0 20px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filter {
+  flex: 0 0 auto; min-height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line-2); border-radius: 999px; background: var(--paper); color: var(--ink-2); font: inherit; font-size: 13px; cursor: pointer;
+}
+.filterOn { border-color: var(--ink); background: var(--ink); color: var(--paper); font-weight: 600; }
+.filterCount { font-variant-numeric: tabular-nums; opacity: 0.7; }
+.search { min-height: 44px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--paper); font-size: 16px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.row {
+  width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 0; border: 0; border-bottom: 1px solid var(--line);
+  background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.row:focus-visible { outline-offset: -2px; }
+.rowText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.word { font-size: 20px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+.note { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.meta { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.metAgain { color: var(--again); font-weight: 600; }
+.chev { flex-shrink: 0; color: var(--faint); }
+.chev svg { transform: rotate(180deg); }
+.none { margin: 0; padding: 16px 0; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.footnote { margin: 0; padding-top: 12px; font-size: 12px; color: var(--muted); }
+
+/* A small rain gauge: one more drop for each stage reached. */
+.gauge { display: inline-flex; align-items: flex-end; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--accent); }
+.gauge[data-stage="new"] { color: var(--muted); }
+.drops { display: inline-flex; align-items: flex-end; gap: 3px; }
+.drops > i { display: block; width: 3px; border-radius: 2px; background: var(--line-2); }
+.drops > i[data-on] { background: var(--accent); }
+.drops > i:nth-child(1) { height: 7px; }
+.drops > i:nth-child(2) { height: 10px; }
+.drops > i:nth-child(3) { height: 13px; }
+.drops > i:nth-child(4) { height: 16px; }
+
+.empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 8px; text-align: center; }
+.empty p { margin: 0; font-size: 14px; line-height: 1.8; color: var(--muted); max-width: 22em; }
+
+/* One word, opened */
+.backdrop {
+  position: fixed; inset: 0; z-index: 20; background: color-mix(in srgb, var(--ink) 32%, transparent);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  width: 100%; max-width: 560px; max-height: 90dvh; overflow-y: auto;
+  background: var(--paper); border-radius: 16px 16px 0 0;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 16px; outline: none;
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } }
+.sheetHead { display: flex; align-items: center; justify-content: space-between; }
+.close {
+  width: var(--tap); height: var(--tap); margin-right: -10px; border: 0; background: transparent; color: var(--ink);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.sheetWord { display: flex; align-items: center; gap: 14px; }
+.big { flex: 1; min-width: 0; margin: 0; font-size: 34px; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
+
+.track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 14px 10px; background: var(--surface); border-radius: var(--radius); }
+.step { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; font-size: 11px; line-height: 1.4; color: var(--faint); text-align: center; }
+.step > i { display: block; width: 4px; border-radius: 2px; background: var(--line-2); }
+.step:nth-child(1) > i { height: 10px; }
+.step:nth-child(2) > i { height: 16px; }
+.step:nth-child(3) > i { height: 22px; }
+.step:nth-child(4) > i { height: 28px; }
+.stepOn { color: var(--accent); }
+.stepOn > i { background: var(--accent); }
+.stepNow { font-weight: 700; }
+.hint { margin: -6px 0 0; font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.facts > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 8px 10px 0; min-width: 0; }
+.facts dt { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.facts dd { margin: 0; font-size: 11px; color: var(--muted); }
+
+.understood { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font-size: 15px; cursor: pointer; }
+.understood input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+.noteBox { display: flex; flex-direction: column; gap: 8px; }
+.textarea {
+  min-height: 72px; padding: 12px; border: 1.5px solid var(--ink); border-radius: var(--radius);
+  font-size: 16px; line-height: 1.6; background: var(--paper); resize: vertical;
+}
+.noteRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.noteStatus { font-size: 13px; color: var(--accent); }
+
+.places { display: flex; flex-direction: column; padding-top: 12px; border-top: 1px solid var(--line); }
+.placeRow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.placeText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.placeSentence { font-size: 18px; line-height: 1.7; overflow-wrap: anywhere; }
+.mineRow { display: flex; align-items: center; gap: 12px; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+
+.dangerRow { display: flex; justify-content: center; padding-top: 4px; }
+.quietDanger { min-height: var(--tap); padding: 0 12px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+.danger { min-height: 40px; padding: 0 16px; border: 1px solid var(--danger); border-radius: 8px; background: var(--paper); color: var(--danger); font: inherit; font-size: 14px; cursor: pointer; }

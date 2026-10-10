@@ -104,6 +104,48 @@ export async function deleteWord(wordId: string) {
   revalidatePath("/app/memo");
 }
 
+/** Change what the learner wrote beside a word (empty clears it). */
+export async function updateWordNote(wordId: string, raw: string): Promise<{ error: string | null }> {
+  const settings = await requireSettings();
+  const t = getDict(settings.nativeLang);
+  const { supabase, user } = await requireUser();
+  const note = cleanText(raw) || null;
+  if (note && note.length > 120) return { error: t.words.tooLong };
+  const { error } = await supabase.from("pl_words").update({ note }).eq("id", wordId).eq("user_id", user.id);
+  if (error) return { error: t.words.failed };
+  revalidatePath("/app/memo");
+  return { error: null };
+}
+
+/** Where a memo word lives: library sentences that contain it, and the learner's own corrected sentences that used it. */
+export async function wordPlaces(word: string) {
+  const settings = await requireSettings();
+  const { supabase, user } = await requireUser();
+  const w = cleanText(word).slice(0, 40);
+  if (!w) return { rain: [], mine: [] };
+  const needle = w.replace(/[%_\\]/g, (c) => `\\${c}`);
+  const [rain, { data: mine }] = await Promise.all([
+    sentencesWith(w, settings.targetLang, settings.nativeLang, null),
+    supabase
+      .from("pl_corrections")
+      .select("id, saying_id, corrected, created_at")
+      .eq("user_id", user.id)
+      .eq("target_lang", settings.targetLang)
+      .ilike("corrected", `%${needle}%`)
+      .order("created_at", { ascending: false })
+      .limit(3),
+  ]);
+  return {
+    rain,
+    mine: (mine ?? []).map((c) => ({
+      id: String(c.id),
+      sayingId: c.saying_id ? String(c.saying_id) : null,
+      text: String(c.corrected),
+      hits: findMemoHits(String(c.corrected), [w]),
+    })),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Writing and corrections
 // ---------------------------------------------------------------------------
@@ -164,7 +206,10 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
   await Promise.all(
     (words ?? [])
       .filter((w) => findMemoHits(result.corrected, [String(w.text)]).length > 0)
-      .map((w) => admin.from("pl_words").update({ uses: w.uses + 1, last_seen_at: new Date().toISOString() }).eq("id", w.id)),
+      .map((w) => {
+        const now = new Date().toISOString();
+        return admin.from("pl_words").update({ uses: w.uses + 1, last_seen_at: now, last_met_at: now }).eq("id", w.id);
+      }),
   );
   return { error: null };
 }

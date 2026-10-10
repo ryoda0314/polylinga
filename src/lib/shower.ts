@@ -185,7 +185,7 @@ export async function recordCluster(userId: string, target: Lang, patternId: str
       writes.push(
         supabase
           .from("pl_words")
-          .update({ encounters: (w.encounters as number) + met, last_seen_at: nowIso })
+          .update({ encounters: (w.encounters as number) + met, last_seen_at: nowIso, last_met_at: nowIso })
           .eq("id", w.id),
       );
     }

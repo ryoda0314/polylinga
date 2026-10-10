@@ -1,25 +1,46 @@
-import { SentenceText } from "@/components/SentenceText";
 import { requireUser } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
-import { langClass } from "@/lib/langs";
+import type { Lang } from "@/lib/langs";
 import { readingFor } from "@/lib/reading";
 import { requireSettings } from "@/lib/settings";
 import { wordStage } from "@/lib/shower-core";
 import styles from "../app.module.css";
-import { WordAddForm, WordActions } from "./WordControls";
+import { MemoBoard } from "./MemoBoard";
+import { WordAddForm } from "./WordControls";
+import type { MemoWord } from "./words";
 
 export const metadata = { title: "メモ" };
-
-const STAGE_LEVEL = { new: 0, seen: 1, understood: 2, used: 3 } as const;
 
 type WordRow = {
   id: string;
   text: string;
   note: string | null;
+  memo_count: number;
   encounters: number;
   uses: number;
   understood: boolean;
+  created_at: string;
+  last_met_at: string | null;
 };
+
+const DAY = 24 * 60 * 60 * 1000;
+
+function toMemoWords(rows: WordRow[], target: Lang): MemoWord[] {
+  const now = Date.now();
+  return rows.map((w) => ({
+    id: w.id,
+    text: w.text,
+    note: w.note,
+    memoCount: w.memo_count,
+    encounters: w.encounters,
+    uses: w.uses,
+    understood: w.understood,
+    stage: wordStage(w),
+    reading: readingFor(w.text, target),
+    since: w.created_at,
+    metDaysAgo: w.last_met_at ? Math.floor((now - Date.parse(w.last_met_at)) / DAY) : null,
+  }));
+}
 
 export default async function MemoPage() {
   const settings = await requireSettings();
@@ -27,12 +48,12 @@ export default async function MemoPage() {
   const t = getDict(settings.nativeLang);
   const { data } = await supabase
     .from("pl_words")
-    .select("id, text, note, encounters, uses, understood")
+    .select("id, text, note, memo_count, encounters, uses, understood, created_at, last_met_at")
     .eq("user_id", user.id)
     .eq("lang", settings.targetLang)
     .order("last_seen_at", { ascending: false })
     .limit(300);
-  const words = (data ?? []) as WordRow[];
+  const words = toMemoWords((data ?? []) as WordRow[], settings.targetLang);
 
   return (
     <>
@@ -44,46 +65,7 @@ export default async function MemoPage() {
       <div className={styles.bodyTight}>
         <p className={styles.lead}>{t.words.lead}</p>
         <WordAddForm native={settings.nativeLang} target={settings.targetLang} />
-
-        <section>
-          <div className={styles.listHead}>
-            <h2>{t.words.title}</h2>
-            <span className={styles.count}>{t.common.count(words.length)}</span>
-          </div>
-          {words.length === 0 ? (
-            <p className={styles.empty}>{t.words.empty}</p>
-          ) : (
-            words.map((w) => {
-              const stage = wordStage(w);
-              const level = STAGE_LEVEL[stage];
-              return (
-                <div key={w.id} className={styles.row}>
-                  <div className={styles.rowText}>
-                    {/* A small rain gauge: one more drop for each stage the word has reached. */}
-                    <span className={styles.gauge} data-stage={stage}>
-                      <span className={styles.drops} aria-hidden="true">
-                        {[0, 1, 2, 3].map((k) => (
-                          <span key={k} className={k <= level ? styles.dropOn : styles.dropOff} />
-                        ))}
-                      </span>
-                      {t.words.stages[stage]}
-                    </span>
-                    <span className={`${styles.rowMain} ${langClass(settings.targetLang)}`}>
-                      <SentenceText text={w.text} reading={readingFor(w.text, settings.targetLang)} />
-                    </span>
-                    {w.note ? <span className={`${styles.rowSub} ${langClass(settings.nativeLang)}`}>{w.note}</span> : null}
-                    <span className={styles.rowSub}>
-                      {t.words.met(w.encounters)}
-                      {w.uses > 0 ? `・${t.words.used(w.uses)}` : ""}
-                    </span>
-                  </div>
-                  <WordActions wordId={w.id} understood={w.understood} native={settings.nativeLang} />
-                </div>
-              );
-            })
-          )}
-          {words.length > 0 ? <p className={styles.note}>{t.words.gauge}</p> : null}
-        </section>
+        <MemoBoard words={words} native={settings.nativeLang} target={settings.targetLang} rate={settings.speechRate} />
       </div>
     </>
   );

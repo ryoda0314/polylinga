@@ -5,11 +5,19 @@ import styles from "./page.module.css";
 
 const NOTE_URL = "https://note.com/ryoda_/n/n4e69c14a99cb";
 
+// The four steps, each with what the rain does to the leaves at that point.
 const STEPS = [
-  { title: "浴びる", body: "同じかたちの文が、音声付きで次々に降ってきます。訳も付いているので、聞き流すだけでも大丈夫です。" },
-  { title: "気づく", body: "降ってきた文を見比べて、共通しているところを自分で探します。答え合わせは、文と訳の同じところに色が付くだけ。" },
-  { title: "言ってみる", body: "浴びたかたちで自分の文を作ると、AI が直して理由を説明します。そのまま友だちに送れます。" },
-  { title: "また出会う", body: "知らない語は自分で打ってメモ。見返さなくていい。日をあけて、別の文の中でまた降ってきます。" },
+  { title: "浴びる", rain: "雨が降る", body: "同じかたちの文が、音声付きで次々に降ってきます。訳も付いているので、聞き流すだけでも大丈夫です。" },
+  { title: "気づく", rain: "しみこむ", body: "降ってきた文を見比べて、共通しているところを自分で探します。答え合わせは、文と訳の同じところに色が付くだけ。" },
+  { title: "言ってみる", rain: "芽が出る", body: "浴びたかたちで自分の文を作ると、AI が直して理由を説明します。そのまま友だちに送れます。" },
+  { title: "また出会う", rain: "葉が育つ", body: "知らない語は自分で打ってメモ。見返さなくていい。日をあけて、別の文の中でまた降ってきます。" },
+];
+
+// The name, read against the Kokinshū preface: the heart is the seed, the rain grows the leaves.
+const NAME_MAP = [
+  { term: "心（種）", meaning: "伝えたい思いや考え" },
+  { term: "言の雨", meaning: "出会い、浴びる無数の例文" },
+  { term: "言の葉", meaning: "育って、自分のものになった言葉" },
 ];
 
 // The demo is a real rain from the library: three invitations, with the matching parts lit in both languages.
@@ -43,13 +51,17 @@ export default function Home() {
         <Rain />
         <div className={styles.container + " " + styles.hero}>
           <div className={styles.heroText}>
-            <h1>
-              例文の雨を浴びて、
-              <br />
-              使える言葉へ。
+            <span className={styles.eyebrow}>例文で身につける、韓国語・英語・中国語</span>
+            <h1 className={styles.heroTitle}>
+              <span>
+                <span className="wordmark-kana">言の葉</span>は、
+              </span>
+              <span>
+                <span className="wordmark-kana">言の雨</span>に育まれる。
+              </span>
             </h1>
             <p>
-              同じかたちの短い文が、音声付きで雨のように降ってくる。浴びているうちに、共通しているところに自分で気づく。気づいたら自分でも言ってみて、AI に直してもらう。忘れても、また降ってくる。
+              同じかたちの短い文が、音声付きで雨のように降ってくる。覚えるための完成品ではなく、あなたの言葉を育てる雨です。浴びて、気づいて、言ってみて、忘れたころにまた出会う。そのうちに、使える言葉が自分の中に育っていきます。
             </p>
             <div className={styles.ctaRow}>
               <Link href="/app" className="btn">
@@ -100,6 +112,36 @@ export default function Home() {
         </div>
       </section>
 
+      <section className={styles.rule}>
+        <div className={styles.container + " " + styles.section + " " + styles.split}>
+          <div className={styles.entry}>
+            <h2 className={styles.entryHead}>
+              <span className="wordmark-kana">ことのあめ</span>
+              <span className={styles.entryKanji}>【言の雨】</span>
+            </h2>
+            <span className={styles.entryPos}>名詞・造語</span>
+            <Sprout />
+          </div>
+          <div className={styles.prose}>
+            <p className={styles.entryDef}>言の葉を育む雨。</p>
+            <p>
+              古今和歌集の仮名序は、歌を「人の心を種として、よろづの言の葉とぞなれりける」と書きました。心を種に生まれる言の葉に、たえず降りそそぐさまざまな言葉。それが言の雨です。
+            </p>
+            <p>
+              一つひとつの言葉は雨粒のように小さくても、何度も触れ、また出会ううちに、言の葉は少しずつ育ち、やがて自分の言葉になります。雨そのものが葉になるのではなく、雨が葉を育てる。降ってくる例文は、覚えるべき完成品ではありません。
+            </p>
+            <dl className={styles.nameMap}>
+              {NAME_MAP.map((m) => (
+                <div key={m.term}>
+                  <dt className="wordmark-kana">{m.term}</dt>
+                  <dd>{m.meaning}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.band}>
         <div className={styles.container + " " + styles.split}>
           <h2>
@@ -124,30 +166,15 @@ export default function Home() {
         <ol className={styles.steps}>
           {STEPS.map((s, i) => (
             <li key={s.title}>
-              <span className="mono">{String(i + 1).padStart(2, "0")}</span>
+              <span className="mono">
+                {String(i + 1).padStart(2, "0")}
+                <span className={styles.stepRain}>{s.rain}</span>
+              </span>
               <h3>{s.title}</h3>
               <p>{s.body}</p>
             </li>
           ))}
         </ol>
-      </section>
-
-      <section className={styles.rule}>
-        <div className={styles.container + " " + styles.section + " " + styles.split}>
-          <h2 className={styles.nameTitle}>
-            <span className="wordmark-kana">言の葉</span>を、
-            <br />
-            <span className="wordmark-kana">雨</span>に。
-          </h2>
-          <div className={styles.prose}>
-            <p>
-              古今和歌集の仮名序は、歌を「人の心を種として、よろづの言の葉とぞなれりける」と書きました。言葉は、心から茂る葉だという見方です。
-            </p>
-            <p>
-              このアプリでは、言葉を葉のように茂らせて覚えるのではなく、雨のように降らせて浴びます。たくさん浴びて、自分で気づいて、忘れたころにまた降ってくる。それで「ことのあめ（言の雨）」と名付けました。
-            </p>
-          </div>
-        </div>
       </section>
 
       <section id="languages" className={styles.rule}>
@@ -198,7 +225,7 @@ export default function Home() {
       <section className={`${styles.rule} ${styles.finalWrap}`}>
         <Rain />
         <div className={styles.container + " " + styles.section + " " + styles.final}>
-          <h2>今日も、少し浴びてみる。</h2>
+          <h2>今日の雨を、少し浴びてみる。</h2>
           <Link href="/app" className="btn">
             無料ではじめる
           </Link>
@@ -218,5 +245,22 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+/** A sprout under three falling drops in the icon's colors: the rain grows the leaves, it does not become them. */
+function Sprout() {
+  return (
+    <svg className={styles.sprout} viewBox="0 0 200 200" aria-hidden="true">
+      <rect className={styles.sproutDrop} x="62" y="18" width="7" height="26" rx="3.5" fill="var(--rain-blue)" />
+      <rect className={styles.sproutDrop} x="97" y="6" width="7" height="30" rx="3.5" fill="var(--rain-violet)" />
+      <rect className={styles.sproutDrop} x="132" y="22" width="7" height="24" rx="3.5" fill="var(--rain-pink)" />
+      <g className={styles.sproutLeaves}>
+        <path d="M100 150c-4-26-24-40-52-38 4 26 24 40 52 38z" fill="var(--rain-sky)" />
+        <path d="M100 136c6-28 28-42 56-38-6 28-28 42-56 38z" fill="var(--rain-violet)" opacity="0.85" />
+      </g>
+      <path d="M100 190v-62" stroke="var(--ink-2)" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M60 190h80" stroke="var(--line-2)" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
