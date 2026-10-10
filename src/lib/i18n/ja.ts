@@ -24,7 +24,10 @@ export const ja = {
   },
   shower: {
     title: "浴びる",
-    lead: "同じかたちの文が、音声付きで降ってきます。共通しているところを探してみてください。",
+    lead: "聞きながら見比べて、共通しているところを探してみてください。答え合わせは最後に。",
+    introTitle: "雨が来ています",
+    introCount: (n: number) => `${n}つの文が、音声付きで降ってきます`,
+    introMemo: (words: string) => `メモした「${words}」も降ってきます`,
     start: "浴びる",
     again: "前にも降ったかたち",
     againDays: (n: number) => `・${n}日ぶり`,

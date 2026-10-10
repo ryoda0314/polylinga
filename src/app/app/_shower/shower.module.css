@@ -9,7 +9,16 @@
 .toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
 .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
 
-.intro { display: flex; flex-direction: column; gap: 20px; padding: 24px 0; }
+.intro { display: flex; flex-direction: column; gap: 20px; padding: 8px 0 24px; }
+/* Before the first tap: a little sky with the icon's rain falling on the sprout, then what is about to fall. */
+.introSky {
+  position: relative; overflow: hidden; height: 200px; border-radius: 16px; background: var(--surface);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.introSprout { position: relative; width: 80px; height: auto; margin-bottom: 14px; }
+.introText { display: flex; flex-direction: column; gap: 6px; }
+.introTitle { margin: 0; font-family: var(--font-mincho); font-size: 26px; font-weight: 700; letter-spacing: 0.04em; }
+.introMeta { margin: 0; font-size: 15px; color: var(--ink-2); }
 .lead { margin: 0; font-size: 15px; line-height: 1.8; color: var(--ink-2); }
 .empty { margin: 0; padding: 24px 0; font-size: 15px; line-height: 1.8; color: var(--muted); }
 

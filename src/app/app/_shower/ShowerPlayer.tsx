@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { playToEnd, stopAudio } from "@/components/audio";
 import { Icon } from "@/components/Icon";
+import { Rain } from "@/components/Rain";
 import { SentenceText, type Highlight } from "@/components/SentenceText";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
@@ -111,7 +113,10 @@ export function ShowerPlayer({
   const nativeClass = langClass(native);
   const visible = cluster.sentences.slice(0, shown);
   // Memo words that turned up in this rain: meeting them again is the point, so say so.
-  const metWords = [...new Set(visible.flatMap((s) => s.memoHits.map((h) => s.text.slice(h.start, h.end))))];
+  const wordsIn = (list: ShowerSentence[]) => [...new Set(list.flatMap((s) => s.memoHits.map((h) => s.text.slice(h.start, h.end))))];
+  const metWords = wordsIn(visible);
+  // Before the first tap: what is about to fall (never what it has in common: that is for the learner to find).
+  const comingWords = wordsIn(cluster.sentences);
   const badge = cluster.again
     ? t.shower.again + (cluster.againDays && cluster.againDays >= 1 ? t.shower.againDays(cluster.againDays) : "")
     : t.shower.fresh;
@@ -134,8 +139,18 @@ export function ShowerPlayer({
 
       {shown === 0 ? (
         <div className={styles.intro}>
+          <div className={styles.introSky} aria-hidden="true">
+            <Rain />
+            <Image src="/illustrations/sprout.png" alt="" width={80} height={138} className={styles.introSprout} priority />
+          </div>
+          <div className={styles.introText}>
+            <h2 className={styles.introTitle}>{t.shower.introTitle}</h2>
+            <p className={styles.introMeta}>{t.shower.introCount(cluster.sentences.length)}</p>
+            {comingWords.length > 0 ? <p className={styles.memoNote}>{t.shower.introMemo(comingWords.join("・"))}</p> : null}
+          </div>
           <p className={styles.lead}>{t.shower.lead}</p>
           <button type="button" className="btn" onClick={start}>
+            <Icon name="shower" size={22} />
             {t.shower.start}
           </button>
         </div>
