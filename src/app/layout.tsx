@@ -28,6 +28,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#fcfbf8",
   viewportFit: "cover",
+  // The keyboard covers the page instead of shrinking it, so the bottom bar stays put (Android Chrome; iOS already does).
+  interactiveWidget: "resizes-visual",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

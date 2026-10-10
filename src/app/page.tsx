@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Rain } from "@/components/Rain";
@@ -120,7 +121,7 @@ export default function Home() {
               <span className={styles.entryKanji}>【言の雨】</span>
             </h2>
             <span className={styles.entryPos}>名詞・造語</span>
-            <Sprout />
+            <Image src="/illustrations/sprout.png" alt="" width={150} height={259} className={styles.sprout} />
           </div>
           <div className={styles.prose}>
             <p className={styles.entryDef}>言の葉を育む雨。</p>
@@ -245,22 +246,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  );
-}
-
-/** A sprout under three falling drops in the icon's colors: the rain grows the leaves, it does not become them. */
-function Sprout() {
-  return (
-    <svg className={styles.sprout} viewBox="0 0 200 200" aria-hidden="true">
-      <rect className={styles.sproutDrop} x="62" y="18" width="7" height="26" rx="3.5" fill="var(--rain-blue)" />
-      <rect className={styles.sproutDrop} x="97" y="6" width="7" height="30" rx="3.5" fill="var(--rain-violet)" />
-      <rect className={styles.sproutDrop} x="132" y="22" width="7" height="24" rx="3.5" fill="var(--rain-pink)" />
-      <g className={styles.sproutLeaves}>
-        <path d="M100 150c-4-26-24-40-52-38 4 26 24 40 52 38z" fill="var(--rain-sky)" />
-        <path d="M100 136c6-28 28-42 56-38-6 28-28 42-56 38z" fill="var(--rain-violet)" opacity="0.85" />
-      </g>
-      <path d="M100 190v-62" stroke="var(--ink-2)" strokeWidth="3" strokeLinecap="round" fill="none" />
-      <path d="M60 190h80" stroke="var(--line-2)" strokeWidth="2" strokeLinecap="round" />
-    </svg>
   );
 }

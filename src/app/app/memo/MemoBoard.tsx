@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { SentenceText } from "@/components/SentenceText";
@@ -52,7 +53,7 @@ export function MemoBoard({ words, native, target, rate }: { words: MemoWord[]; 
   if (words.length === 0) {
     return (
       <div className={styles.empty}>
-        <Sprout />
+        <Image src="/illustrations/sprout.png" alt="" width={72} height={124} />
         <p>{t.words.empty}</p>
       </div>
     );
@@ -143,19 +144,5 @@ export function MemoBoard({ words, native, target, rate }: { words: MemoWord[]; 
 
       {open ? <WordDetail key={open.id} word={open} native={native} target={target} rate={rate} onClose={() => setOpenId(null)} /> : null}
     </>
-  );
-}
-
-/** Drops falling on a sprout, for an empty memo: the words to come. */
-function Sprout() {
-  return (
-    <svg width="96" height="96" viewBox="0 0 200 200" aria-hidden="true">
-      <rect x="62" y="22" width="7" height="26" rx="3.5" fill="var(--rain-blue)" />
-      <rect x="97" y="8" width="7" height="30" rx="3.5" fill="var(--rain-violet)" />
-      <rect x="132" y="26" width="7" height="24" rx="3.5" fill="var(--rain-pink)" />
-      <path d="M100 150c-4-26-24-40-52-38 4 26 24 40 52 38z" fill="var(--rain-sky)" />
-      <path d="M100 136c6-28 28-42 56-38-6 28-28 42-56 38z" fill="var(--rain-violet)" opacity="0.85" />
-      <path d="M100 190v-62" stroke="var(--ink-2)" strokeWidth="4" strokeLinecap="round" fill="none" />
-    </svg>
   );
 }

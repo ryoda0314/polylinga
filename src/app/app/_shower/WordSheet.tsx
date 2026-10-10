@@ -6,7 +6,6 @@ import { SentenceText } from "@/components/SentenceText";
 import { SpeakButton, type AudioSource } from "@/components/SpeakButton";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
-import type { ShowerSentence } from "@/lib/shower";
 import { findSentencesWith, saveWord, type WordState } from "../actions";
 import styles from "./shower.module.css";
 
@@ -32,9 +31,12 @@ function wordsOf(text: string, lang: Lang): { word: string; index: number }[] {
   return [...out].map(([word, index]) => ({ word, index }));
 }
 
+/** The sentence a word was noticed in: a library sentence (its id keeps it out of "other sentences"), or the learner's own. */
+export type SheetSentence = { id: string | null; text: string; reading: string[] | null };
+
 /**
  * A word the learner noticed: see it in other sentences, and type it into the memo themselves
- * (the typing is the point, so the field is never filled in for them).
+ * (the typing is the point, so the field is never filled in for them). Used in the rain and on a correction.
  */
 export function WordSheet({
   sentence,
@@ -43,7 +45,7 @@ export function WordSheet({
   rate,
   onClose,
 }: {
-  sentence: ShowerSentence;
+  sentence: SheetSentence;
   native: Lang;
   target: Lang;
   rate: number;
@@ -60,6 +62,13 @@ export function WordSheet({
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
+
+  // Escape closes the sheet wherever focus is (the save button, disabled while it saves, drops focus to the page).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   function pick(word: string) {
     setPicked(word);
@@ -79,9 +88,6 @@ export function WordSheet({
         tabIndex={-1}
         className={styles.sheet}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
-        }}
       >
         <div className={styles.sheetHead}>
           <h2 id="word-sheet-title" className={styles.sheetTitle}>

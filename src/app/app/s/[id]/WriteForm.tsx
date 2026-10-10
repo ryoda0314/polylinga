@@ -17,12 +17,24 @@ export function WriteForm({
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, { error: null });
 
+  // Once the keyboard is up, bring the example sentences above the field (if the page has them) into view with it.
+  function keepHintsInView() {
+    window.setTimeout(() => document.getElementById("write-ref")?.scrollIntoView({ block: "start", behavior: "smooth" }), 350);
+  }
+
   return (
     <form action={formAction} className={styles.stackSm}>
       <label htmlFor="text" className="label">
         {labels.write}
       </label>
-      <textarea id="text" name="text" required maxLength={200} className={`${styles.textarea} ${targetClass}`} />
+      <textarea
+        id="text"
+        name="text"
+        required
+        maxLength={200}
+        className={`${styles.textarea} ${targetClass}`}
+        onFocus={keepHintsInView}
+      />
       <p className={styles.note}>{labels.hint}</p>
       {state.error ? (
         <p className={styles.error} role="alert">

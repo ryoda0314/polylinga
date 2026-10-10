@@ -70,6 +70,17 @@
 .memoNote { margin: 0; font-size: 13px; line-height: 1.7; color: var(--again); font-weight: 500; }
 
 .try { display: flex; flex-direction: column; gap: 8px; padding: 16px 0; border-top: 1px solid var(--line); }
+/* The rain, kept right above the field while typing: short, scrollable, so the field still fits above the keyboard. */
+.ref {
+  display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; margin-bottom: 4px;
+  background: var(--surface); border-radius: var(--radius); scroll-margin-top: 8px;
+}
+.refTitle { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
+.refList { list-style: none; margin: 0; padding: 0; max-height: 26vh; overflow-y: auto; overscroll-behavior: contain; }
+.refList li { display: flex; flex-direction: column; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.refList li:last-child { border-bottom: 0; }
+.refText { font-size: 17px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+.refGloss { font-size: 12px; color: var(--muted); }
 .textarea {
   width: 100%; min-height: 96px; padding: 14px; resize: vertical;
   border: 1.5px solid var(--ink); border-radius: var(--radius); font-size: 18px; line-height: 1.6; background: var(--paper);

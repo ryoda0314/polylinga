@@ -14,8 +14,10 @@ import { isLang, langClass, type Lang } from "@/lib/langs";
 import { LIMITS, usesLeft } from "@/lib/metering";
 import { readingFor } from "@/lib/reading";
 import { requireSettings } from "@/lib/settings";
+import { findMemoHits } from "@/lib/shower-core";
 import { correctSaying } from "../../actions";
 import styles from "../../app.module.css";
+import { MemoButton, MemoTap } from "./MemoTap";
 import { WriteForm } from "./WriteForm";
 
 export const metadata = { title: "言ってみる" };
@@ -41,14 +43,17 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const target: Lang = saying.target_lang;
   const t = getDict(native);
 
-  const [{ data: correctionRows }, left] = await Promise.all([
+  const [{ data: correctionRows }, left, { data: memoRows }] = await Promise.all([
     supabase
       .from("pl_corrections")
       .select("id, input, corrected, result, created_at")
       .eq("saying_id", id)
       .order("created_at", { ascending: false }),
     usesLeft(user.id, "corrections"),
+    // Memo words show where they turn up here too: the same dotted violet as in the rain.
+    supabase.from("pl_words").select("text").eq("user_id", user.id).eq("lang", target),
   ]);
+  const memo = (memoRows ?? []).map((w) => String(w.text));
   const corrections = (correctionRows ?? []) as CorrectionRow[];
   const latest = corrections[0];
   const title = saying.intent ?? (saying.pattern_id ? t.write.fromShower : "");
@@ -81,8 +86,8 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
       <div className={styles.bodyTight}>
         {latest ? (
           <>
-            <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} />
-            <PatternsView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} />
+            <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+            <PatternsView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
             <details className={styles.fold}>
               <summary>{t.saying.rewrite}</summary>
               {writeForm}
@@ -101,7 +106,6 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
           </>
         ) : (
           <>
-            {writeForm}
             <Hints
               patternId={saying.pattern_id}
               ids={((saying.matches ?? []) as { sentence_id: string }[]).map((m) => m.sentence_id)}
@@ -109,7 +113,9 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
               native={native}
               rate={settings.speechRate}
               t={t}
+              memo={memo}
             />
+            {writeForm}
           </>
         )}
       </div>
@@ -124,6 +130,7 @@ async function Hints({
   native,
   rate,
   t,
+  memo,
 }: {
   patternId: string | null;
   ids: string[];
@@ -131,17 +138,21 @@ async function Hints({
   native: Lang;
   rate: number;
   t: Dict;
+  memo: string[];
 }) {
   const hints = patternId
     ? ((await patternExamples([patternId], target, native, 4)).get(patternId) ?? [])
     : await loadSentences(ids, target, native);
   if (hints.length === 0) return null;
   return (
-    <section>
+    // Above the field, short and scrollable, so it stays in view while typing (WriteForm scrolls to it on focus).
+    <section id="write-ref" className={styles.refBox}>
       <h2 className="label">{patternId ? t.saying.showerTitle : t.saying.hintsTitle}</h2>
-      {hints.map((s) => (
-        <ExampleRow key={s.id} sentence={s} lang={target} native={native} rate={rate} t={t} />
-      ))}
+      <div className={styles.refScroll}>
+        {hints.map((s) => (
+          <ExampleRow key={s.id} sentence={s} lang={target} native={native} rate={rate} t={t} memo={memo} />
+        ))}
+      </div>
     </section>
   );
 }
@@ -152,6 +163,7 @@ function ExampleRow({
   native,
   rate,
   t,
+  memo,
   onlyPattern,
 }: {
   sentence: ShownSentence;
@@ -159,6 +171,7 @@ function ExampleRow({
   native: Lang;
   rate: number;
   t: Dict;
+  memo: string[];
   onlyPattern?: string;
 }) {
   const marks: Highlight[] = sentence.marks
@@ -171,9 +184,19 @@ function ExampleRow({
   return (
     <div className={styles.row}>
       <div className={styles.rowText}>
-        <span className={`${styles.exampleText} ${langClass(lang)}`}>
-          <SentenceText text={sentence.text} highlights={marks} reading={sentence.reading} />
-        </span>
+        <MemoTap
+          sentence={{ id: sentence.id, text: sentence.text, reading: sentence.reading }}
+          native={native}
+          target={lang}
+          rate={rate}
+          className={`${styles.exampleText} ${langClass(lang)}`}
+        >
+          <SentenceText
+            text={sentence.text}
+            highlights={[...marks, ...findMemoHits(sentence.text, memo).map((h) => ({ ...h, kind: "memo" as const }))]}
+            reading={sentence.reading}
+          />
+        </MemoTap>
         <span className={`${styles.gloss} ${langClass(native)}`}>
           <SentenceText text={sentence.gloss} highlights={glossMarks} />
         </span>
@@ -196,19 +219,24 @@ function CorrectionView({
   native,
   rate,
   t,
+  memo,
 }: {
   correction: CorrectionRow;
   target: Lang;
   native: Lang;
   rate: number;
   t: Dict;
+  memo: string[];
 }) {
   const result = correction.result;
   const { removed, added } = diffRanges(correction.input, correction.corrected, target);
   const after: Highlight[] = [
     ...added.map((r) => ({ ...r, kind: "ins" as const })),
     ...(result.patterns ?? []).map((p) => ({ start: p.start, end: p.end, kind: "mark" as const })),
+    ...findMemoHits(correction.corrected, memo).map((h) => ({ ...h, kind: "memo" as const })),
   ];
+  const reading = readingFor(correction.corrected, target);
+  const fixedSentence = { id: null, text: correction.corrected, reading };
 
   return (
     <>
@@ -223,7 +251,9 @@ function CorrectionView({
         <h2 className="label">{result.natural ? t.saying.natural : t.saying.corrected}</h2>
         <div className={styles.fixedRow}>
           <p className={`${styles.fixed} ${langClass(target)}`}>
-            <SentenceText text={correction.corrected} highlights={after} reading={readingFor(correction.corrected, target)} />
+            <MemoTap sentence={fixedSentence} native={native} target={target} rate={rate}>
+              <SentenceText text={correction.corrected} highlights={after} reading={reading} />
+            </MemoTap>
           </p>
           <SpeakButton
             text={correction.corrected}
@@ -236,11 +266,12 @@ function CorrectionView({
           />
         </div>
         <p className={`${styles.gloss} ${langClass(native)}`}>{result.meaning}</p>
-        <div>
+        <div className={styles.actions}>
           <CopyButton
             text={correction.corrected}
             labels={{ copy: t.common.copy, copied: t.common.copied, failed: t.common.copyFailed }}
           />
+          <MemoButton sentence={fixedSentence} native={native} target={target} rate={rate} />
         </div>
       </section>
 
@@ -258,12 +289,14 @@ async function PatternsView({
   native,
   rate,
   t,
+  memo,
 }: {
   correction: CorrectionRow;
   target: Lang;
   native: Lang;
   rate: number;
   t: Dict;
+  memo: string[];
 }) {
   const found = correction.result.patterns ?? [];
   if (found.length === 0) return null;
@@ -294,7 +327,7 @@ async function PatternsView({
                 <p className={styles.empty}>{t.saying.noPatternExamples}</p>
               ) : (
                 list.map((s) => (
-                  <ExampleRow key={s.id} sentence={s} lang={target} native={native} rate={rate} t={t} onlyPattern={f.id} />
+                  <ExampleRow key={s.id} sentence={s} lang={target} native={native} rate={rate} t={t} memo={memo} onlyPattern={f.id} />
                 ))
               )}
             </div>

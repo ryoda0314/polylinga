@@ -1,11 +1,22 @@
+/* Fixed to the bottom of the screen: it never scrolls with the page. The shell is at most 560 px wide, so is the bar. */
 .nav {
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 50%;
+  z-index: 10;
+  width: 100%;
+  max-width: 560px;
+  transform: translateX(-50%);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   background: var(--paper);
   border-top: 1px solid var(--line);
   padding: 4px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+}
+
+/* While typing on a phone the keyboard is up: the bar steps out of the way instead of riding on top of the keyboard. */
+@media (pointer: coarse) {
+  :global(body:has(textarea:focus, input:not([type="checkbox"]):not([type="radio"]):focus)) .nav { visibility: hidden; }
 }
 
 .item {
@@ -21,5 +32,3 @@
 }
 
 .active { color: var(--accent); font-weight: 600; }
-
-

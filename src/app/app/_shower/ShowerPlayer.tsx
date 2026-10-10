@@ -201,7 +201,7 @@ export function ShowerPlayer({
             </button>
           )}
           {trying ? (
-            <TryForm patternId={cluster.patternId} native={native} target={target} />
+            <TryForm patternId={cluster.patternId} native={native} target={target} sentences={cluster.sentences} revealed={revealed} />
           ) : (
             <button type="button" className="btn-quiet" onClick={() => setTrying(true)}>
               {t.shower.tryIt}

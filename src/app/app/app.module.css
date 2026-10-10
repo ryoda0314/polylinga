@@ -12,7 +12,8 @@
   .shell { border: 0; }
 }
 
-.main { flex: 1; display: flex; flex-direction: column; }
+/* Room at the bottom for the fixed bar (BottomNav: 4 + 56 + 8 px, the border, and the phone's home area). */
+.main { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(69px + env(safe-area-inset-bottom, 0px)); }
 
 /* Top bars */
 .topbar {
@@ -96,6 +97,15 @@
   padding: 16px 20px; background: var(--paper); border-top: 1px solid var(--line);
 }
 .footerBar > * { flex: 1; }
+
+/* A sentence that opens the word sheet when tapped: it looks like plain text until then. */
+.tapText { all: unset; cursor: pointer; border-radius: 6px; overflow-wrap: anywhere; }
+.tapText:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Example sentences kept above a field while typing: a short scrollable box. */
+.refBox { display: flex; flex-direction: column; gap: 6px; scroll-margin-top: 8px; }
+.refScroll { max-height: 30vh; overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid var(--line); }
 
 /* Correction */
 .yours { margin: 0; font-size: 20px; line-height: 1.7; color: var(--muted); overflow-wrap: anywhere; }
