@@ -33,14 +33,22 @@ export type FormState = { error: string | null };
 // Shower
 // ---------------------------------------------------------------------------
 
-/** Record the cluster the learner just finished (if any) and hand them the next one. */
-export async function nextCluster(finished: { patternId: string; sentenceIds: string[] } | null): Promise<ShowerCluster | null> {
+/**
+ * Record a cluster once all of it has fallen. It counts as bathed in then, whatever the learner does next (move on,
+ * try a sentence, or leave), so the same pattern does not come straight back next time.
+ */
+export async function recordFinished(finished: { patternId: string; sentenceIds: string[] }) {
   const { user } = await requireUser();
   const settings = await requireSettings();
-  if (finished && typeof finished.patternId === "string" && Array.isArray(finished.sentenceIds)) {
-    await recordCluster(user.id, settings.targetLang, finished.patternId, finished.sentenceIds.map(String));
-  }
-  return pickCluster(user.id, settings.targetLang, settings.nativeLang, finished?.patternId ?? null);
+  if (typeof finished?.patternId !== "string" || !Array.isArray(finished.sentenceIds)) return;
+  await recordCluster(user.id, settings.targetLang, finished.patternId, finished.sentenceIds.map(String));
+}
+
+/** The next cluster, avoiding the pattern the learner just had. */
+export async function nextCluster(avoidPatternId: string | null): Promise<ShowerCluster | null> {
+  const { user } = await requireUser();
+  const settings = await requireSettings();
+  return pickCluster(user.id, settings.targetLang, settings.nativeLang, typeof avoidPatternId === "string" ? avoidPatternId : null);
 }
 
 /** Other sentences with the word, for the word sheet. */

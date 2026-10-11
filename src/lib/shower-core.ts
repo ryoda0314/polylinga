@@ -10,6 +10,23 @@ export function nextReturn(times: number, now = new Date()): string {
   return new Date(now.getTime() + days * 86_400_000).toISOString();
 }
 
+/**
+ * Rains (clusters bathed in, in this language) until a pattern returns, by how many times the learner has bathed in it.
+ * Someone who bathes a lot meets a new pattern again within the same sitting; the day count above still brings it back
+ * to someone who comes once a day. Whichever comes first.
+ */
+export const RETURN_RAINS = [3, 8, 20, 50, 120];
+
+export function returnAfterRain(times: number, rainsSoFar: number): number {
+  return rainsSoFar + RETURN_RAINS[Math.min(Math.max(times - 1, 0), RETURN_RAINS.length - 1)];
+}
+
+/** Whether a pattern is due to rain again: its day has come, or enough other rains have fallen since. */
+export function isDue(e: { next_at: string | null; return_after: number | null }, rainsSoFar: number, now = Date.now()): boolean {
+  if (e.return_after != null && rainsSoFar >= e.return_after) return true;
+  return Boolean(e.next_at) && new Date(e.next_at!).getTime() <= now;
+}
+
 /** Every place one of the memo words occurs in the text (case-insensitive for Latin script). */
 export function findMemoHits(text: string, words: string[]): Span[] {
   const hay = text.toLowerCase();

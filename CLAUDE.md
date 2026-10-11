@@ -20,7 +20,9 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 
 - `src/lib/auth.ts`, `src/lib/settings.ts`: request-cached user and settings (`requireUser`, `requireSettings`).
 - `src/lib/shower.ts` (+ pure helpers in `shower-core.ts`): picks the next cluster (patterns due to return first,
-  then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings.
+  then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings. A pattern is due
+  after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same
+  sitting. A cluster counts as bathed in once all of it has fallen (`recordFinished`), not only on 次の雨.
 - `src/lib/corpus.ts`: the sentence library (search for 書いてみる hints, examples by pattern). RLS hides drafts.
 - `src/lib/reading.ts`: pinyin over Chinese text. Library sentences use their checked `zh_pinyin`; anything else
   (corrections, memo words) falls back to pinyin-pro, which misreads polyphones such as 得・只・长.

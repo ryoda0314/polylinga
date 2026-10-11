@@ -4,7 +4,7 @@ import { sentenceAudio, type Audio } from "@/lib/corpus";
 import type { Range } from "@/lib/diff";
 import type { Lang } from "@/lib/langs";
 import { readingFor } from "@/lib/reading";
-import { findMemoHits, nextReturn } from "@/lib/shower-core";
+import { findMemoHits, isDue, nextReturn, returnAfterRain } from "@/lib/shower-core";
 
 export { findMemoHits };
 
@@ -58,7 +58,7 @@ export async function pickCluster(
     supabase.from("pl_patterns").select("id, function_id").eq("lang", target),
     supabase.from("pl_functions").select("id, position, label"),
     supabase.rpc("pl_pattern_counts", { target }),
-    supabase.from("pl_exposures").select("pattern_id, times, last_at, next_at").eq("user_id", userId),
+    supabase.from("pl_exposures").select("pattern_id, times, last_at, next_at, return_after").eq("user_id", userId),
   ]);
 
   const position = new Map((functions ?? []).map((f) => [f.id, f.position as number]));
@@ -67,10 +67,18 @@ export async function pickCluster(
   if (usable.length === 0) return null;
 
   const exposure = new Map((exposures ?? []).map((e) => [e.pattern_id, e]));
+  const rains = rainsIn(patterns ?? [], exposures ?? []);
   const now = Date.now();
+  // Due patterns come back first: the ones overdue by the most rains, then by the longest wait in days.
   const due = usable
-    .filter((p) => exposure.get(p.id)?.next_at && new Date(exposure.get(p.id)!.next_at).getTime() <= now)
-    .sort((a, b) => new Date(exposure.get(a.id)!.next_at).getTime() - new Date(exposure.get(b.id)!.next_at).getTime());
+    .filter((p) => exposure.has(p.id) && isDue(exposure.get(p.id)!, rains, now))
+    .sort((a, b) => {
+      const ea = exposure.get(a.id)!, eb = exposure.get(b.id)!;
+      return (
+        (ea.return_after ?? Infinity) - (eb.return_after ?? Infinity) ||
+        new Date(ea.next_at ?? 0).getTime() - new Date(eb.next_at ?? 0).getTime()
+      );
+    });
   const fresh = usable
     .filter((p) => !exposure.has(p.id))
     .sort(
@@ -149,27 +157,41 @@ export async function pickCluster(
   };
 }
 
+/** How many rains (clusters) the learner has bathed in, in this language: every bath counts once for its pattern. */
+function rainsIn(patterns: { id: string }[], exposures: { pattern_id: string; times: number }[]): number {
+  const ids = new Set(patterns.map((p) => p.id));
+  return exposures.reduce((n, e) => n + (ids.has(e.pattern_id) ? (e.times ?? 0) : 0), 0);
+}
+
 /** Remember a finished cluster: when the pattern returns, which sentences were seen, which memo words were met. */
 export async function recordCluster(userId: string, target: Lang, patternId: string, sentenceIds: string[]) {
   const { supabase } = await getSession();
   const ids = sentenceIds.slice(0, CLUSTER_SIZE);
   const nowIso = new Date().toISOString();
 
-  const [{ data: exposure }, { data: seenRows }, { data: rows }, { data: words }] = await Promise.all([
-    supabase.from("pl_exposures").select("times").eq("user_id", userId).eq("pattern_id", patternId).maybeSingle(),
+  const [{ data: patterns }, { data: exposures }, { data: seenRows }, { data: rows }, { data: words }] = await Promise.all([
+    supabase.from("pl_patterns").select("id").eq("lang", target),
+    supabase.from("pl_exposures").select("pattern_id, times").eq("user_id", userId),
     supabase.from("pl_seen").select("sentence_id, times").eq("user_id", userId).in("sentence_id", ids),
     supabase.from("pl_sentences").select(`id, ${target}`).in("id", ids),
     supabase.from("pl_words").select("id, text, encounters").eq("user_id", userId).eq("lang", target),
   ]);
 
+  const exposure = (exposures ?? []).find((e) => e.pattern_id === patternId);
   const times = (exposure?.times ?? 0) + 1;
+  const rains = rainsIn(patterns ?? [], exposures ?? []) + 1; // counting this one
   const seen = new Map((seenRows ?? []).map((s) => [s.sentence_id, s.times as number]));
   const texts = (rows ?? []).map((r) => String((r as Record<string, unknown>)[target] ?? ""));
 
   const writes: PromiseLike<unknown>[] = [
-    supabase
-      .from("pl_exposures")
-      .upsert({ user_id: userId, pattern_id: patternId, times, last_at: nowIso, next_at: nextReturn(times) }),
+    supabase.from("pl_exposures").upsert({
+      user_id: userId,
+      pattern_id: patternId,
+      times,
+      last_at: nowIso,
+      next_at: nextReturn(times),
+      return_after: returnAfterRain(times, rains),
+    }),
     supabase.from("pl_seen").upsert(
       (rows ?? []).map((r) => ({
         user_id: userId,

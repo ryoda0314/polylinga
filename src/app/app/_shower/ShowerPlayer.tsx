@@ -9,7 +9,7 @@ import { SentenceText, type Highlight } from "@/components/SentenceText";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
 import type { ShowerCluster, ShowerSentence } from "@/lib/shower";
-import { nextCluster } from "../actions";
+import { nextCluster, recordFinished } from "../actions";
 import styles from "./shower.module.css";
 import { TryForm } from "./TryForm";
 import { WordSheet } from "./WordSheet";
@@ -45,7 +45,18 @@ export function ShowerPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const runRef = useRef(0); // bumping it stops whatever flow is running
 
+  const recorded = useRef<{ key: string; done: Promise<void> } | null>(null);
+
   useEffect(() => () => stopAudio(audioRef.current), []);
+
+  // Once every sentence has fallen, the cluster counts as bathed in, even if the learner then tries a sentence or leaves.
+  useEffect(() => {
+    if (!cluster || shown < cluster.sentences.length) return;
+    const sentenceIds = cluster.sentences.map((s) => s.id);
+    const key = `${cluster.patternId}:${sentenceIds.join(",")}`;
+    if (recorded.current?.key === key) return;
+    recorded.current = { key, done: recordFinished({ patternId: cluster.patternId, sentenceIds }).catch(() => {}) };
+  }, [cluster, shown]);
 
   function element() {
     // Created on the first tap; later plays on the same element are allowed on mobile.
@@ -92,9 +103,10 @@ export function ShowerPlayer({
     runRef.current++;
     stopAudio(audioRef.current);
     setPlaying(null);
-    const finished = { patternId: cluster.patternId, sentenceIds: cluster.sentences.map((s) => s.id) };
+    const avoid = cluster.patternId;
     startTransition(async () => {
-      const next = await nextCluster(finished);
+      await recorded.current?.done;
+      const next = await nextCluster(avoid);
       setCluster(next);
       setRevealed(false);
       setTrying(false);

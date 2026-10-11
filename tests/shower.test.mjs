@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { findMemoHits, nextReturn, wordStage } from "../src/lib/shower-core.ts";
+import { findMemoHits, isDue, nextReturn, returnAfterRain, wordStage } from "../src/lib/shower-core.ts";
 
 const DAY = 86_400_000;
 const now = new Date("2026-10-09T00:00:00Z");
@@ -32,4 +32,16 @@ test("memo stage: はじめて → 前に見た → 意味が分かる → 使�
   assert.equal(wordStage({ encounters: 3, uses: 0, understood: false }), "seen");
   assert.equal(wordStage({ encounters: 3, uses: 0, understood: true }), "understood");
   assert.equal(wordStage({ encounters: 1, uses: 1, understood: false }), "used");
+});
+
+test("a pattern also comes back after 3, 8, 20, 50 ... other rains, capped at 120", () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 9].map((times) => returnAfterRain(times, 10) - 10), [3, 8, 20, 50, 120, 120, 120]);
+});
+
+test("due when enough rains have fallen or its day has come, whichever first", () => {
+  const later = new Date(now.getTime() + DAY).toISOString(), earlier = new Date(now.getTime() - DAY).toISOString();
+  assert.equal(isDue({ next_at: later, return_after: 5 }, 4, now.getTime()), false);
+  assert.equal(isDue({ next_at: later, return_after: 5 }, 5, now.getTime()), true);
+  assert.equal(isDue({ next_at: earlier, return_after: 50 }, 4, now.getTime()), true);
+  assert.equal(isDue({ next_at: later, return_after: null }, 999, now.getTime()), false);
 });
