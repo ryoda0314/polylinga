@@ -63,6 +63,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const writeForm = (
     <WriteForm
       action={correctSaying.bind(null, saying.id)}
+      draftKey={`saying:${saying.id}`}
       left={left}
       targetClass={langClass(target)}
       labels={{

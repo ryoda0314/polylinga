@@ -56,6 +56,30 @@ function toSaid(c: { id: string; saying_id: string | null; input: string; correc
   };
 }
 
+/**
+ * For the rain's greeting: whether the learner has already bathed today, and whether they are coming back after a few
+ * days away (never how many, and never as a streak).
+ */
+export async function rainSoFar(userId: string, target: Lang): Promise<{ today: boolean; back: boolean }> {
+  const { supabase } = await getSession();
+  const today = dayOf(new Date().toISOString());
+  const { data } = await supabase
+    .from("pl_rain_days")
+    .select("day")
+    .eq("user_id", userId)
+    .eq("lang", target)
+    .order("day", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const last = (data?.day as string | undefined) ?? null;
+  if (!last) return { today: false, back: false };
+  const away = (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${last}T00:00:00Z`)) / 86_400_000;
+  return { today: away === 0, back: away >= BACK_AFTER_DAYS };
+}
+
+/** Days away after which coming back is greeted. */
+const BACK_AFTER_DAYS = 3;
+
 /** The four numbers at the top of 自分. */
 export async function loadSofar(userId: string, target: Lang): Promise<Sofar> {
   const { supabase } = await getSession();

@@ -13,6 +13,10 @@ export type Settings = {
   shareRain: boolean;
   /** When the learner last heard that one of their sentences reached someone. */
   reachedSeenAt: string | null;
+  /** Their plan for when they bathe in the rain (電車に乗ったら), if they made one. */
+  rainCue: string | null;
+  /** Whether they have been asked for that plan (asked once, after their first rain). */
+  rainCueAsked: boolean;
 };
 
 // Launch scope: Japanese speakers learning Korean, English or Chinese.
@@ -28,7 +32,7 @@ export const getSettings = cache(async (): Promise<Settings | null> => {
   const { supabase, user } = await requireUser();
   const { data } = await supabase
     .from("pl_settings")
-    .select("native_lang, target_lang, accent, speech_rate, share_rain, reached_seen_at")
+    .select("native_lang, target_lang, accent, speech_rate, share_rain, reached_seen_at, rain_cue, rain_cue_asked")
     .eq("user_id", user.id)
     .maybeSingle();
   if (!data || !isLaunchPair(data.native_lang, data.target_lang)) return null;
@@ -39,6 +43,8 @@ export const getSettings = cache(async (): Promise<Settings | null> => {
     speechRate: typeof data.speech_rate === "number" ? data.speech_rate : 1,
     shareRain: data.share_rain === true,
     reachedSeenAt: (data.reached_seen_at as string | null) ?? null,
+    rainCue: (data.rain_cue as string | null) ?? null,
+    rainCueAsked: data.rain_cue_asked === true,
   };
 });
 

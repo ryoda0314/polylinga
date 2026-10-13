@@ -28,6 +28,11 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings. A pattern is due
   after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same
   sitting. A cluster counts as bathed in once all of it has fallen (`recordFinished`), not only on 次の雨.
+- Habit, without streaks (habits form from a cue repeated, and a missed day barely slows that): after the first rain the
+  learner is asked once when they will bathe (`pl_settings.rain_cue`, e.g. 電車に乗ったら; `CuePrompt`, settings), and the
+  rain shows 「〜、ひと雨。」. The first rain of a day ends with "enough for today", and coming back after 3+ days away is
+  greeted (`rainSoFar` in me.ts). For train rides: sound and translation settings are kept on the device, the next rain
+  is fetched while the current one is on screen, and half-written sentences are kept as drafts (`src/components/local.ts`).
 - `src/lib/minna.ts`: みんなの雨 (`/app?rain=minna`). Learners who switch sharing on (`pl_settings.share_rain`) send
   corrected sentences the correction judged `shareable` into `pl_shared`, one row per pattern used, lit at the pattern's
   usual library part. Clusters by pattern from other learners (4 or more), never showing who wrote them: these tables have

@@ -71,6 +71,19 @@ export async function reportMinna(sharedId: string) {
   if (typeof sharedId === "string" && UUID.test(sharedId)) await reportShared(user.id, sharedId);
 }
 
+/** A plan for when to bathe in the rain (電車に乗ったら), or none. Either way they have been asked. */
+export async function setRainCue(cue: string | null) {
+  const { supabase, user } = await requireUser();
+  const text = typeof cue === "string" ? cleanCue(cue) : null;
+  await supabase.from("pl_settings").update({ rain_cue: text, rain_cue_asked: true }).eq("user_id", user.id);
+}
+
+/** A plan as the learner wrote it, without a trailing comma or full stop (the page adds 「、ひと雨。」). */
+function cleanCue(value: unknown): string | null {
+  const text = cleanText(value).replace(/[、。,.\s]+$/u, "").slice(0, 30);
+  return text || null;
+}
+
 /** The learner has seen that their sentences reached someone. */
 export async function markReachedSeen() {
   const { supabase, user } = await requireUser();
@@ -421,6 +434,8 @@ export async function saveSettings(_prev: SettingsState, formData: FormData): Pr
     accent,
     speech_rate: [0.75, 1, 1.25].includes(rate) ? rate : 1,
     share_rain: formData.get("share_rain") === "on",
+    rain_cue: cleanCue(formData.get("rain_cue")),
+    rain_cue_asked: true,
     updated_at: new Date().toISOString(),
   });
   if (error) return { message: t.me.saveFailed, error: true };

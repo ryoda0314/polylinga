@@ -1,0 +1,13 @@
+.picker { display: flex; flex-direction: column; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 40px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 999px;
+  background: var(--paper); color: var(--ink-2); font-size: 14px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); color: var(--accent); font-weight: 600; }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.own { display: flex; flex-direction: column; gap: 6px; }
+.input {
+  min-height: 48px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: var(--paper); font-size: 16px;
+}

@@ -150,3 +150,12 @@
 @media (prefers-reduced-motion: reduce) {
   .item { animation: none; }
 }
+/* Making the rain a habit: a welcome back, the learner's plan, today's first rain done, and the one-time question. */
+.welcome { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.7; color: var(--ink-2); }
+.cueLine { margin: 0; font-size: 14px; font-weight: 500; color: var(--accent); }
+.doneToday { margin: 0; font-size: 14px; line-height: 1.7; color: var(--ink-2); }
+.cue { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--surface); border-radius: var(--radius); }
+.cueTitle { margin: 0; font-size: 16px; font-weight: 600; }
+.cueActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-top: 4px; }
+.cueDone { margin: 0; font-size: 14px; line-height: 1.7; color: var(--accent); }
+.offline { margin: 0; font-size: 13px; line-height: 1.7; color: var(--danger); }

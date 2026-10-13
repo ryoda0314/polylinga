@@ -1,21 +1,28 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo } from "react";
+import { useDraft } from "@/components/local";
 import type { FormState } from "../../actions";
 import styles from "../../app.module.css";
 
 export function WriteForm({
   action,
+  draftKey,
   left,
   targetClass,
   labels,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
+  /** Where the half-written sentence is kept on this device (one per saying). */
+  draftKey: string;
   left: number;
   targetClass: string;
   labels: { write: string; hint: string; submit: string; pending: string; left: string; out: string };
 }) {
-  const [state, formAction, pending] = useActionState<FormState, FormData>(action, { error: null });
+  const draft = useDraft(draftKey, "text");
+  const { wrap } = draft;
+  const run = useMemo(() => wrap(action), [wrap, action]);
+  const [state, formAction, pending] = useActionState<FormState, FormData>(run, { error: null });
 
   // Once the keyboard is up, bring the example sentences above the field (if the page has them) into view with it.
   function keepHintsInView() {
@@ -34,6 +41,8 @@ export function WriteForm({
         maxLength={200}
         className={`${styles.textarea} ${targetClass}`}
         onFocus={keepHintsInView}
+        value={draft.value}
+        onChange={(e) => draft.change(e.target.value)}
       />
       <p className={styles.note}>{labels.hint}</p>
       {state.error ? (

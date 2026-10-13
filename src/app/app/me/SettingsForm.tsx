@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { CuePicker } from "@/components/CuePicker";
 import { ACCENTS, type Accent, type Lang } from "@/lib/langs";
 import type { Settings } from "@/lib/settings";
 import { saveSettings, type SettingsState } from "../actions";
@@ -30,6 +31,13 @@ export function SettingsForm({
     preview: string;
     rate: string;
     rates: { slow: string; normal: string; fast: string };
+    cue: string;
+    cueOptions: readonly string[];
+    cueOwn: string;
+    cueOwnLabel: string;
+    cueOwnPlaceholder: string;
+    cueNone: string;
+    cueNote: string;
     share: string;
     shareLabel: string;
     shareNote: string;
@@ -43,6 +51,7 @@ export function SettingsForm({
   });
   // Preview the accent before saving: the whole app shell reads data-accent.
   const [accent, setAccent] = useState<Accent>(settings.accent);
+  const [cue, setCue] = useState<string | null>(settings.rainCue);
   const rates = [
     { value: 0.75, label: labels.rates.slow },
     { value: 1, label: labels.rates.normal },
@@ -102,6 +111,20 @@ export function SettingsForm({
             </label>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="label" style={{ marginBottom: 8 }}>
+          {labels.cue}
+        </legend>
+        <CuePicker
+          name="rain_cue"
+          value={cue}
+          onChange={setCue}
+          options={labels.cueOptions}
+          labels={{ own: labels.cueOwn, ownLabel: labels.cueOwnLabel, ownPlaceholder: labels.cueOwnPlaceholder, none: labels.cueNone }}
+        />
+        <span className={styles.note}>{labels.cueNote}</span>
       </fieldset>
 
       <fieldset className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useRef } from "react";
+import { useDraft } from "@/components/local";
 import { SentenceText, type Highlight } from "@/components/SentenceText";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
@@ -30,7 +31,9 @@ export function TryForm({
   labels?: { ref: string; write: string };
 }) {
   const t = getDict(native);
-  const action = useMemo(() => tryPattern.bind(null, patternId), [patternId]);
+  const draft = useDraft(`try:${patternId}`, "text");
+  const { wrap } = draft;
+  const action = useMemo(() => wrap(tryPattern.bind(null, patternId)), [wrap, patternId]);
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, { error: null });
   const refBox = useRef<HTMLDivElement>(null);
 
@@ -70,6 +73,8 @@ export function TryForm({
         maxLength={200}
         className={`${styles.textarea} ${langClass(target)}`}
         onFocus={keepRainInView}
+        value={draft.value}
+        onChange={(e) => draft.change(e.target.value)}
       />
       <p className={styles.note}>{t.shower.tryHint}</p>
       {state.error ? (

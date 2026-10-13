@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { playToEnd, stopAudio } from "@/components/audio";
 import { Icon } from "@/components/Icon";
+import { usePref } from "@/components/local";
 import { Rain } from "@/components/Rain";
 import { SentenceText, type Highlight } from "@/components/SentenceText";
 import { getDict } from "@/lib/i18n";
@@ -12,6 +13,7 @@ import type { ShowerCluster, ShowerSentence } from "@/lib/shower";
 import Link from "next/link";
 import { heartMinna, markReachedSeen, nextCluster, recordFinished, reportMinna } from "../actions";
 import styles from "./shower.module.css";
+import { CuePrompt } from "./CuePrompt";
 import { TryForm } from "./TryForm";
 import { WordSheet } from "./WordSheet";
 
@@ -28,6 +30,7 @@ export function ShowerPlayer({
   source,
   reached,
   sharing,
+  habit,
   native,
   target,
   rate,
@@ -38,6 +41,11 @@ export function ShowerPlayer({
   reached: boolean;
   /** The learner shares their corrected sentences. */
   sharing: boolean;
+  /**
+   * Making the rain a habit: their plan (電車に乗ったら) and whether to ask for one, whether this visit brings their first
+   * rain today, and whether they are back after a few days away.
+   */
+  habit: { cue: string | null; ask: boolean; firstToday: boolean; back: boolean };
   native: Lang;
   target: Lang;
   rate: number;
@@ -46,8 +54,12 @@ export function ShowerPlayer({
   const [cluster, setCluster] = useState(initial);
   const [shown, setShown] = useState(0);
   const [playing, setPlaying] = useState<number | null>(null);
-  const [autoplay, setAutoplay] = useState(true);
-  const [hideGloss, setHideGloss] = useState(false);
+  // Remembered on this device: on a train the sound stays off until the learner turns it back on.
+  const [autoplay, setAutoplay] = usePref("autoplay", true);
+  const [hideGloss, setHideGloss] = usePref("hideGloss", false);
+  // Which rain of this visit this is (0 = the first): the greeting and today's note belong to the first only.
+  const [rainNo, setRainNo] = useState(0);
+  const [offline, setOffline] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [trying, setTrying] = useState(false);
   const [sheetFor, setSheetFor] = useState<ShowerSentence | null>(null);
@@ -55,7 +67,7 @@ export function ShowerPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const runRef = useRef(0); // bumping it stops whatever flow is running
 
-  const recorded = useRef<{ key: string; done: Promise<void> } | null>(null);
+  const recorded = useRef<{ key: string; done: Promise<void>; next: Promise<ShowerCluster | null> } | null>(null);
   const [hearted, setHearted] = useState<Set<string>>(() => new Set());
   const [reported, setReported] = useState<Set<string>>(() => new Set());
   const minna = source === "minna";
@@ -83,7 +95,11 @@ export function ShowerPlayer({
     const sentenceIds = cluster.sentences.map((s) => s.id);
     const key = `${cluster.patternId}:${sentenceIds.join(",")}`;
     if (recorded.current?.key === key) return;
-    recorded.current = { key, done: recordFinished({ patternId: cluster.patternId, sentenceIds }, source).catch(() => {}) };
+    const done = recordFinished({ patternId: cluster.patternId, sentenceIds }, source).catch(() => {});
+    // The next rain is fetched now, while this one is still on screen: 次の雨 then needs no connection (a tunnel).
+    const next = done.then(() => nextCluster(cluster.patternId, source));
+    next.catch(() => {}); // asked for again when the learner moves on
+    recorded.current = { key, done, next };
   }, [cluster, shown, source]);
 
   function element() {
@@ -132,9 +148,21 @@ export function ShowerPlayer({
     stopAudio(audioRef.current);
     setPlaying(null);
     const avoid = cluster.patternId;
+    const ahead = recorded.current?.next;
     startTransition(async () => {
-      await recorded.current?.done;
-      const next = await nextCluster(avoid, source);
+      let next: ShowerCluster | null;
+      try {
+        next = await (ahead ?? nextCluster(avoid, source));
+      } catch {
+        try {
+          next = await nextCluster(avoid, source);
+        } catch {
+          setOffline(true);
+          return;
+        }
+      }
+      setOffline(false);
+      setRainNo((n) => n + 1);
       setCluster(next);
       setRevealed(false);
       setTrying(false);
@@ -148,6 +176,7 @@ export function ShowerPlayer({
   }
 
   const reachedNote = reached ? <p className={styles.reached}>{t.shower.reached}</p> : null;
+  const firstRain = rainNo === 0;
   if (!cluster) {
     if (!minna) return <p className={styles.empty}>{t.shower.empty}</p>;
     return (
@@ -180,6 +209,9 @@ export function ShowerPlayer({
   return (
     <div className={styles.wrap}>
       {reachedNote}
+      {habit.back && firstRain && shown === 0 ? (
+        <p className={styles.welcome}>{cluster.again ? t.shower.welcomeBackAgain : t.shower.welcomeBack}</p>
+      ) : null}
       <div className={styles.toolbar}>
         <span className={cluster.again ? styles.again : styles.fresh}>{badge}</span>
         <div className={styles.toggles}>
@@ -206,6 +238,7 @@ export function ShowerPlayer({
               {minna ? t.shower.minnaIntro(cluster.sentences.length) : t.shower.introCount(cluster.sentences.length)}
             </p>
             {comingWords.length > 0 ? <p className={styles.memoNote}>{t.shower.introMemo(comingWords.join("・"))}</p> : null}
+            {habit.cue ? <p className={styles.cueLine}>{t.shower.cueLine(habit.cue)}</p> : null}
           </div>
           <p className={styles.lead}>{t.shower.lead}</p>
           <button type="button" className="btn" onClick={start}>
@@ -283,6 +316,8 @@ export function ShowerPlayer({
 
       {allShown ? (
         <div className={styles.after}>
+          {firstRain && habit.firstToday ? <p className={styles.doneToday}>{t.shower.doneToday}</p> : null}
+          {firstRain && habit.ask && !minna ? <CuePrompt native={native} /> : null}
           {revealed ? (
             <section className={styles.answer}>
               <h2 className="label">{t.shower.revealed}</h2>
@@ -304,6 +339,11 @@ export function ShowerPlayer({
           <button type="button" className="btn" onClick={goNext} disabled={pending}>
             {pending ? t.shower.loading : t.shower.nextCluster}
           </button>
+          {offline ? (
+            <p className={styles.offline} role="alert">
+              {t.shower.offline}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo } from "react";
+import { useDraft } from "@/components/local";
 import { startSaying, type FormState } from "../actions";
 import styles from "../app.module.css";
 
@@ -20,7 +21,11 @@ export function SayForm({
   };
   nativeClass: string;
 }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(startSaying, { error: null });
+  // Kept on this device while typing, for a ride that ends mid-sentence.
+  const draft = useDraft("write", "intent");
+  const { wrap } = draft;
+  const run = useMemo(() => wrap(startSaying), [wrap]);
+  const [state, action, pending] = useActionState<FormState, FormData>(run, { error: null });
 
   return (
     <form action={action} className={styles.stack}>
@@ -43,6 +48,8 @@ export function SayForm({
         maxLength={200}
         className={`${styles.textarea} ${nativeClass}`}
         placeholder={labels.placeholder}
+        value={draft.value}
+        onChange={(e) => draft.change(e.target.value)}
       />
       {state.error ? (
         <p className={styles.error} role="alert">
