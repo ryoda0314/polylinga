@@ -8,7 +8,16 @@ export function SayForm({
   labels,
   nativeClass,
 }: {
-  labels: { title: string; lead: string; input: string; placeholder: string; submit: string; pending: string };
+  labels: {
+    title: string;
+    lead: string;
+    steps: string[];
+    stepsLabel: string;
+    input: string;
+    placeholder: string;
+    submit: string;
+    pending: string;
+  };
   nativeClass: string;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(startSaying, { error: null });
@@ -16,10 +25,17 @@ export function SayForm({
   return (
     <form action={action} className={styles.stack}>
       <h1 className={styles.h1}>{labels.title}</h1>
-      <p className={styles.lead}>{labels.lead}</p>
-      <label htmlFor="intent" className="sr-only">
+      <ol className={styles.steps} role="list" aria-label={labels.stepsLabel}>
+        {labels.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+      <label htmlFor="intent" className="label">
         {labels.input}
       </label>
+      <p className={styles.note} style={{ marginTop: -8 }}>
+        {labels.lead}
+      </p>
       <textarea
         id="intent"
         name="intent"

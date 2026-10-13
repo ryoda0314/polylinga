@@ -40,6 +40,9 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   try it again) and 自分の文 (corrections, sentences hearted in みんなの雨, their own shared ones; withdraw hides every
   row of that correction). Rain before `pl_rain_days` existed shows only on each pattern's last day.
 - `src/lib/corpus.ts`: the sentence library (search for 書いてみる hints, examples by pattern). RLS hides drafts.
+  書いてみる hints (`searchCorpus` → `pl_hint_sentences`) are one sentence per function (かたち), ranked by the
+  sentence's closeness in meaning plus the function's average meaning, so they share a way of saying with the intent
+  rather than only its topic words; weak or far-behind ones are left out, and the page names each hint's かたち.
 - `src/lib/reading.ts`: pinyin over Chinese text. Library sentences use their checked `zh_pinyin`; anything else
   (corrections, memo words) falls back to pinyin-pro, which misreads polyphones such as 得・只・长.
 - `src/lib/metering.ts`: daily limits through `pl_consume_for` / `pl_refund_for`, callable by the service role only.

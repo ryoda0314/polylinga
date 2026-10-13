@@ -36,7 +36,9 @@ export default async function WritePage() {
       <SayForm
         labels={{
           title: t.write.title,
-          lead: t.write.lead(t.start.targets[target]),
+          lead: t.write.lead,
+          steps: t.write.steps(t.common.langs[target]),
+          stepsLabel: t.write.stepsLabel,
           input: t.write.inputLabel,
           placeholder: t.write.placeholder,
           submit: t.write.submit,

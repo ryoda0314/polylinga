@@ -264,7 +264,7 @@ export async function startSaying(_prev: FormState, formData: FormData): Promise
   const { supabase, user } = await requireUser();
   let matches: { sentence_id: string; similarity: number }[] = [];
   try {
-    matches = await searchCorpus(intent, settings.nativeLang);
+    matches = await searchCorpus(intent, settings.nativeLang, settings.targetLang);
   } catch (err) {
     // Hints are a bonus; the learner can still write and get a correction.
     console.error("[search]", err);

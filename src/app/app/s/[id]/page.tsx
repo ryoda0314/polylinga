@@ -66,7 +66,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
       left={left}
       targetClass={langClass(target)}
       labels={{
-        write: t.saying.writeLabel(t.start.targets[target]),
+        write: t.saying.writeLabel(t.common.langs[target]),
         hint: t.saying.writeHint,
         submit: t.saying.submit,
         pending: t.saying.pending,
@@ -154,19 +154,40 @@ async function Hints({
   t: Dict;
   memo: string[];
 }) {
-  const hints = patternId
-    ? ((await patternExamples([patternId], target, native, 4)).get(patternId) ?? [])
-    : await loadSentences(ids, target, native);
-  if (hints.length === 0) return null;
+  const [hints, patterns, labels] = await Promise.all([
+    patternId
+      ? patternExamples([patternId], target, native, 4).then((m) => m.get(patternId) ?? [])
+      : loadSentences(ids, target, native),
+    approvedPatterns(target),
+    functionLabels(),
+  ]);
+  if (patternId && hints.length === 0) return null;
+  // Each hint is a different way of saying (searchCorpus picks one per function): name it, as the rain does.
+  const labelOf = (s: ShownSentence) => {
+    const pattern = patterns.find((p) => p.id === s.marks[0]?.patternId);
+    return pattern ? (labels.get(pattern.functionId)?.[native] ?? null) : null;
+  };
   return (
     // Above the field, short and scrollable, so it stays in view while typing (WriteForm scrolls to it on focus).
     <section id="write-ref" className={styles.refBox}>
       <h2 className="label">{patternId ? t.saying.showerTitle : t.saying.hintsTitle}</h2>
-      <div className={styles.refScroll}>
-        {hints.map((s) => (
-          <ExampleRow key={s.id} sentence={s} lang={target} native={native} rate={rate} t={t} memo={memo} />
-        ))}
-      </div>
+      {patternId ? null : <p className={styles.note}>{hints.length ? t.saying.hintsNote : t.saying.hintsNone}</p>}
+      {hints.length ? (
+        <div className={styles.refScroll}>
+          {hints.map((s) => (
+            <ExampleRow
+              key={s.id}
+              sentence={s}
+              lang={target}
+              native={native}
+              rate={rate}
+              t={t}
+              memo={memo}
+              label={patternId ? null : labelOf(s)}
+            />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -179,6 +200,7 @@ function ExampleRow({
   t,
   memo,
   onlyPattern,
+  label,
 }: {
   sentence: ShownSentence;
   lang: Lang;
@@ -187,6 +209,8 @@ function ExampleRow({
   t: Dict;
   memo: string[];
   onlyPattern?: string;
+  /** The way of saying it shows (誘う), for hints. */
+  label?: string | null;
 }) {
   const marks: Highlight[] = sentence.marks
     .filter((m) => !onlyPattern || m.patternId === onlyPattern)
@@ -198,6 +222,7 @@ function ExampleRow({
   return (
     <div className={styles.row}>
       <div className={styles.rowText}>
+        {label ? <span className={styles.kind}>{label}</span> : null}
         <MemoTap
           sentence={{ id: sentence.id, text: sentence.text, reading: sentence.reading }}
           native={native}

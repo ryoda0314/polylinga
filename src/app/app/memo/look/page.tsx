@@ -46,7 +46,7 @@ export default async function LookPage({ searchParams }: PageProps<"/app/memo/lo
       <div className={styles.bodyTight}>
         <Form action="/app/memo/look" className={styles.stackSm} role="search">
           <label htmlFor="look-q" className="label">
-            {t.look.label(t.look.names[target])}
+            {t.look.label(t.common.langs[target])}
           </label>
           <div className={styles.lookRow}>
             <input

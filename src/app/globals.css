@@ -51,6 +51,9 @@
 
 html, body { margin: 0; padding: 0; }
 
+/* Something scrolled into view at the top stops below the status bar strip, not under it. */
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
 /* Every page starts below the phone's status bar; .status-fill paints the bar itself. */
 body {
   padding-top: env(safe-area-inset-top, 0px);
