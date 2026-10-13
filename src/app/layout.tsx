@@ -38,7 +38,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ja"
       className={`${plex.variable} ${plexJp.variable} ${plexKr.variable} ${notoSc.variable} ${plexMono.variable} ${shippori.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <div className="status-fill" aria-hidden="true" />
+        {children}
+      </body>
     </html>
   );
 }

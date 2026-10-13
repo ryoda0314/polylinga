@@ -1,5 +1,5 @@
 .shell {
-  min-height: 100dvh;
+  min-height: calc(100dvh - env(safe-area-inset-top, 0px));
   display: flex;
   flex-direction: column;
   max-width: 560px;
@@ -12,13 +12,13 @@
   .shell { border: 0; }
 }
 
-/* Room at the bottom for the fixed bar (BottomNav: 4 + 56 + 8 px, the border, and the phone's home area). */
-.main { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(69px + env(safe-area-inset-bottom, 0px)); }
+/* Room at the bottom for the fixed bar (BottomNav: 4 + 50 px, the border, and --nav-bottom). */
+.main { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(55px + var(--nav-bottom)); }
 
 /* Top bars */
 .topbar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 0;
+  padding: 12px 20px 0;
 }
 .wordmark { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; color: var(--ink); }
 .pair {
@@ -27,7 +27,7 @@
 }
 .subbar {
   display: flex; align-items: center; gap: 4px;
-  padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 8px;
+  padding: 8px 12px 8px 8px;
   border-bottom: 1px solid var(--line);
 }
 .iconLink {
@@ -117,7 +117,7 @@
 .note { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.7; }
 
 /* Review */
-.reviewHead { display: flex; flex-direction: column; gap: 8px; padding: calc(8px + env(safe-area-inset-top, 0px)) 20px 0; }
+.reviewHead { display: flex; flex-direction: column; gap: 8px; padding: 8px 20px 0; }
 .reviewHeadRow { display: flex; align-items: center; justify-content: space-between; }
 .reviewTitle { font-size: 15px; font-weight: 600; }
 .review { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 24px; padding: 24px 28px; }

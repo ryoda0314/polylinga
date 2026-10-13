@@ -28,6 +28,8 @@
 
   --radius: 12px;
   --tap: 44px;
+  /* Room under the bottom bar: the home indicator's inset, less what its own margin already leaves clear. */
+  --nav-bottom: max(8px, env(safe-area-inset-bottom, 0px) - 12px);
 
   --font-ui: var(--font-plex), var(--font-plex-jp), "Hiragino Sans", "Yu Gothic", sans-serif;
   --font-ja: var(--font-plex-jp), "Hiragino Sans", "Yu Gothic", sans-serif;
@@ -49,13 +51,24 @@
 
 html, body { margin: 0; padding: 0; }
 
+/* Every page starts below the phone's status bar; .status-fill paints the bar itself. */
 body {
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ui);
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* A solid strip behind the phone's status bar (zero tall where there is none). Without it iOS draws a gradient over
+   whatever scrolls underneath. Below the sheets, which dim it with everything else. */
+.status-fill {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 15;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--status-fill, var(--paper));
+  pointer-events: none;
 }
 
 a { color: inherit; }

@@ -11,7 +11,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   background: var(--paper);
   border-top: 1px solid var(--line);
-  padding: 4px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 8px var(--nav-bottom);
 }
 
 /* While typing on a phone the keyboard is up: the bar steps out of the way instead of riding on top of the keyboard. */
@@ -20,7 +20,7 @@
 }
 
 .item {
-  min-height: 56px;
+  min-height: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;

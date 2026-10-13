@@ -75,3 +75,7 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - Every tab is rendered on the server per visit. `src/app/app/loading.tsx` makes the bottom bar switch at once (in
   production its links prefetch it): it shows the destination's own header, so keep those headers in step with the pages'.
   Pages run their queries in parallel where they can; each sequential Supabase call adds about 40 ms.
+- Phone safe areas (`viewport-fit=cover`): `body` is padded by the top inset and `.status-fill` (root layout) paints
+  the status bar solid, since iOS otherwise draws a gradient over content scrolling under it. Pages never add the top
+  inset themselves; a page with another background sets `--status-fill` (see login.module.css). The bottom bar's room
+  under the tabs is `--nav-bottom` in globals.css.

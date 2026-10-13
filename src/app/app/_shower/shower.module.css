@@ -121,7 +121,7 @@
 .sheet {
   width: 100%; max-width: 560px; max-height: 88dvh; overflow-y: auto;
   background: var(--paper); border-radius: 16px 16px 0 0;
-  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  padding: 16px 20px max(24px, env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; gap: 14px; outline: none;
 }
 .sheetHead { display: flex; align-items: center; justify-content: space-between; }

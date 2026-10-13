@@ -1,4 +1,5 @@
-.shell { min-height: 100dvh; background: var(--surface); }
+:global(body):has(.shell) { --status-fill: var(--surface); }
+.shell { min-height: calc(100dvh - env(safe-area-inset-top, 0px)); background: var(--surface); }
 .header {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 12px 20px; background: var(--paper); border-bottom: 1px solid var(--line);
