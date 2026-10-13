@@ -38,6 +38,8 @@ export type ShowerCluster = {
   /** Whole days since it last came round, when it is coming back. */
   againDays: number | null;
   sentences: ShowerSentence[];
+  /** Where the rain comes from: the library, or other learners' corrected sentences (みんなの雨). */
+  source?: "library" | "minna";
 };
 
 async function memoWords(userId: string, lang: Lang): Promise<string[]> {
@@ -91,24 +93,24 @@ export async function pickCluster(
   );
   const pattern = due[0] ?? fresh[0] ?? soonest[0];
 
-  // Sentences of this pattern the learner has not seen come first, then the ones seen longest ago.
-  const { data: markRows } = await supabase
-    .from("pl_sentence_patterns")
-    .select("sentence_id, start_index, end_index")
-    .eq("pattern_id", pattern.id)
-    .eq("lang", target);
+  // Sentences of this pattern the learner has not seen come first, then the ones seen longest ago. Both lists are
+  // asked for at once: the seen ones are found through the sentence's own marks.
+  const [{ data: markRows }, { data: seenRows }] = await Promise.all([
+    supabase
+      .from("pl_sentence_patterns")
+      .select("sentence_id, start_index, end_index")
+      .eq("pattern_id", pattern.id)
+      .eq("lang", target),
+    supabase
+      .from("pl_seen")
+      .select("sentence_id, last_at, pl_sentences!inner(pl_sentence_patterns!inner(pattern_id))")
+      .eq("user_id", userId)
+      .eq("pl_sentences.pl_sentence_patterns.pattern_id", pattern.id),
+  ]);
   const candidates = (markRows ?? []).map((m) => ({
     sentenceId: m.sentence_id as string,
     mark: { start: m.start_index as number, end: m.end_index as number },
   }));
-  const { data: seenRows } = await supabase
-    .from("pl_seen")
-    .select("sentence_id, last_at")
-    .eq("user_id", userId)
-    .in(
-      "sentence_id",
-      candidates.map((c) => c.sentenceId),
-    );
   const lastSeen = new Map((seenRows ?? []).map((s) => [s.sentence_id, new Date(s.last_at).getTime()]));
   const chosen = [...candidates]
     .map((c) => ({ ...c, order: lastSeen.get(c.sentenceId) ?? -Math.random() }))
@@ -212,6 +214,8 @@ export async function recordCluster(userId: string, target: Lang, patternId: str
       );
     }
   }
+  // The day's record for 自分 (pl_rain_days), counted per pattern.
+  writes.push(supabase.rpc("pl_log_rain", { p_pattern: patternId, p_source: "library", p_first: times === 1 }));
   await Promise.all(writes);
 }
 

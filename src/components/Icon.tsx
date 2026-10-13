@@ -1,4 +1,4 @@
-type IconName = "speaker" | "back" | "pencil" | "bookmark" | "user" | "close" | "arrow" | "shower" | "copy";
+type IconName = "speaker" | "back" | "pencil" | "bookmark" | "user" | "close" | "arrow" | "shower" | "copy" | "sliders" | "search";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   speaker: (
@@ -42,6 +42,23 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <rect x="8" y="8" width="12" height="12" rx="2" />
       <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6" />
+      <path d="M20 20l-4.5-4.5" />
+    </>
+  ),
+  // Settings: two sliders.
+  sliders: (
+    <>
+      <path d="M4 7h9" />
+      <path d="M17 7h3" />
+      <circle cx="15" cy="7" r="2" />
+      <path d="M4 17h3" />
+      <path d="M11 17h9" />
+      <circle cx="9" cy="17" r="2" />
     </>
   ),
 };

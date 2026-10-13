@@ -17,6 +17,8 @@ import { requireSettings } from "@/lib/settings";
 import { findMemoHits } from "@/lib/shower-core";
 import { correctSaying } from "../../actions";
 import styles from "../../app.module.css";
+import { DeleteSaying } from "./DeleteSaying";
+import { ExplainPanel } from "./ExplainPanel";
 import { MemoButton, MemoTap } from "./MemoTap";
 import { WriteForm } from "./WriteForm";
 
@@ -118,6 +120,18 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
             {writeForm}
           </>
         )}
+        <div className={styles.pageFoot}>
+          <DeleteSaying
+            sayingId={saying.id}
+            labels={{
+              delete: t.saying.delete,
+              confirm: t.saying.deleteConfirm,
+              cancel: t.common.cancel,
+              note: t.saying.deleteNote,
+              deleting: t.saying.deleting,
+            }}
+          />
+        </div>
       </div>
     </>
   );
@@ -273,6 +287,15 @@ function CorrectionView({
           />
           <MemoButton sentence={fixedSentence} native={native} target={target} rate={rate} />
         </div>
+        <ExplainPanel
+          correctionId={correction.id}
+          text={correction.corrected}
+          translation={result.meaning ?? ""}
+          reading={reading}
+          initial={result.breakdown?.length ? result.breakdown : null}
+          native={native}
+          target={target}
+        />
       </section>
 
       <section className={styles.panel}>

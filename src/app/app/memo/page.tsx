@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { requireUser } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import type { Lang } from "@/lib/langs";
@@ -61,6 +63,10 @@ export default async function MemoPage() {
         <h1 className={styles.subtitleStrong} style={{ paddingLeft: 12 }}>
           {t.words.title}
         </h1>
+        <Link href="/app/memo/look" className={styles.pair}>
+          <Icon name="search" size={18} />
+          {t.look.open}
+        </Link>
       </header>
       <div className={styles.bodyTight}>
         <p className={styles.lead}>{t.words.lead}</p>

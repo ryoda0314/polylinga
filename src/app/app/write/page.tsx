@@ -1,11 +1,10 @@
-import Link from "next/link";
-import { Icon } from "@/components/Icon";
 import { requireUser } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { langClass } from "@/lib/langs";
 import { requireSettings } from "@/lib/settings";
 import styles from "../app.module.css";
 import { SayForm } from "./SayForm";
+import { WriteHistory } from "./WriteHistory";
 
 export const metadata = { title: "書いてみる" };
 
@@ -46,28 +45,27 @@ export default async function WritePage() {
         nativeClass={langClass(settings.nativeLang)}
       />
 
-      <section>
-        <div className={styles.listHead}>
-          <h2>{t.write.recentTitle}</h2>
-        </div>
-        {rows.length === 0 ? (
-          <p className={styles.empty}>{t.write.recentNone}</p>
-        ) : (
-          rows.map((row) => (
-            <Link key={row.id} href={`/app/s/${row.id}`} className={styles.rowLink}>
-              <span className={styles.rowText}>
-                <span className={`${styles.rowMain} ${langClass(target)}`}>
-                  {row.pl_corrections[0]?.corrected ?? t.write.notTried}
-                </span>
-                <span className={`${styles.rowSub} ${langClass(settings.nativeLang)}`}>
-                  {row.intent ?? (row.pl_patterns ? t.write.fromShower : "")}
-                </span>
-              </span>
-              <Icon name="arrow" size={18} />
-            </Link>
-          ))
-        )}
-      </section>
+      <WriteHistory
+        rows={rows.map((row) => ({
+          id: row.id,
+          main: row.pl_corrections[0]?.corrected ?? t.write.notTried,
+          sub: row.intent ?? (row.pl_patterns ? t.write.fromShower : ""),
+        }))}
+        targetClass={langClass(target)}
+        nativeClass={langClass(settings.nativeLang)}
+        labels={{
+          title: t.write.recentTitle,
+          none: t.write.recentNone,
+          edit: t.write.edit,
+          done: t.write.editDone,
+          delete: t.write.delete,
+          confirm: t.write.deleteConfirm,
+          all: t.write.deleteAll,
+          allConfirm: t.write.deleteAllConfirm,
+          note: t.write.deleteNote,
+          deleting: t.write.deleting,
+        }}
+      />
     </div>
   );
 }

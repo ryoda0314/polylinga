@@ -19,12 +19,15 @@ export function TryForm({
   target,
   sentences,
   revealed,
+  labels,
 }: {
   patternId: string;
   native: Lang;
   target: Lang;
   sentences: ShowerSentence[];
   revealed: boolean;
+  /** Wording for use outside the shower (自分), where the sentences were not "just now". */
+  labels?: { ref: string; write: string };
 }) {
   const t = getDict(native);
   const action = useMemo(() => tryPattern.bind(null, patternId), [patternId]);
@@ -38,8 +41,8 @@ export function TryForm({
 
   return (
     <form action={formAction} className={styles.try}>
-      <div ref={refBox} className={styles.ref} aria-label={t.shower.tryRef}>
-        <span className={styles.refTitle}>{t.shower.tryRef}</span>
+      <div ref={refBox} className={styles.ref} aria-label={labels?.ref ?? t.shower.tryRef}>
+        <span className={styles.refTitle}>{labels?.ref ?? t.shower.tryRef}</span>
         <ul className={styles.refList}>
           {sentences.map((s) => {
             const marks: Highlight[] = revealed && s.mark ? [{ ...s.mark, kind: "mark" }] : [];
@@ -58,7 +61,7 @@ export function TryForm({
         </ul>
       </div>
       <label htmlFor="try-text" className="label">
-        {t.shower.tryLabel}
+        {labels?.write ?? t.shower.tryLabel}
       </label>
       <textarea
         id="try-text"

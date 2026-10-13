@@ -24,12 +24,12 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Checks the token's signature locally (refreshing it first when it has expired), without asking Supabase Auth.
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
   const path = request.nextUrl.pathname;
-  const signedIn = user && !user.is_anonymous;
+  const signedIn = Boolean(claims?.sub) && !claims?.is_anonymous;
   if (!signedIn && (path.startsWith("/app") || path.startsWith("/start") || path.startsWith("/admin"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

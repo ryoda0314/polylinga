@@ -3,14 +3,18 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-// One auth round trip per request, however many server components ask.
+export type SessionUser = { id: string; email: string | null };
+
+// Once per request, however many server components ask. The session token's signature is checked here against the
+// project's published signing keys (cached for a while), so no round trip to Supabase Auth is needed for each page.
 export const getSession = cache(async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
   // Anonymous sign-ins are enabled on the shared project; they never count as a learner here.
-  return { supabase, user: user && !user.is_anonymous ? user : null };
+  const user: SessionUser | null =
+    claims?.sub && !claims.is_anonymous ? { id: claims.sub, email: claims.email ?? null } : null;
+  return { supabase, user };
 });
 
 export async function requireUser() {

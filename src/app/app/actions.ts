@@ -2,13 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { correctSentence, type CorrectionResult } from "@/lib/ai";
+import { correctSentence, explainSentence, type CorrectionResult, type ExplainedPart } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { approvedPatterns, searchCorpus } from "@/lib/corpus";
 import { getDict } from "@/lib/i18n";
 import { isAccent, isLang, type Lang } from "@/lib/langs";
 import { consume, LIMITS, refund } from "@/lib/metering";
 import { LAUNCH_NATIVE, LAUNCH_TARGETS, requireSettings } from "@/lib/settings";
+import { heartShared, pickMinnaCluster, recordMinna, reportShared, shareCorrection } from "@/lib/minna";
+import { withdrawShared } from "@/lib/me";
 import { findMemoHits, pickCluster, recordCluster, sentencesWith, type ShowerCluster } from "@/lib/shower";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -37,18 +39,42 @@ export type FormState = { error: string | null };
  * Record a cluster once all of it has fallen. It counts as bathed in then, whatever the learner does next (move on,
  * try a sentence, or leave), so the same pattern does not come straight back next time.
  */
-export async function recordFinished(finished: { patternId: string; sentenceIds: string[] }) {
+export async function recordFinished(finished: { patternId: string; sentenceIds: string[] }, source: "library" | "minna" = "library") {
   const { user } = await requireUser();
   const settings = await requireSettings();
   if (typeof finished?.patternId !== "string" || !Array.isArray(finished.sentenceIds)) return;
-  await recordCluster(user.id, settings.targetLang, finished.patternId, finished.sentenceIds.map(String));
+  const ids = finished.sentenceIds.map(String);
+  if (source === "minna") await recordMinna(user.id, finished.patternId, ids.filter((id) => UUID.test(id)));
+  else await recordCluster(user.id, settings.targetLang, finished.patternId, ids);
 }
 
 /** The next cluster, avoiding the pattern the learner just had. */
-export async function nextCluster(avoidPatternId: string | null): Promise<ShowerCluster | null> {
+export async function nextCluster(avoidPatternId: string | null, source: "library" | "minna" = "library"): Promise<ShowerCluster | null> {
   const { user } = await requireUser();
   const settings = await requireSettings();
-  return pickCluster(user.id, settings.targetLang, settings.nativeLang, typeof avoidPatternId === "string" ? avoidPatternId : null);
+  const avoid = typeof avoidPatternId === "string" ? avoidPatternId : null;
+  if (source === "minna") return pickMinnaCluster(user.id, settings.targetLang, settings.nativeLang, avoid);
+  return pickCluster(user.id, settings.targetLang, settings.nativeLang, avoid);
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** 「これ言いたかった」 for another learner's sentence in みんなの雨. */
+export async function heartMinna(sharedId: string) {
+  const { user } = await requireUser();
+  if (typeof sharedId === "string" && UUID.test(sharedId)) await heartShared(user.id, sharedId);
+}
+
+/** Report a sentence in みんなの雨: it stops raining at once. */
+export async function reportMinna(sharedId: string) {
+  const { user } = await requireUser();
+  if (typeof sharedId === "string" && UUID.test(sharedId)) await reportShared(user.id, sharedId);
+}
+
+/** The learner has seen that their sentences reached someone. */
+export async function markReachedSeen() {
+  const { supabase, user } = await requireUser();
+  await supabase.from("pl_settings").update({ reached_seen_at: new Date().toISOString() }).eq("user_id", user.id);
 }
 
 /** Other sentences with the word, for the word sheet. */
@@ -193,7 +219,7 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
 
   // Written with the service role: correction text is what /api/tts will agree to read aloud.
   const admin = createAdminClient();
-  const { error } = await admin.from("pl_corrections").insert({
+  const { data: saved, error } = await admin.from("pl_corrections").insert({
     user_id: userId,
     saying_id: saying.id,
     native_lang: native,
@@ -202,12 +228,17 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
     input: text,
     corrected: result.corrected,
     result,
-  });
-  if (error) {
-    console.error("[correction] save", error.message);
+  }).select("id").single();
+  if (error || !saved) {
+    console.error("[correction] save", error?.message);
     await refund(userId, "corrections");
     return { error: t.saying.failed };
   }
+
+  // Learners who share let the corrected sentence rain on others (みんなの雨); never let that hold the correction up.
+  await shareCorrection({ userId, correctionId: String(saved.id), target, native, result }).catch((err) =>
+    console.error("[minna]", err),
+  );
 
   // A memo word that made it into the learner's own corrected sentence has been used.
   const { data: words } = await admin.from("pl_words").select("id, text, uses").eq("user_id", userId).eq("lang", target);
@@ -284,6 +315,68 @@ export async function tryPattern(patternId: string, _prev: FormState, formData: 
   redirect(`/app/s/${saying.id}`);
 }
 
+/**
+ * 詳しく解説 for one of the learner's own corrections: made by the AI the first time they ask, then kept with the
+ * correction, so each correction costs at most one more call.
+ */
+export async function explainCorrection(correctionId: string): Promise<{ parts: ExplainedPart[] | null; error: string | null }> {
+  const { supabase, user } = await requireUser();
+  const t = getDict(LAUNCH_NATIVE);
+  if (typeof correctionId !== "string" || !UUID.test(correctionId)) return { parts: null, error: t.saying.explainFailed };
+  // RLS: a learner reads only their own corrections.
+  const { data: row } = await supabase
+    .from("pl_corrections")
+    .select("id, corrected, result, native_lang, target_lang")
+    .eq("id", correctionId)
+    .maybeSingle();
+  if (!row || !isLang(row.native_lang) || !isLang(row.target_lang)) return { parts: null, error: t.saying.explainFailed };
+  const result = row.result as CorrectionResult;
+  if (result.breakdown?.length) return { parts: result.breakdown, error: null };
+
+  let parts: ExplainedPart[];
+  try {
+    parts = await explainSentence({
+      text: String(row.corrected),
+      translation: result.meaning ?? "",
+      nativeLang: row.native_lang,
+      targetLang: row.target_lang,
+    });
+  } catch (err) {
+    console.error("[explain]", err);
+    return { parts: null, error: getDict(row.native_lang).saying.explainFailed };
+  }
+  // Kept with the correction (written with the service role, like the correction itself).
+  const { error } = await createAdminClient()
+    .from("pl_corrections")
+    .update({ result: { ...result, breakdown: parts } })
+    .eq("id", row.id)
+    .eq("user_id", user.id);
+  if (error) console.error("[explain] save", error.message);
+  return { parts, error: null };
+}
+
+/**
+ * Delete one thing the learner wrote, with its corrections (and so anything of it raining in みんなの雨). `leave`
+ * goes back to 書いてみる afterwards, for when they delete it from its own page.
+ */
+export async function deleteSaying(sayingId: string, leave = false) {
+  const { supabase, user } = await requireUser();
+  if (typeof sayingId !== "string" || !UUID.test(sayingId)) return;
+  await supabase.from("pl_sayings").delete().eq("id", sayingId).eq("user_id", user.id);
+  revalidatePath("/app/write");
+  revalidatePath("/app/me");
+  if (leave === true) redirect("/app/write");
+}
+
+/** Delete everything the learner has written in the language they are learning now. */
+export async function deleteAllSayings() {
+  const { supabase, user } = await requireUser();
+  const settings = await requireSettings();
+  await supabase.from("pl_sayings").delete().eq("user_id", user.id).eq("target_lang", settings.targetLang);
+  revalidatePath("/app/write");
+  revalidatePath("/app/me");
+}
+
 /** Correct one more attempt for an existing saying. The page re-renders from the stored correction. */
 export async function correctSaying(sayingId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const { supabase, user } = await requireUser();
@@ -327,6 +420,7 @@ export async function saveSettings(_prev: SettingsState, formData: FormData): Pr
     target_lang: target,
     accent,
     speech_rate: [0.75, 1, 1.25].includes(rate) ? rate : 1,
+    share_rain: formData.get("share_rain") === "on",
     updated_at: new Date().toISOString(),
   });
   if (error) return { message: t.me.saveFailed, error: true };
@@ -339,4 +433,12 @@ export async function signOut() {
   const { supabase } = await requireUser();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+/** Stop one of the learner's own sentences raining in みんなの雨. */
+export async function withdrawMine(sharedId: string) {
+  const { user } = await requireUser();
+  if (typeof sharedId !== "string" || !UUID.test(sharedId)) return;
+  await withdrawShared(user.id, sharedId);
+  revalidatePath("/app/me");
 }

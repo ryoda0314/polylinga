@@ -12,6 +12,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // this runs only when that file does not exist yet.
 //   GET /api/tts?sentence=<uuid>&lang=ko   an approved library sentence
 //   GET /api/tts?correction=<uuid>          the signed-in learner's own corrected sentence
+//   GET /api/tts?shared=<uuid>              a sentence raining in みんなの雨 (live ones only)
 // Only text that already exists in our data can be read aloud, never text from the request.
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -23,7 +24,19 @@ export async function GET(request: NextRequest) {
 
   const correctionId = params.get("correction");
   const sentenceId = params.get("sentence");
-  if (correctionId && UUID.test(correctionId)) {
+  const sharedId = params.get("shared");
+  if (sharedId && UUID.test(sharedId)) {
+    // Shared sentences are read with the service role; only ones still raining can be read aloud.
+    const { data } = await createAdminClient()
+      .from("pl_shared")
+      .select("text, target_lang, status")
+      .eq("id", sharedId)
+      .maybeSingle();
+    if (data && data.status === "live" && isLang(data.target_lang)) {
+      text = data.text;
+      lang = data.target_lang;
+    }
+  } else if (correctionId && UUID.test(correctionId)) {
     // RLS: learners can only read their own corrections.
     const { data } = await supabase
       .from("pl_corrections")

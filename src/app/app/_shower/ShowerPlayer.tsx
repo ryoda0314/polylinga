@@ -9,7 +9,8 @@ import { SentenceText, type Highlight } from "@/components/SentenceText";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
 import type { ShowerCluster, ShowerSentence } from "@/lib/shower";
-import { nextCluster, recordFinished } from "../actions";
+import Link from "next/link";
+import { heartMinna, markReachedSeen, nextCluster, recordFinished, reportMinna } from "../actions";
 import styles from "./shower.module.css";
 import { TryForm } from "./TryForm";
 import { WordSheet } from "./WordSheet";
@@ -19,15 +20,24 @@ const GAP_MS = 700;
 /**
  * One rain: sentences that share a pattern fall in one at a time with their audio and stay on screen,
  * so the learner can compare them and find the common part. Nothing is explained until they ask, and then
- * only by lighting the matching parts of the sentence and its translation.
+ * only by lighting the matching parts of the sentence and its translation. The rain comes from the library, or (みんなの雨)
+ * from other learners' corrected sentences, where the learner can say 「これ言いたかった」 or report one.
  */
 export function ShowerPlayer({
   initial,
+  source,
+  reached,
+  sharing,
   native,
   target,
   rate,
 }: {
   initial: ShowerCluster | null;
+  source: "library" | "minna";
+  /** One of the learner's own shared sentences has reached someone since they last heard. */
+  reached: boolean;
+  /** The learner shares their corrected sentences. */
+  sharing: boolean;
   native: Lang;
   target: Lang;
   rate: number;
@@ -46,8 +56,26 @@ export function ShowerPlayer({
   const runRef = useRef(0); // bumping it stops whatever flow is running
 
   const recorded = useRef<{ key: string; done: Promise<void> } | null>(null);
+  const [hearted, setHearted] = useState<Set<string>>(() => new Set());
+  const [reported, setReported] = useState<Set<string>>(() => new Set());
+  const minna = source === "minna";
 
   useEffect(() => () => stopAudio(audioRef.current), []);
+
+  // Heard once: the note stays on this page, and next time it is quiet again.
+  useEffect(() => {
+    if (reached) void markReachedSeen().catch(() => {});
+  }, [reached]);
+
+  function heart(id: string) {
+    setHearted((prev) => new Set(prev).add(id));
+    void heartMinna(id).catch(() => {});
+  }
+
+  function report(id: string) {
+    setReported((prev) => new Set(prev).add(id));
+    void reportMinna(id).catch(() => {});
+  }
 
   // Once every sentence has fallen, the cluster counts as bathed in, even if the learner then tries a sentence or leaves.
   useEffect(() => {
@@ -55,8 +83,8 @@ export function ShowerPlayer({
     const sentenceIds = cluster.sentences.map((s) => s.id);
     const key = `${cluster.patternId}:${sentenceIds.join(",")}`;
     if (recorded.current?.key === key) return;
-    recorded.current = { key, done: recordFinished({ patternId: cluster.patternId, sentenceIds }).catch(() => {}) };
-  }, [cluster, shown]);
+    recorded.current = { key, done: recordFinished({ patternId: cluster.patternId, sentenceIds }, source).catch(() => {}) };
+  }, [cluster, shown, source]);
 
   function element() {
     // Created on the first tap; later plays on the same element are allowed on mobile.
@@ -106,7 +134,7 @@ export function ShowerPlayer({
     const avoid = cluster.patternId;
     startTransition(async () => {
       await recorded.current?.done;
-      const next = await nextCluster(avoid);
+      const next = await nextCluster(avoid, source);
       setCluster(next);
       setRevealed(false);
       setTrying(false);
@@ -119,7 +147,21 @@ export function ShowerPlayer({
     });
   }
 
-  if (!cluster) return <p className={styles.empty}>{t.shower.empty}</p>;
+  const reachedNote = reached ? <p className={styles.reached}>{t.shower.reached}</p> : null;
+  if (!cluster) {
+    if (!minna) return <p className={styles.empty}>{t.shower.empty}</p>;
+    return (
+      <div className={styles.wrap}>
+        {reachedNote}
+        <p className={styles.empty}>{t.shower.minnaEmpty}</p>
+        {sharing ? null : (
+          <Link href="/app/me" className={styles.shareHint}>
+            {t.shower.minnaShareHint}
+          </Link>
+        )}
+      </div>
+    );
+  }
   const allShown = shown >= cluster.sentences.length;
   const targetClass = langClass(target);
   const nativeClass = langClass(native);
@@ -129,12 +171,15 @@ export function ShowerPlayer({
   const metWords = wordsIn(visible);
   // Before the first tap: what is about to fall (never what it has in common: that is for the learner to find).
   const comingWords = wordsIn(cluster.sentences);
-  const badge = cluster.again
-    ? t.shower.again + (cluster.againDays && cluster.againDays >= 1 ? t.shower.againDays(cluster.againDays) : "")
-    : t.shower.fresh;
+  const badge = minna
+    ? t.shower.minnaBadge(cluster.again)
+    : cluster.again
+      ? t.shower.again + (cluster.againDays && cluster.againDays >= 1 ? t.shower.againDays(cluster.againDays) : "")
+      : t.shower.fresh;
 
   return (
     <div className={styles.wrap}>
+      {reachedNote}
       <div className={styles.toolbar}>
         <span className={cluster.again ? styles.again : styles.fresh}>{badge}</span>
         <div className={styles.toggles}>
@@ -157,7 +202,9 @@ export function ShowerPlayer({
           </div>
           <div className={styles.introText}>
             <h2 className={styles.introTitle}>{t.shower.introTitle}</h2>
-            <p className={styles.introMeta}>{t.shower.introCount(cluster.sentences.length)}</p>
+            <p className={styles.introMeta}>
+              {minna ? t.shower.minnaIntro(cluster.sentences.length) : t.shower.introCount(cluster.sentences.length)}
+            </p>
             {comingWords.length > 0 ? <p className={styles.memoNote}>{t.shower.introMemo(comingWords.join("・"))}</p> : null}
           </div>
           <p className={styles.lead}>{t.shower.lead}</p>
@@ -187,6 +234,26 @@ export function ShowerPlayer({
                     </span>
                   )}
                   {s.seenBefore ? <span className={styles.seen}>{t.shower.seenBefore}</span> : null}
+                  {minna ? (
+                    reported.has(s.id) ? (
+                      <span className={styles.seen}>{t.shower.reported}</span>
+                    ) : (
+                      <span className={styles.reactions}>
+                        <button
+                          type="button"
+                          className={styles.reaction}
+                          onClick={() => heart(s.id)}
+                          disabled={hearted.has(s.id)}
+                          aria-pressed={hearted.has(s.id)}
+                        >
+                          {hearted.has(s.id) ? t.shower.hearted : t.shower.heart}
+                        </button>
+                        <button type="button" className={styles.reportLink} onClick={() => report(s.id)}>
+                          {t.shower.report}
+                        </button>
+                      </span>
+                    )
+                  ) : null}
                 </div>
                 <button
                   type="button"

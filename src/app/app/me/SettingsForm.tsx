@@ -30,6 +30,9 @@ export function SettingsForm({
     preview: string;
     rate: string;
     rates: { slow: string; normal: string; fast: string };
+    share: string;
+    shareLabel: string;
+    shareNote: string;
     save: string;
     saving: string;
   };
@@ -99,6 +102,17 @@ export function SettingsForm({
             </label>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset className={styles.field} style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="label" style={{ marginBottom: 8 }}>
+          {labels.share}
+        </legend>
+        <label className={styles.check}>
+          <input type="checkbox" name="share_rain" defaultChecked={settings.shareRain} />
+          {labels.shareLabel}
+        </label>
+        <span className={styles.note}>{labels.shareNote}</span>
       </fieldset>
 
       <button type="submit" className="btn" disabled={pending}>

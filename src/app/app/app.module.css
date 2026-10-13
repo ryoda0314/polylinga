@@ -148,3 +148,105 @@
 .segment:has(input:checked) { background: var(--ink); color: var(--paper); font-weight: 600; }
 .segment:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
 .saved { margin: 0; font-size: 14px; color: var(--muted); }
+.check { display: flex; align-items: center; gap: 10px; min-height: var(--tap); font-size: 15px; cursor: pointer; }
+.check input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--accent); }
+
+/* 自分: the learner's own counts in a hairline grid (never compared with anyone), and their lists. */
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); }
+.stat { display: flex; flex-direction: column; gap: 2px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.stat:nth-child(odd) { padding-right: 12px; border-right: 1px solid var(--line); }
+.stat:nth-child(even) { padding-left: 16px; }
+.stat dt { font-size: 12px; color: var(--muted); }
+.stat dd { margin: 0; font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.stat dd small { margin-left: 2px; font-size: 13px; color: var(--muted); font-weight: 400; }
+.plainList { list-style: none; margin: 0; padding: 0; }
+.usedTag { flex-shrink: 0; font-size: 11px; font-weight: 600; color: var(--again); background: var(--again-tint); border-radius: 999px; padding: 2px 8px; }
+.rowSide { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.quietLink { all: unset; min-height: 32px; display: inline-flex; align-items: center; font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.quietLink:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Ways to look back (日ごと・かたち・自分の文): links styled like the rain toggle on 浴びる. */
+.views { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+.view { min-height: var(--tap); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--ink-2); text-decoration: none; }
+.view + .view { border-left: 1px solid var(--line-2); }
+.view[aria-current="page"] { background: var(--ink); color: var(--paper); font-weight: 600; }
+.view:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* 日ごと: one ruled block per day that had something in it. Empty days are never shown. */
+.days { display: flex; flex-direction: column; gap: 28px; }
+.day { display: flex; flex-direction: column; }
+.dayHead {
+  margin: 0; display: flex; align-items: baseline; gap: 10px;
+  padding-bottom: 10px; border-bottom: 1.5px solid var(--ink); font-size: 15px; font-weight: 600;
+}
+.dayHead span { font-size: 12px; font-weight: 600; color: var(--accent); }
+.dayList { margin: 0; }
+.dayRow { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.dayRow dt { padding-top: 7px; font-size: 12px; color: var(--muted); }
+.dayRow dd { margin: 0; min-width: 0; }
+.dayRow ul { display: flex; flex-direction: column; gap: 6px; }
+.dayWords { padding-top: 4px; font-size: 16px; line-height: 1.7; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line-2); border-radius: 999px; background: var(--paper);
+  font-size: 13px; color: var(--ink); text-decoration: none;
+}
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chipTimes { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.firstTag { font-size: 11px; font-weight: 600; color: var(--accent); }
+.saidRow { display: flex; align-items: center; gap: 10px; padding: 2px 0; color: var(--ink); text-decoration: none; }
+.saidText { font-size: 16px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+.moreLink {
+  align-self: center; min-height: var(--tap); padding: 0 20px; display: inline-flex; align-items: center;
+  border: 1px solid var(--line-2); border-radius: 999px; font-size: 14px; color: var(--ink-2); text-decoration: none;
+}
+.inlineLink { margin-left: 6px; color: var(--accent); text-underline-offset: 3px; }
+
+/* One pattern looked back on: the parts that were lit, then its sentences. */
+.parts { margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 28px; font-weight: 500; line-height: 1.5; }
+.plainLink { flex: 1; min-width: 0; display: flex; color: inherit; text-decoration: none; }
+/* While a page is on its way (loading.tsx): the destination's header at once, then quiet blocks that only fade in if
+   the wait is long enough to notice. */
+.ghost { display: flex; flex-direction: column; gap: 14px; animation: ghost-in 0.4s ease-out 0.18s both; }
+.ghostLine { height: 14px; border-radius: 6px; background: var(--surface); }
+.ghostBlock { height: 112px; border-radius: var(--radius); background: var(--surface); }
+.pairGhost { width: 132px; }
+@keyframes ghost-in { from { opacity: 0; } to { opacity: 1; } }
+/* 詳しく解説 under a corrected sentence: each word with its meaning; the pressed one is lit in the sentence and translation. */
+.explainBox { display: flex; flex-direction: column; gap: 12px; }
+.explainPanel { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--line-2); border-radius: var(--radius); }
+.explainSentence { margin: 0; font-size: 20px; font-weight: 500; line-height: 1.8; overflow-wrap: anywhere; }
+.explainList { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.explainRow {
+  all: unset; box-sizing: border-box; width: 100%; cursor: pointer;
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 12px; align-items: baseline;
+  padding: 10px 6px; border-bottom: 1px solid var(--line);
+}
+.explainRow[aria-pressed="true"] { background: var(--tint); }
+.explainRow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.explainWord { font-size: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.explainMeaning { font-size: 14px; line-height: 1.6; color: var(--ink-2); overflow-wrap: anywhere; }
+
+/* Deleting from the learner's history: a quiet first press, a clear second one. */
+.headButton { all: unset; min-height: 32px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; }
+.headButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.smallButton {
+  flex-shrink: 0; min-height: 36px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 999px;
+  background: var(--paper); color: var(--ink-2); font-size: 13px; cursor: pointer;
+}
+.dangerButton {
+  flex-shrink: 0; min-height: 36px; padding: 0 14px; border: 1px solid var(--danger); border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.smallButton:disabled, .dangerButton:disabled { opacity: 0.55; cursor: default; }
+.confirmRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.confirmRow .note { flex-basis: 100%; }
+.pageFoot { display: flex; flex-direction: column; align-items: flex-start; padding-top: 24px; border-top: 1px solid var(--line); }
+
+/* 例文から探す */
+.lookRow { display: flex; gap: 8px; }
+.lookRow :global(.btn) { flex-shrink: 0; }
+.lookInput {
+  flex: 1; min-width: 0; min-height: 52px; padding: 0 14px;
+  border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--paper); font-size: 18px;
+}

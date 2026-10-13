@@ -5,6 +5,7 @@ import { audioUrl } from "@/lib/audio";
 import { getSession } from "@/lib/auth";
 import type { Lang } from "@/lib/langs";
 import { readingFor } from "@/lib/reading";
+import { findMemoHits, type Span } from "@/lib/shower-core";
 
 // The pattern library: approved 4-language sentence sets and the "かたち" marked in each.
 // RLS hides drafts, so every read here sees approved content only.
@@ -163,4 +164,49 @@ export async function patternExamples(
     );
   }
   return result;
+}
+
+/** A library sentence found by 例文から探す, with where the word sits in it or in its translation. */
+export type FoundSentence = {
+  id: string;
+  text: string;
+  gloss: string;
+  reading: string[] | null;
+  audio: Audio;
+  hits: Span[];
+  glossHits: Span[];
+};
+
+const LOOK_LIMIT = 20;
+
+/**
+ * 例文から探す: approved sentences containing a word, typed in the language being learned or in the learner's own.
+ * No definitions: the learner reads several sentences and their translations and gets the meaning from them.
+ */
+export async function lookUp(word: string, target: Lang, native: Lang): Promise<FoundSentence[]> {
+  const needle = word.replace(/[%_\\]/g, (c) => `\\${c}`);
+  const supabase = await db();
+  const columns = "id, ja, en, ko, zh, zh_pinyin";
+  const [{ data: inTarget }, { data: inNative }] = await Promise.all([
+    supabase.from("pl_sentences").select(columns).ilike(target, `%${needle}%`).limit(LOOK_LIMIT),
+    supabase.from("pl_sentences").select(columns).ilike(native, `%${needle}%`).limit(LOOK_LIMIT),
+  ]);
+  const found = new Map<string, FoundSentence>();
+  for (const row of [...(inTarget ?? []), ...(inNative ?? [])]) {
+    const s = toSentence(row);
+    if (found.has(s.id)) continue;
+    const text = s[target];
+    const gloss = s[native];
+    found.set(s.id, {
+      id: s.id,
+      text,
+      gloss,
+      reading: readingFor(text, target, s.zhPinyin),
+      audio: sentenceAudio(text, target, s.id),
+      hits: findMemoHits(text, [word]),
+      glossHits: findMemoHits(gloss, [word]),
+    });
+  }
+  // Short sentences first: a word's meaning shows most plainly in them.
+  return [...found.values()].sort((a, b) => a.text.length - b.text.length).slice(0, LOOK_LIMIT);
 }
