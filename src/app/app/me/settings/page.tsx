@@ -51,6 +51,10 @@ export default async function SettingsPage() {
           }}
         />
 
+        <Link href="/tutorial" className="btn-quiet">
+          {t.tutorial.again}
+        </Link>
+
         <section className={styles.stackSm} style={{ borderTop: "1px solid var(--line)", paddingTop: 24 }}>
           <h2 className="label">{t.me.account}</h2>
           <p className={styles.rowSub} style={{ margin: 0, overflowWrap: "anywhere" }}>

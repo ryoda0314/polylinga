@@ -30,7 +30,7 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const signedIn = Boolean(claims?.sub) && !claims?.is_anonymous;
-  if (!signedIn && (path.startsWith("/app") || path.startsWith("/start") || path.startsWith("/admin"))) {
+  if (!signedIn && (path.startsWith("/app") || path.startsWith("/start") || path.startsWith("/tutorial") || path.startsWith("/admin"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
@@ -41,5 +41,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/start", "/admin/:path*", "/login/:path*", "/auth/:path*"],
+  matcher: ["/app/:path*", "/start", "/tutorial", "/admin/:path*", "/login/:path*", "/auth/:path*"],
 };

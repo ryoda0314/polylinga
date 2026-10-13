@@ -1,0 +1,94 @@
+/* The hands-on tutorial: one column like the app, a bar of five steps, each step's words sliding in, the action at the
+   bottom. Flat, the app's tokens only; motion where something falls, lights or goes by, and none for reduced motion. */
+.page {
+  min-height: calc(100dvh - env(safe-area-inset-top, 0px));
+  max-width: 560px; margin: 0 auto; display: flex; flex-direction: column;
+  background: var(--paper); border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+}
+@media (max-width: 560px) { .page { border: 0; } }
+
+.head { display: flex; align-items: center; gap: 16px; padding: 10px 12px 6px 20px; }
+.bars { flex: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.bar { height: 4px; border-radius: 2px; background: var(--line); transition: background 0.3s; }
+.bar[data-on] { background: var(--accent); }
+.skip {
+  all: unset; min-height: var(--tap); padding: 0 8px; display: inline-flex; align-items: center;
+  font-size: 13px; color: var(--muted); cursor: pointer;
+}
+.skip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.body { flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 14px 20px 28px; }
+.heading { display: flex; flex-direction: column; gap: 8px; animation: tut-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes tut-in { from { opacity: 0; transform: translateX(24px); } }
+.step { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); }
+.title { margin: 0; font-size: 25px; font-weight: 600; line-height: 1.45; }
+.lead { margin: 0; font-size: 15px; line-height: 1.8; color: var(--ink-2); }
+.hint { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+.done { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.8; color: var(--ink-2); }
+.rise { animation: tut-up 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes tut-up { from { opacity: 0; transform: translateY(10px); } }
+
+/* Step 1: the sky before the first tap, as on the rain's first screen. */
+.sky {
+  position: relative; overflow: hidden; height: 168px; border-radius: 16px; background: var(--surface);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sprout { position: relative; width: 80px; height: auto; margin-bottom: 12px; }
+
+/* Step 2: words that can be pressed; the pressed one gets a violet underline. */
+.token { all: unset; cursor: pointer; border-radius: 4px; }
+.token:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tapped { box-shadow: inset 0 -3px 0 var(--again); }
+
+/* Step 3: the field the example types itself into. */
+.intent { margin: 0; font-size: 17px; font-weight: 500; line-height: 1.6; }
+.field {
+  all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 96px; padding: 16px;
+  border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--paper);
+  font-size: 18px; line-height: 1.6; cursor: pointer; overflow-wrap: anywhere;
+}
+.field:disabled { cursor: default; }
+.field:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.placeholder { color: var(--faint); font-size: 15px; }
+.caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 1px; vertical-align: -0.15em; background: var(--accent); animation: tut-caret 1.06s steps(1) infinite; }
+@keyframes tut-caret { 50% { opacity: 0; } }
+.result { display: flex; flex-direction: column; gap: 24px; }
+
+/* Step 4: three days going by. */
+.memoBefore { margin: 0; padding: 12px 14px; border-radius: var(--radius); background: var(--again-tint); font-size: 14px; line-height: 1.7; color: var(--ink-2); }
+.days { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.day { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--faint); }
+.day i { width: 12px; height: 12px; border-radius: 50%; background: var(--line-2); transition: background 0.3s, transform 0.3s; }
+.day[data-past] { color: var(--muted); }
+.day[data-past] i { background: color-mix(in srgb, var(--again) 35%, var(--paper)); }
+.day[data-on] { color: var(--again); font-weight: 600; }
+.day[data-on] i { background: var(--again); transform: scale(1.25); }
+
+/* Step 5: a train window with the town going by; the plan written on it. */
+.window {
+  position: relative; height: 150px; overflow: hidden; border-radius: 24px;
+  border: 10px solid color-mix(in srgb, var(--ink) 8%, var(--paper)); background: color-mix(in srgb, var(--accent) 6%, var(--paper));
+}
+.town, .poles { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; }
+.town { animation: tut-ride 16s linear infinite; }
+.poles { animation: tut-ride 2.6s linear infinite; }
+.town i { position: absolute; bottom: 0; border-radius: 6px 6px 0 0; background: color-mix(in srgb, var(--accent) 14%, var(--paper)); }
+.poles i { position: absolute; bottom: 0; width: 8px; height: 100%; background: color-mix(in srgb, var(--ink) 12%, var(--paper)); }
+@keyframes tut-ride { to { transform: translateX(-50%); } }
+.cueLine {
+  position: absolute; left: 16px; top: 14px; margin: 0; padding: 4px 12px; border-radius: 999px;
+  background: var(--paper); font-size: 15px; font-weight: 600; color: var(--accent);
+}
+.cue { display: flex; flex-direction: column; gap: 12px; }
+.cueAsk { margin: 0; font-size: 17px; font-weight: 600; }
+.cueActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+.cueDone { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.7; color: var(--accent); }
+
+/* The action, always at hand at the bottom. */
+.foot {
+  position: sticky; bottom: 0; display: flex; flex-direction: column; gap: 10px;
+  padding: 12px 20px max(16px, env(safe-area-inset-bottom, 0px)); background: var(--paper); border-top: 1px solid var(--line);
+}
+.foot :global(.btn), .foot :global(.btn-quiet) { width: 100%; }
+.sound { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; min-height: 36px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.sound input { width: 18px; height: 18px; accent-color: var(--accent); }

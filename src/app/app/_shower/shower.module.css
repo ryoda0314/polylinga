@@ -159,3 +159,5 @@
 .cueActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-top: 4px; }
 .cueDone { margin: 0; font-size: 14px; line-height: 1.7; color: var(--accent); }
 .offline { margin: 0; font-size: 13px; line-height: 1.7; color: var(--danger); }
+/* For a learner who has not been through the tutorial yet: a quiet way into it, above the rain. */
+.tour { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin-bottom: -16px; font-size: 14px; font-weight: 500; color: var(--accent); text-decoration: none; }

@@ -40,6 +40,12 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
       </header>
       <div className={styles.body}>
         <h1 className="sr-only">{t.shower.title}</h1>
+        {settings.tutorialSeen ? null : (
+          <Link href="/tutorial" className={showerStyles.tour}>
+            {t.tutorial.first}
+            <Icon name="arrow" size={16} />
+          </Link>
+        )}
         <nav className={showerStyles.sources} aria-label={t.shower.sourceLabel}>
           <Link href="/app" className={showerStyles.source} aria-current={source === "library" ? "page" : undefined}>
             {t.shower.sourceLibrary}

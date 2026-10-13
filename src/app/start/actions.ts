@@ -21,5 +21,7 @@ export async function chooseTarget(formData: FormData) {
     console.error("[start]", error.message);
     redirect("/start?change=1&error=1");
   }
-  redirect("/app");
+  // A new learner sees how the rain works first, hands on (once; it can be opened again from settings).
+  const { data: seen } = await supabase.from("pl_settings").select("tutorial_seen_at").eq("user_id", user.id).maybeSingle();
+  redirect(seen?.tutorial_seen_at ? "/app" : "/tutorial");
 }

@@ -33,6 +33,12 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   rain shows 「〜、ひと雨。」. The first rain of a day ends with "enough for today", and coming back after 3+ days away is
   greeted (`rainSoFar` in me.ts). For train rides: sound and translation settings are kept on the device, the next rain
   is fetched while the current one is on screen, and half-written sentences are kept as drafts (`src/components/local.ts`).
+- `src/app/tutorial/` + `src/lib/tutorial.ts`: the hands-on tutorial (`/tutorial`, outside the app shell). A new learner
+  lands there after `/start`; until `pl_settings.tutorial_seen_at` is set (finished or skipped) 浴びる offers it, and
+  settings can open it again. Five steps, each started by the learner's tap and drawn with the app's own screens: the
+  rain falls, they press what looks shared and it lights, a sample attempt is corrected and explained word by word (a
+  hand-written sample per language, no AI call), three days pass and the way of saying returns with a memo word, and
+  they choose when to bathe (saved as the real `rain_cue`). Library sentences of 誘う in the language learned (`PICKS`).
 - `src/lib/minna.ts`: みんなの雨 (`/app?rain=minna`). Learners who switch sharing on (`pl_settings.share_rain`) send
   corrected sentences the correction judged `shareable` into `pl_shared`, one row per pattern used, lit at the pattern's
   usual library part. Clusters by pattern from other learners (4 or more), never showing who wrote them: these tables have
