@@ -39,7 +39,7 @@ export default function Loading() {
   if (path === "/app") {
     return (
       <div role="status" aria-label={t.common.loading}>
-        <header className={styles.topbar}>
+        <header className={`${styles.topbar} ${styles.mobileOnly}`}>
           <Logo size="sm" href={null} />
           <span className={`${styles.pair} ${styles.pairGhost}`} aria-hidden="true" />
         </header>

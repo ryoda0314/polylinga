@@ -32,7 +32,8 @@ export default async function WritePage() {
   const rows = (data ?? []) as unknown as Row[];
 
   return (
-    <div className={styles.body}>
+    <div className={`${styles.body} ${styles.split}`}>
+      <div className={`${styles.col} ${styles.stick}`}>
       <SayForm
         labels={{
           title: t.write.title,
@@ -46,6 +47,8 @@ export default async function WritePage() {
         }}
         nativeClass={langClass(settings.nativeLang)}
       />
+      </div>
+      <div className={styles.col}>
 
       <WriteHistory
         rows={rows.map((row) => ({
@@ -68,6 +71,7 @@ export default async function WritePage() {
           deleting: t.write.deleting,
         }}
       />
+      </div>
     </div>
   );
 }

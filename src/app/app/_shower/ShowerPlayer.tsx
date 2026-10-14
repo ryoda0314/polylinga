@@ -208,24 +208,8 @@ export function ShowerPlayer({
 
   return (
     <div className={styles.wrap}>
-      {reachedNote}
-      {habit.back && firstRain && shown === 0 ? (
-        <p className={styles.welcome}>{cluster.again ? t.shower.welcomeBackAgain : t.shower.welcomeBack}</p>
-      ) : null}
-      <div className={styles.toolbar}>
-        <span className={cluster.again ? styles.again : styles.fresh}>{badge}</span>
-        <div className={styles.toggles}>
-          <label className={styles.toggle}>
-            <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
-            {t.shower.autoplay}
-          </label>
-          <label className={styles.toggle}>
-            <input type="checkbox" checked={hideGloss} onChange={(e) => setHideGloss(e.target.checked)} />
-            {t.shower.hideGloss}
-          </label>
-        </div>
-      </div>
-
+      {/* The rain itself: on a wide screen the left column, with the controls beside it. */}
+      <div className={styles.rain}>
       {shown === 0 ? (
         <div className={styles.intro}>
           <div className={styles.introSky} aria-hidden="true">
@@ -314,6 +298,28 @@ export function ShowerPlayer({
         </button>
       ) : null}
 
+      </div>
+
+      {/* What the rain is (badge, switches) and what to do after it: on a phone above and below the rain. */}
+      <div className={styles.side}>
+      {reachedNote}
+      {habit.back && firstRain && shown === 0 ? (
+        <p className={styles.welcome}>{cluster.again ? t.shower.welcomeBackAgain : t.shower.welcomeBack}</p>
+      ) : null}
+      <div className={styles.toolbar}>
+        <span className={cluster.again ? styles.again : styles.fresh}>{badge}</span>
+        <div className={styles.toggles}>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
+            {t.shower.autoplay}
+          </label>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={hideGloss} onChange={(e) => setHideGloss(e.target.checked)} />
+            {t.shower.hideGloss}
+          </label>
+        </div>
+      </div>
+
       {allShown ? (
         <div className={styles.after}>
           {firstRain && habit.firstToday ? <p className={styles.doneToday}>{t.shower.doneToday}</p> : null}
@@ -346,6 +352,8 @@ export function ShowerPlayer({
           ) : null}
         </div>
       ) : null}
+
+      </div>
 
       {sheetFor ? (
         <WordSheet sentence={sheetFor} native={native} target={target} rate={rate} onClose={() => setSheetFor(null)} />

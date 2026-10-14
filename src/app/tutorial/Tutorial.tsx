@@ -163,6 +163,7 @@ function RainSteps({ data, native, target, t, player, onNext, step, sound, sound
           title={noticing ? t.tutorial.noticeTitle : t.tutorial.rainTitle}
           lead={noticing ? t.tutorial.noticeLead : t.tutorial.rainLead}
         />
+        <div className={styles.stage}>
         {shown === 0 ? (
           <div className={styles.sky} aria-hidden="true">
             <Rain />
@@ -205,6 +206,7 @@ function RainSteps({ data, native, target, t, player, onNext, step, sound, sound
           </section>
         ) : null}
         {!noticing && fell ? <p className={`${styles.done} ${styles.rise}`}>{t.tutorial.rainDone}</p> : null}
+        </div>
       </section>
       <footer className={styles.foot}>
         {!noticing ? (
@@ -325,6 +327,7 @@ function SayStep({ data, native, target, t, onNext, rate }: StepProps & { rate: 
     <>
       <section className={styles.body}>
         <Heading t={t} n={3} title={t.tutorial.sayTitle} lead={t.tutorial.sayLead} />
+        <div className={styles.stage}>
         {phase !== "done" ? (
           <>
             <div className={app.stackSm}>
@@ -348,6 +351,7 @@ function SayStep({ data, native, target, t, onNext, rate }: StepProps & { rate: 
         ) : (
           <Corrected say={say} native={native} target={target} t={t} rate={rate} />
         )}
+        </div>
       </section>
       <footer className={styles.foot}>
         {phase === "done" ? (
@@ -469,6 +473,7 @@ function AgainStep({ data, native, target, t, player, onNext, sound, soundSwitch
     <>
       <section className={styles.body}>
         <Heading t={t} n={4} title={t.tutorial.againTitle} lead={t.tutorial.againLead} />
+        <div className={styles.stage}>
         <p className={styles.memoBefore}>{t.tutorial.againMemoBefore(data.memo)}</p>
         <div className={styles.days} aria-hidden="true">
           {t.tutorial.days.map((d, i) => (
@@ -479,7 +484,7 @@ function AgainStep({ data, native, target, t, player, onNext, sound, soundSwitch
           ))}
         </div>
         {back ? (
-          <div className={`${shower.wrap} ${styles.rise}`}>
+          <div className={`${styles.returned} ${styles.rise}`}>
             <div className={shower.toolbar}>
               <span className={shower.again}>{t.tutorial.againBadge}</span>
             </div>
@@ -507,6 +512,7 @@ function AgainStep({ data, native, target, t, player, onNext, sound, soundSwitch
             {fell ? <p className={`${styles.done} ${styles.rise}`}>{t.tutorial.againNote}</p> : null}
           </div>
         ) : null}
+        </div>
       </section>
       <footer className={styles.foot}>
         {busy ? (
@@ -556,6 +562,7 @@ function HabitStep({ t, cue }: { t: Dict; cue: string | null }) {
     <>
       <section className={styles.body}>
         <Heading t={t} n={5} title={t.tutorial.habitTitle} lead={t.tutorial.habitLead} />
+        <div className={styles.stage}>
         <div className={styles.window} aria-hidden="true">
           <div className={styles.town}>
             {[0, 50].map((off) =>
@@ -594,6 +601,7 @@ function HabitStep({ t, cue }: { t: Dict; cue: string | null }) {
             </div>
           </div>
         )}
+        </div>
       </section>
       <footer className={styles.foot}>
         <form action={finishTutorial}>

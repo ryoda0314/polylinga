@@ -32,3 +32,21 @@
 }
 
 .active { color: var(--accent); font-weight: 600; }
+
+/* Only on a wide screen: the name above the tabs and the language pair below them. */
+.brand, .side { display: none; }
+
+/* A wide screen (a PC): the tabs become a column down the left, beside the page, and stay put while it scrolls. */
+@media (min-width: 1024px) {
+  .nav {
+    position: sticky; top: 0; bottom: auto; left: auto; z-index: 1; transform: none; order: -1;
+    flex-shrink: 0; align-self: flex-start; width: 232px; max-width: none; height: 100dvh;
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 22px 16px 24px; border-top: 0; border-right: 1px solid var(--line);
+  }
+  .brand { display: block; padding: 2px 10px 28px; }
+  .item { flex-direction: row; justify-content: flex-start; gap: 14px; min-height: 48px; padding: 0 14px; border-radius: 10px; font-size: 15px; }
+  .item:hover { background: var(--surface); }
+  .active { background: var(--tint); }
+  .side { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding: 0 4px; }
+}

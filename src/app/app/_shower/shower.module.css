@@ -1,7 +1,7 @@
 .wrap { display: flex; flex-direction: column; gap: 20px; }
 
 /* Which rain: the library's (ことのあめ), or other learners' corrected sentences (みんなの雨). */
-.sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; margin-bottom: -12px; }
+.sources { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; margin-bottom: -12px; }
 .source { min-height: var(--tap); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--ink-2); text-decoration: none; }
 .source + .source { border-left: 1px solid var(--line-2); }
 .source[aria-current="page"] { background: var(--ink); color: var(--paper); font-weight: 600; }
@@ -161,3 +161,23 @@
 .offline { margin: 0; font-size: 13px; line-height: 1.7; color: var(--danger); }
 /* For a learner who has not been through the tutorial yet: a quiet way into it, above the rain. */
 .tour { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin-bottom: -16px; font-size: 14px; font-weight: 500; color: var(--accent); text-decoration: none; }
+
+/* The rain and what goes with it (badge, switches, then the answer, これで言ってみる and 次の雨). On a phone they are one
+   column: the notes and switches above the rain, the after part below it. On a wide screen, side by side. */
+.rain, .side { display: contents; }
+.side > .reached, .side > .welcome, .side > .toolbar { order: -1; }
+.side > .after { order: 1; }
+
+@media (min-width: 1024px) {
+  .wrap:has(> .rain) { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 0 56px; align-items: start; }
+  .rain { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .side { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 32px; }
+  .side > .reached, .side > .welcome, .side > .toolbar, .side > .after { order: 0; }
+  .side .toolbar { flex-direction: column; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .sentence { font-size: 26px; }
+  .gloss { font-size: 15px; }
+  .introSky { height: 240px; }
+  /* Sheets open as a dialog in the middle of the screen. */
+  .backdrop { align-items: center; padding: 32px; }
+  .sheet { border-radius: 16px; max-height: 84dvh; padding-bottom: 24px; }
+}

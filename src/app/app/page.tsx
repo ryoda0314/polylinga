@@ -6,31 +6,40 @@ import { getDict } from "@/lib/i18n";
 import { LANG_NATIVE_NAME, langClass } from "@/lib/langs";
 import { rainSoFar } from "@/lib/me";
 import { pickMinnaCluster, reachedSomeone } from "@/lib/minna";
+import { readingFor } from "@/lib/reading";
 import { requireSettings } from "@/lib/settings";
 import { pickCluster } from "@/lib/shower";
 import { ShowerPlayer } from "./_shower/ShowerPlayer";
+import { WordRain } from "./_shower/WordRain";
 import showerStyles from "./_shower/shower.module.css";
 import styles from "./app.module.css";
 
 export const metadata = { title: "浴びる" };
 
 export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
-  const [settings, { user }, params] = await Promise.all([requireSettings(), requireUser(), searchParams]);
+  const [settings, { supabase, user }, params] = await Promise.all([requireSettings(), requireUser(), searchParams]);
   const t = getDict(settings.nativeLang);
-  // Two rains: the library's (ことのあめ), and other learners' corrected sentences (みんなの雨).
-  const source = params.rain === "minna" ? "minna" : "library";
+  // Three rains: the library's (ことのあめ), other learners' corrected sentences (みんなの雨), and the learner's own memo
+  // words with their meanings (単語の雨).
+  const source = params.rain === "minna" ? "minna" : params.rain === "words" ? "words" : "library";
   // The day so far is read before this visit's rain is recorded: it says whether this is today's first rain.
-  const [first, reached, sofar] = await Promise.all([
-    source === "minna"
-      ? pickMinnaCluster(user.id, settings.targetLang, settings.nativeLang, null)
-      : pickCluster(user.id, settings.targetLang, settings.nativeLang, null),
+  const [first, reached, sofar, { data: memo }] = await Promise.all([
+    source === "words"
+      ? null
+      : source === "minna"
+        ? pickMinnaCluster(user.id, settings.targetLang, settings.nativeLang, null)
+        : pickCluster(user.id, settings.targetLang, settings.nativeLang, null),
     reachedSomeone(user.id, settings.reachedSeenAt),
     rainSoFar(user.id, settings.targetLang),
+    source === "words"
+      ? supabase.from("pl_words").select("id, text, note").eq("user_id", user.id).eq("lang", settings.targetLang).limit(1000)
+      : { data: null },
   ]);
 
   return (
     <>
-      <header className={styles.topbar}>
+      {/* On a wide screen the name and the language pair are in the column on the left. */}
+      <header className={`${styles.topbar} ${styles.mobileOnly}`}>
         <Logo size="sm" href="/" />
         <Link href="/app/me" className={styles.pair}>
           <span className={langClass(settings.nativeLang)}>{LANG_NATIVE_NAME[settings.nativeLang]}</span>
@@ -53,7 +62,23 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
           <Link href="/app?rain=minna" className={showerStyles.source} aria-current={source === "minna" ? "page" : undefined}>
             {t.shower.sourceMinna}
           </Link>
+          <Link href="/app?rain=words" className={showerStyles.source} aria-current={source === "words" ? "page" : undefined}>
+            {t.shower.sourceWords}
+          </Link>
         </nav>
+        {source === "words" ? (
+          <WordRain
+            words={(memo ?? []).map((w) => ({
+              id: String(w.id),
+              text: String(w.text),
+              note: (w.note as string | null) ?? null,
+              reading: readingFor(String(w.text), settings.targetLang),
+            }))}
+            native={settings.nativeLang}
+            target={settings.targetLang}
+            rate={settings.speechRate}
+          />
+        ) : (
         <ShowerPlayer
           key={source}
           initial={first}
@@ -70,6 +95,7 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
           target={settings.targetLang}
           rate={settings.speechRate}
         />
+        )}
       </div>
     </>
   );

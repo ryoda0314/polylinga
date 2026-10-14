@@ -1,14 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icon";
 import styles from "./BottomNav.module.css";
 
+/**
+ * The four tabs: a bar at the bottom on a phone, a column down the left on a wide screen, where it also carries the
+ * name (`brand`) and the language pair (`side`).
+ */
 export function BottomNav({
   labels,
+  brand,
+  side,
 }: {
   labels: { shower: string; write: string; memo: string; me: string; label: string };
+  brand?: ReactNode;
+  side?: ReactNode;
 }) {
   const pathname = usePathname();
   const items = [
@@ -26,6 +35,7 @@ export function BottomNav({
 
   return (
     <nav className={styles.nav} aria-label={labels.label}>
+      {brand ? <div className={styles.brand}>{brand}</div> : null}
       {items.map((item) => (
         <Link
           key={item.href}
@@ -37,6 +47,7 @@ export function BottomNav({
           {item.label}
         </Link>
       ))}
+      {side ? <div className={styles.side}>{side}</div> : null}
     </nav>
   );
 }

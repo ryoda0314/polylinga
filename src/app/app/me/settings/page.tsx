@@ -22,7 +22,7 @@ export default async function SettingsPage() {
         </Link>
         <h1 className={styles.subtitleStrong}>{t.me.settings}</h1>
       </header>
-      <div className={styles.bodyTight}>
+      <div className={`${styles.bodyTight} ${styles.narrow}`}>
         <SettingsForm
           settings={settings}
           targets={LAUNCH_TARGETS.map((l) => ({ value: l, label: `${t.start.targets[l]}（${LANG_NATIVE_NAME[l]}）` }))}

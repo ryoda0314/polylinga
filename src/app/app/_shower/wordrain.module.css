@@ -1,0 +1,49 @@
+/* 単語の雨: one memo word at a time falls into a sky of thin rain, its meaning following; the last few stay below. */
+.wrap { display: flex; flex-direction: column; gap: 20px; }
+.lead { margin: 0; font-size: 15px; line-height: 1.8; color: var(--ink-2); }
+
+.stage {
+  position: relative; overflow: hidden; min-height: clamp(280px, 46vh, 460px); padding: 32px 20px;
+  border-radius: 16px; background: var(--surface); display: flex; align-items: center; justify-content: center;
+}
+.sky { position: absolute; inset: 0; }
+.word {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
+  animation: word-fall 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes word-fall { from { opacity: 0; transform: translateY(-56px); } 55% { opacity: 1; } }
+.text { font-size: 48px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+.note {
+  min-height: 1.6em; font-size: 20px; line-height: 1.6; color: var(--ink-2); overflow-wrap: anywhere;
+  opacity: 0; transform: translateY(6px); transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.note[data-on] { opacity: 1; transform: none; }
+.count { position: relative; margin: 0; max-width: 28em; font-size: 15px; line-height: 1.8; color: var(--ink-2); text-align: center; }
+
+.controls { display: flex; flex-direction: column; gap: 12px; }
+.settings { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.check { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.speeds { display: inline-grid; grid-auto-flow: column; border: 1px solid var(--line-2); border-radius: 999px; overflow: hidden; }
+.speed { all: unset; min-height: 36px; padding: 0 14px; display: inline-flex; align-items: center; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.speed + .speed { border-left: 1px solid var(--line-2); }
+.speed[aria-pressed="true"] { background: var(--ink); color: var(--paper); font-weight: 600; }
+.speed:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.trail { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.trail li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.trailText { font-size: 18px; font-weight: 500; }
+.trailNote { font-size: 13px; color: var(--muted); }
+
+.empty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.empty p { margin: 0; font-size: 15px; line-height: 1.8; color: var(--muted); }
+
+/* A wide screen: a bigger sky to leave running, the controls in one row. */
+@media (min-width: 1024px) {
+  .stage { min-height: 480px; }
+  .text { font-size: 68px; }
+  .note { font-size: 24px; }
+  .controls { flex-direction: row; align-items: center; gap: 24px; }
+  .controls :global(.btn) { min-width: 240px; }
+  .settings { flex: 1; justify-content: flex-end; gap: 8px 24px; }
+}

@@ -86,10 +86,15 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
         <h1 className={`${styles.subtitle} ${langClass(native)}`}>{title}</h1>
       </header>
 
-      <div className={styles.bodyTight}>
+      {/* With a correction, a wide screen shows it on the left and the same way of saying, rewriting and earlier
+          attempts on the right. Before one, a single column: the hints sit right above the field. */}
+      <div className={latest ? `${styles.bodyTight} ${styles.split}` : `${styles.bodyTight} ${styles.narrow}`}>
         {latest ? (
           <>
-            <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+            <div className={styles.col}>
+              <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+            </div>
+            <div className={styles.col}>
             <PatternsView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
             <details className={styles.fold}>
               <summary>{t.saying.rewrite}</summary>
@@ -106,6 +111,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
                 ))}
               </details>
             ) : null}
+            </div>
           </>
         ) : (
           <>
@@ -121,7 +127,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
             {writeForm}
           </>
         )}
-        <div className={styles.pageFoot}>
+        <div className={`${styles.pageFoot} ${styles.full}`}>
           <DeleteSaying
             sayingId={saying.id}
             labels={{

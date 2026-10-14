@@ -132,3 +132,9 @@
 .dangerRow { display: flex; justify-content: center; padding-top: 4px; }
 .quietDanger { min-height: var(--tap); padding: 0 12px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
 .danger { min-height: 40px; padding: 0 16px; border: 1px solid var(--danger); border-radius: 8px; background: var(--paper); color: var(--danger); font: inherit; font-size: 14px; cursor: pointer; }
+
+/* On a wide screen a word opens as a dialog in the middle of the screen. */
+@media (min-width: 1024px) {
+  .backdrop { align-items: center; padding: 32px; }
+  .sheet { border-radius: 16px; max-height: 84dvh; padding-bottom: 24px; }
+}

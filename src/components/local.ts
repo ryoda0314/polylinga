@@ -83,3 +83,10 @@ export function useDraft(key: string, field: string) {
 
   return { value, change, wrap };
 }
+
+/** One of a few named choices (a speed, say) remembered on this device. */
+export function useChoice<T extends string>(key: string, choices: readonly T[], fallback: T): [T, (value: T) => void] {
+  const raw = useLocal(`kotonoame:${key}`);
+  const set = useCallback((value: T) => write(`kotonoame:${key}`, value), [key]);
+  return [(choices as readonly string[]).includes(raw ?? "") ? (raw as T) : fallback, set];
+}

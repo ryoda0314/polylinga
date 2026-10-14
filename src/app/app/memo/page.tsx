@@ -68,10 +68,20 @@ export default async function MemoPage() {
           {t.look.open}
         </Link>
       </header>
-      <div className={styles.bodyTight}>
-        <p className={styles.lead}>{t.words.lead}</p>
-        <WordAddForm native={settings.nativeLang} target={settings.targetLang} />
-        <MemoBoard words={words} native={settings.nativeLang} target={settings.targetLang} rate={settings.speechRate} />
+      <div className={`${styles.bodyTight} ${styles.split}`}>
+        <div className={`${styles.col} ${styles.stick}`}>
+          <p className={styles.lead}>{t.words.lead}</p>
+          <WordAddForm native={settings.nativeLang} target={settings.targetLang} />
+          {words.length ? (
+            <Link href="/app?rain=words" className={styles.quietAction}>
+              <Icon name="shower" size={18} />
+              {t.wordRain.fromMemo}
+            </Link>
+          ) : null}
+        </div>
+        <div className={styles.col}>
+          <MemoBoard words={words} native={settings.nativeLang} target={settings.targetLang} rate={settings.speechRate} />
+        </div>
       </div>
     </>
   );

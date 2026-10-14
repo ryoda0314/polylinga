@@ -33,6 +33,10 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   rain shows 「〜、ひと雨。」. The first rain of a day ends with "enough for today", and coming back after 3+ days away is
   greeted (`rainSoFar` in me.ts). For train rides: sound and translation settings are kept on the device, the next rain
   is fetched while the current one is on screen, and half-written sentences are kept as drafts (`src/components/local.ts`).
+- 単語の雨 (`/app?rain=words`, `_shower/WordRain.tsx`): the third rain on 浴びる, also linked from メモ. The learner's memo
+  words fall one at a time with what they wrote beside them, in a new order each round, until they stop it; read aloud by
+  the browser's voice if they want, speed kept on the device, the screen kept awake while it runs. Nothing is asked or
+  counted, and it does not count as meeting a word (that stays the sentence rain's job).
 - `src/app/tutorial/` + `src/lib/tutorial.ts`: the hands-on tutorial (`/tutorial`, outside the app shell). A new learner
   lands there after `/start`; until `pl_settings.tutorial_seen_at` is set (finished or skipped) 浴びる offers it, and
   settings can open it again. Five steps, each started by the learner's tap and drawn with the app's own screens: the
@@ -89,6 +93,12 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - Every tab is rendered on the server per visit. `src/app/app/loading.tsx` makes the bottom bar switch at once (in
   production its links prefetch it): it shows the destination's own header, so keep those headers in step with the pages'.
   Pages run their queries in parallel where they can; each sequential Supabase call adds about 40 ms.
+- Phone first, with a PC layout from 1024 px (`@media (min-width: 1024px)` in each module): the tab bar becomes a column
+  on the left (BottomNav, with the name and the language pair), the page sits beside it in a 1080 px measure, and pages
+  with two halves use `.split` with `.col` groups (`display: contents` on a phone, so the phone order is the DOM order):
+  書いてみる, a correction, メモ. 浴びる puts the rain (`.rain`) and its controls (`.side`) side by side; on a phone
+  `order` keeps the switches above the rain and the after part below. Sheets open as centred dialogs; the tutorial
+  puts each step's words and action on the left and what it shows on the right.
 - Phone safe areas (`viewport-fit=cover`): `body` is padded by the top inset and `.status-fill` (root layout) paints
   the status bar solid, since iOS otherwise draws a gradient over content scrolling under it. Pages never add the top
   inset themselves; a page with another background sets `--status-fill` (see login.module.css). The bottom bar's room
