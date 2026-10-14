@@ -96,6 +96,15 @@
 /* What each step shows and lets the learner do, under its heading on a phone. */
 .stage { display: contents; }
 
+/* A tablet: still one column, with more room around it. */
+@media (min-width: 720px) {
+  .page { max-width: 720px; }
+  .head { padding: 20px 24px 6px 32px; }
+  .body { padding: 20px 32px 40px; }
+  .title { font-size: 28px; }
+  .sky { height: 280px; }
+}
+
 /* A wide screen (a PC): the step's words and its action on the left, the rain and what it does on the right. */
 @media (min-width: 1024px) {
   .page {

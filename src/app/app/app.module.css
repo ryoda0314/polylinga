@@ -266,24 +266,39 @@
 /* Groups that are two columns on a wide screen and simply follow one another on a phone. */
 .col { display: contents; }
 
-/* A wide screen (a PC): the tabs sit in a column on the left (BottomNav), the page beside them in one measure, and
-   pages with two halves (書いてみる, a correction, メモ) put them side by side. */
+/* From a tablet up (720 px): the tabs leave the bottom for a column on the left (BottomNav), and the page sits beside
+   them in one measure, still one column. */
+@media (min-width: 720px) {
+  .shell { flex-direction: row; max-width: none; border: 0; }
+  .main { min-width: 0; padding-bottom: 56px; padding-right: env(safe-area-inset-right, 0px); }
+  .main > * { width: 100%; max-width: 720px; margin-inline: auto; }
+  .topbar { padding: 20px 32px 0; }
+  .subbar { padding: 14px 32px 14px 24px; }
+  .body { padding: 32px 32px 48px; }
+  .bodyTight { padding: 28px 32px 48px; }
+  .mobileOnly { display: none !important; }
+  .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stat:nth-child(odd), .stat:nth-child(even) { padding: 16px 20px; border-right: 1px solid var(--line); }
+  .stat:first-child { padding-left: 0; }
+  .stat:last-child { border-right: 0; }
+}
+
+/* A PC (1024 px): a wider measure, and pages with two halves (書いてみる, a correction, メモ) put them side by side. */
 @media (min-width: 1024px) {
-  .shell { flex-direction: row; max-width: 1360px; }
-  .main { min-width: 0; padding-bottom: 56px; }
-  .main > * { width: 100%; max-width: 1080px; margin-inline: auto; }
+  .main > * { max-width: 1080px; }
   .topbar { padding: 20px 40px 0; }
   .subbar { padding: 14px 40px 14px 32px; }
   .body { padding: 40px 40px 48px; }
   .bodyTight { padding: 32px 40px 48px; }
-  .mobileOnly { display: none !important; }
   .narrow > * { max-width: 720px; }
   .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 56px; align-items: start; }
   .split > .col { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
   .split > .stick { position: sticky; top: 32px; }
   .split > .full { grid-column: 1 / -1; }
-  .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .stat:nth-child(odd), .stat:nth-child(even) { padding: 16px 20px; border-right: 1px solid var(--line); }
-  .stat:first-child { padding-left: 0; }
-  .stat:last-child { border-right: 0; }
+}
+
+/* A large screen (1280 px): the tab column gets its names beside the icons, and the whole app stays one block in the
+   middle instead of stretching to the edges. */
+@media (min-width: 1280px) {
+  .shell { max-width: 1360px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 }

@@ -168,16 +168,19 @@
 .side > .reached, .side > .welcome, .side > .toolbar { order: -1; }
 .side > .after { order: 1; }
 
+/* From a tablet up: larger sentences, and sheets open as a dialog in the middle of the screen. */
+@media (min-width: 720px) {
+  .sentence { font-size: 26px; }
+  .gloss { font-size: 15px; }
+  .introSky { height: 240px; }
+  .backdrop { align-items: center; padding: 32px; }
+  .sheet { border-radius: 16px; max-height: 84dvh; padding-bottom: 24px; }
+}
+
 @media (min-width: 1024px) {
   .wrap:has(> .rain) { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 0 56px; align-items: start; }
   .rain { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
   .side { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 32px; }
   .side > .reached, .side > .welcome, .side > .toolbar, .side > .after { order: 0; }
   .side .toolbar { flex-direction: column; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
-  .sentence { font-size: 26px; }
-  .gloss { font-size: 15px; }
-  .introSky { height: 240px; }
-  /* Sheets open as a dialog in the middle of the screen. */
-  .backdrop { align-items: center; padding: 32px; }
-  .sheet { border-radius: 16px; max-height: 84dvh; padding-bottom: 24px; }
 }

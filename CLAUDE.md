@@ -93,12 +93,16 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - Every tab is rendered on the server per visit. `src/app/app/loading.tsx` makes the bottom bar switch at once (in
   production its links prefetch it): it shows the destination's own header, so keep those headers in step with the pages'.
   Pages run their queries in parallel where they can; each sequential Supabase call adds about 40 ms.
-- Phone first, with a PC layout from 1024 px (`@media (min-width: 1024px)` in each module): the tab bar becomes a column
-  on the left (BottomNav, with the name and the language pair), the page sits beside it in a 1080 px measure, and pages
-  with two halves use `.split` with `.col` groups (`display: contents` on a phone, so the phone order is the DOM order):
-  書いてみる, a correction, メモ. 浴びる puts the rain (`.rain`) and its controls (`.side`) side by side; on a phone
-  `order` keeps the switches above the rain and the after part below. Sheets open as centred dialogs; the tutorial
-  puts each step's words and action on the left and what it shows on the right.
+- Phone first, then three steps up, set in each module:
+  - 720 px (a tablet, a narrow window, a phone on its side): the tab bar becomes a narrow column on the left
+    (BottomNav: icons over names, the app icon, the language learned), clear of the notch. The page is one column in a
+    720 px measure, and sheets open as centred dialogs.
+  - 1024 px (a PC): a 1080 px measure, and pages with two halves use `.split` with `.col` groups (`display: contents`
+    below this, so the narrower order is the DOM order): 書いてみる, a correction, メモ. 浴びる puts the rain (`.rain`)
+    and its controls (`.side`) side by side; narrower, `order` keeps the switches above the rain and the after part
+    below. The tutorial puts each step's words and action on the left and what it shows on the right.
+  - 1280 px: the column widens to the name, the tab names beside their icons and the whole language pair, and the app
+    stays a 1360 px block in the middle.
 - Phone safe areas (`viewport-fit=cover`): `body` is padded by the top inset and `.status-fill` (root layout) paints
   the status bar solid, since iOS otherwise draws a gradient over content scrolling under it. Pages never add the top
   inset themselves; a page with another background sets `--status-fill` (see login.module.css). The bottom bar's room

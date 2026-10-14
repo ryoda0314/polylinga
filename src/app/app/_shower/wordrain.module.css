@@ -38,8 +38,8 @@
 .empty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .empty p { margin: 0; font-size: 15px; line-height: 1.8; color: var(--muted); }
 
-/* A wide screen: a bigger sky to leave running, the controls in one row. */
-@media (min-width: 1024px) {
+/* From a tablet up: a bigger sky to leave running, the controls in one row. */
+@media (min-width: 720px) {
   .stage { min-height: 480px; }
   .text { font-size: 68px; }
   .note { font-size: 24px; }
