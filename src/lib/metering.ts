@@ -8,8 +8,9 @@ function envInt(name: string, fallback: number) {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
+// Corrections per learner: enough for a few sentences and their second tries on each train ride of the day.
 export const LIMITS: Record<MeteredKind, { user: number; global: number }> = {
-  corrections: { user: 3, global: envInt("PL_GLOBAL_CORRECTIONS_PER_DAY", 1000) },
+  corrections: { user: envInt("PL_USER_CORRECTIONS_PER_DAY", 20), global: envInt("PL_GLOBAL_CORRECTIONS_PER_DAY", 1000) },
   tts: { user: 60, global: envInt("PL_GLOBAL_TTS_PER_DAY", 3000) },
 };
 

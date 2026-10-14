@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Rain } from "@/components/Rain";
+import { LIMITS } from "@/lib/metering";
 import styles from "./page.module.css";
 
 const NOTE_URL = "https://note.com/ryoda_/n/n4e69c14a99cb";
@@ -217,7 +218,7 @@ export default function Home() {
             </div>
             <div className={styles.priceRow}>
               <span>AI 添削</span>
-              <span>1日3回まで無料</span>
+              <span>1日{LIMITS.corrections.user}回まで無料</span>
             </div>
           </div>
         </div>
