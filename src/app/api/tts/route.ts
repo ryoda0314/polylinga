@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { AUDIO_BUCKET, audioPath, audioUrl } from "@/lib/audio";
+import { audioUrl, clipExists, storeClip } from "@/lib/audio";
 import { getSession } from "@/lib/auth";
 import { isLang, type Lang } from "@/lib/langs";
 import { consume, refund } from "@/lib/metering";
@@ -61,9 +61,7 @@ export async function GET(request: NextRequest) {
   if (!text || !lang) return NextResponse.json({ error: "読み上げる文が見つかりません" }, { status: 404 });
 
   // Someone may have generated it since the page was rendered.
-  const url = audioUrl(text, lang);
-  const head = await fetch(url, { method: "HEAD", cache: "no-store" }).catch(() => null);
-  if (head?.ok) return NextResponse.redirect(url, 302);
+  if (await clipExists(text, lang)) return NextResponse.redirect(audioUrl(text, lang), 302);
 
   const use = await consume(user.id, "tts");
   if (!use.ok) {
@@ -72,7 +70,8 @@ export async function GET(request: NextRequest) {
 
   let wav: Uint8Array;
   try {
-    wav = await synthesize(text, lang);
+    // A learner is waiting: one more try only if the first came out rushed.
+    wav = await synthesize(text, lang, 2);
   } catch (err) {
     console.error("[tts]", err instanceof Error ? err.message : err);
     await refund(user.id, "tts");
@@ -80,10 +79,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "音声を作れませんでした" }, { status: 503 });
   }
 
-  const { error } = await createAdminClient()
-    .storage.from(AUDIO_BUCKET)
-    .upload(audioPath(text, lang), wav, { contentType: "audio/wav", upsert: true });
-  if (error) console.error("[tts] upload", error.message);
+  await storeClip(text, lang, wav).catch((err) => console.error("[tts] upload", err instanceof Error ? err.message : err));
 
   return new NextResponse(Buffer.from(wav), {
     headers: { "Content-Type": "audio/wav", "Cache-Control": "private, max-age=86400" },

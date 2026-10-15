@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { correctSentence, explainSentence, type CorrectionResult, type ExplainedPart } from "@/lib/ai";
 import { requireUser } from "@/lib/auth";
 import { approvedPatterns, searchCorpus } from "@/lib/corpus";
@@ -13,6 +14,7 @@ import { heartShared, pickMinnaCluster, recordMinna, reportShared, shareCorrecti
 import { withdrawShared } from "@/lib/me";
 import { findMemoHits, pickCluster, recordCluster, sentencesWith, type ShowerCluster } from "@/lib/shower";
 import { createAdminClient } from "@/lib/supabase/server";
+import { ensureClip } from "@/lib/tts";
 
 const MAX_TEXT = 200;
 
@@ -247,6 +249,12 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
     await refund(userId, "corrections");
     return { error: t.saying.failed };
   }
+
+  // The corrected sentence is the one they will play next (here and in みんなの雨): its audio is made once the page is
+  // on its way, so the speaker does not wait for it. Corrections are already limited per day, so this is not counted.
+  after(() =>
+    ensureClip(result.corrected, target).catch((err) => console.error("[tts] after correction", err instanceof Error ? err.message : err)),
+  );
 
   // Learners who share let the corrected sentence rain on others (みんなの雨); never let that hold the correction up.
   await shareCorrection({ userId, correctionId: String(saved.id), target, native, result }).catch((err) =>

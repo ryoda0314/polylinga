@@ -18,6 +18,13 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - Audio: Gemini TTS on Vertex AI (`src/lib/tts.ts`), stored in the public `pl-audio` bucket (`src/lib/audio.ts`).
   Pages link straight to the stored file; `/api/tts` only generates missing clips, and only for approved sentences or the
   learner's own corrections (never for text from the request). The client falls back to the browser's voice.
+  - Gemini's pace varies between generations, so each clip is asked for at a learner's pace and measured (speech units
+    per second, `PACE_RANGE`); a rushed one is made again.
+  - A correction's clip is made right after the correction (`after()` in actions.ts), so its speaker never waits.
+  - `src/components/audio.ts` fetches a rain's clips while its first screen is up, and the next rain's while this one
+    plays (they then play at once, even in a tunnel). One play per element: a newer one cancels an older one still loading.
+  - Pro TTS allows about 10 clips a minute per project, and the app needs that for its own generation. Bulk generation
+    (`scripts/generate-audio.mjs`) therefore runs on Flash (same voice, its own quota).
 
 ## Where things are
 
@@ -78,7 +85,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - `node --env-file=.env.local scripts/expand-library.mjs [function id] [count]`: more chat-style sentences for existing patterns.
 - `node --env-file=.env.local scripts/review-library.mjs [function ids]`: AI second opinion on drafts, shown in the admin page.
 - `node --env-file=.env.local scripts/publish-reviewed.mjs`: publish drafts the reviewer passed, and embed them.
-- `node --env-file=.env.local scripts/generate-audio.mjs`: pre-generate audio for approved sentences (Vertex quota is per minute; the script waits).
+- `node --env-file=.env.local scripts/generate-audio.mjs [--langs=zh,ko,en] [--redo-fast] [--dry-run]`: pre-generate audio for
+  approved sentences on Flash (`--redo-fast` also remakes rushed clips; Vertex quota is per minute, the script waits).
 - `node --env-file=.env.local scripts/prepare-pinyin.mjs` → check `scripts/library/work/pinyin/batch-*.json` by hand
   (corrections in `batch-*.out.json`) → `scripts/apply-pinyin.mjs [--dry-run]`: store checked pinyin for new sentences.
 

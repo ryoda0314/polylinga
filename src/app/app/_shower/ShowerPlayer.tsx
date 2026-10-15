@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { playToEnd, stopAudio } from "@/components/audio";
+import { playToEnd, prefetchAudio, stopAudio } from "@/components/audio";
 import { Icon } from "@/components/Icon";
 import { usePref } from "@/components/local";
 import { Rain } from "@/components/Rain";
@@ -74,6 +74,11 @@ export function ShowerPlayer({
 
   useEffect(() => () => stopAudio(audioRef.current), []);
 
+  // This rain's clips are fetched while its first screen is up, so each sentence starts the moment its turn comes.
+  useEffect(() => {
+    if (cluster) prefetchAudio(cluster.sentences.map((s) => s.audio));
+  }, [cluster]);
+
   // Heard once: the note stays on this page, and next time it is quiet again.
   useEffect(() => {
     if (reached) void markReachedSeen().catch(() => {});
@@ -98,7 +103,8 @@ export function ShowerPlayer({
     const done = recordFinished({ patternId: cluster.patternId, sentenceIds }, source).catch(() => {});
     // The next rain is fetched now, while this one is still on screen: 次の雨 then needs no connection (a tunnel).
     const next = done.then(() => nextCluster(cluster.patternId, source));
-    next.catch(() => {}); // asked for again when the learner moves on
+    // Its stored clips too, so the next rain plays even in a tunnel. A failure is asked for again when the learner moves on.
+    next.then((c) => c && prefetchAudio(c.sentences.map((s) => s.audio), { generate: false })).catch(() => {});
     recorded.current = { key, done, next };
   }, [cluster, shown, source]);
 
@@ -134,7 +140,25 @@ export function ShowerPlayer({
     const run = ++runRef.current;
     setPlaying(i);
     await playToEnd(element(), cluster.sentences[i].audio, cluster.sentences[i].text, target, rate);
-    if (run === runRef.current) setPlaying(null);
+    if (run !== runRef.current) return;
+    setPlaying(null);
+    // A sentence heard again in the middle of a rain: the rain then carries on where it was.
+    if (autoplay && shown < cluster.sentences.length) {
+      await new Promise((r) => setTimeout(r, GAP_MS));
+      if (run === runRef.current) void flowFrom(cluster, shown);
+    }
+  }
+
+  // The switch works at once: off stops the sound now; on carries the rain on from the next sentence.
+  function switchAutoplay(on: boolean) {
+    setAutoplay(on);
+    if (!on) {
+      runRef.current++;
+      stopAudio(audioRef.current);
+      setPlaying(null);
+    } else if (cluster && shown > 0 && shown < cluster.sentences.length) {
+      void flowFrom(cluster, shown);
+    }
   }
 
   function showNext() {
@@ -310,7 +334,7 @@ export function ShowerPlayer({
         <span className={cluster.again ? styles.again : styles.fresh}>{badge}</span>
         <div className={styles.toggles}>
           <label className={styles.toggle}>
-            <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
+            <input type="checkbox" checked={autoplay} onChange={(e) => switchAutoplay(e.target.checked)} />
             {t.shower.autoplay}
           </label>
           <label className={styles.toggle}>
