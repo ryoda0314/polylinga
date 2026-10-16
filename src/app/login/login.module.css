@@ -38,3 +38,5 @@
 }
 .tabOn { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
 .textLink { align-self: flex-start; font-size: 14px; color: var(--muted); padding: 10px 0; }
+/* Google's own button (Google Identity Services), centred, with room kept while it loads. */
+.google { display: flex; justify-content: center; min-height: 44px; }

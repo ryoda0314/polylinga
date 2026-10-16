@@ -31,6 +31,11 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - `src/lib/auth.ts`, `src/lib/settings.ts`: request-cached user and settings (`requireUser`, `requireSettings`). The
   session token is checked with `getClaims()` here and in `src/proxy.ts`: the project signs with ES256, so it is verified
   locally against the cached signing keys instead of a round trip to Supabase Auth on every page.
+- Sign-in (`src/app/login/`): the Supabase project's mails, templates, Site URL and redirect list are the old app's, so
+  ことのあめ does its own. Sign-up and a forgotten password make the link on the server (`generateLink`, the account
+  unconfirmed until then) and send our mail through Resend (`src/lib/email.ts`), straight to `/auth/confirm`; counted as
+  `emails` (5 per address, 80 a day). Google is our own OAuth client via Google Identity Services and
+  `signInWithIdToken` (`GoogleButton`), falling back to the shared redirect sign-in until `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set.
 - `src/lib/shower.ts` (+ pure helpers in `shower-core.ts`): picks the next cluster (patterns due to return first,
   then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings. A pattern is due
   after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same

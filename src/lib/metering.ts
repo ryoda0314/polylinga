@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/server";
 
-export type MeteredKind = "corrections" | "tts";
+export type MeteredKind = "corrections" | "tts" | "emails";
 
 function envInt(name: string, fallback: number) {
   const n = Number(process.env[name]);
@@ -12,6 +12,8 @@ function envInt(name: string, fallback: number) {
 export const LIMITS: Record<MeteredKind, { user: number; global: number }> = {
   corrections: { user: envInt("PL_USER_CORRECTIONS_PER_DAY", 20), global: envInt("PL_GLOBAL_CORRECTIONS_PER_DAY", 1000) },
   tts: { user: 60, global: envInt("PL_GLOBAL_TTS_PER_DAY", 3000) },
+  // Sign-up and password emails: a few per address, and well inside Resend's daily allowance shared with the old app.
+  emails: { user: 5, global: envInt("PL_GLOBAL_EMAILS_PER_DAY", 80) },
 };
 
 export type ConsumeResult = { ok: true; left: number } | { ok: false; reason: "user" | "service" | "error" };

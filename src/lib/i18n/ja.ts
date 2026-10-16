@@ -334,6 +334,19 @@ export const ja = {
     account: "アカウント",
     logout: "ログアウト",
   },
+  // Emails the app sends itself (src/lib/email.ts): signing up and a forgotten password.
+  mail: {
+    confirmSubject: "ことのあめ｜メールアドレスの確認",
+    confirmTitle: "メールアドレスの確認",
+    confirmBody: "ことのあめに登録してくださって、ありがとうございます。下のボタンを押すと登録が終わり、そのまま始められます。",
+    confirmButton: "登録を終える",
+    resetSubject: "ことのあめ｜パスワードの再設定",
+    resetTitle: "パスワードの再設定",
+    resetBody: "下のボタンを押すと、新しいパスワードを決める画面が開きます。",
+    resetButton: "新しいパスワードを決める",
+    linkNote: "ボタンが押せないときは、次のアドレスをブラウザに貼り付けてください。",
+    ignore: "心当たりがなければ、このメールは何もせずに削除してください。",
+  },
   errors: {
     title: "うまく表示できませんでした",
     body: "通信が不安定か、一時的な不具合です。少し待ってからもう一度お試しください。",

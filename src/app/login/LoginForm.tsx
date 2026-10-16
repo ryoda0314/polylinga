@@ -4,11 +4,31 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { register, resendConfirmation, type MailResult } from "./actions";
+import { GoogleButton } from "./GoogleButton";
 import styles from "./login.module.css";
 
 type Mode = "login" | "register";
 
 const MIN_PASSWORD = 8;
+
+const sentNotice = (email: string) =>
+  `${email} に確認メールを送りました。メールのリンクを押すと登録が終わり、そのまま始められます。届かないときは、迷惑メールのフォルダも見てください。`;
+
+function mailError(result: Exclude<MailResult, { ok: true }>): string {
+  switch (result.reason) {
+    case "invalid":
+      return "メールアドレスを確かめてください。";
+    case "exists":
+      return "このメールアドレスはすでに登録されています。ログインしてください。";
+    case "weak":
+      return `パスワードは${MIN_PASSWORD}文字以上にしてください。`;
+    case "limit":
+      return "このアドレスへのメールは、今日はもう送れません。明日もう一度お試しください。";
+    default:
+      return "メールを送れませんでした。少し待ってから、もう一度お試しください。";
+  }
+}
 
 export function LoginForm() {
   const router = useRouter();
@@ -18,28 +38,32 @@ export function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // Tried to log in before confirming: offer the confirmation mail again.
+  const [unconfirmed, setUnconfirmed] = useState(false);
 
   function switchMode(next: Mode) {
     setMode(next);
     setError("");
     setNotice("");
+    setUnconfirmed(false);
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setNotice("");
+    setUnconfirmed(false);
     if (mode === "register" && password.length < MIN_PASSWORD) {
       setError(`パスワードは${MIN_PASSWORD}文字以上にしてください。`);
       return;
     }
     setBusy(true);
-    const supabase = createClient();
 
     if (mode === "login") {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: authError } = await createClient().auth.signInWithPassword({ email, password });
       setBusy(false);
       if (authError) {
+        setUnconfirmed(authError.code === "email_not_confirmed");
         setError(
           authError.status === 429
             ? "ログインの試行が続いたため、少し待つ必要があります。1分ほどしてからお試しください。"
@@ -54,37 +78,22 @@ export function LoginForm() {
       return;
     }
 
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
+    // ことのあめ's own confirmation mail (actions.ts); the account cannot log in until its link is pressed.
+    const result = await register(email, password);
     setBusy(false);
-    if (authError) {
-      setError(
-        authError.code === "user_already_exists"
-          ? "このメールアドレスはすでに登録されています。ログインしてください。"
-          : authError.code === "weak_password"
-            ? "このパスワードは使えません。もう少し長く、推測されにくいものにしてください。"
-            : "登録できませんでした。メールアドレスを確かめて、もう一度お試しください。",
-      );
-      return;
-    }
-    if (data.session) {
-      router.replace("/app");
-      router.refresh();
-    } else {
-      setNotice(`${email} に確認メールを送りました。メールのリンクを押すと登録が終わり、そのまま始められます。`);
-    }
+    if (result.ok) setNotice(sentNotice(email));
+    else setError(mailError(result));
   }
 
-  async function google() {
-    const supabase = createClient();
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (oauthError) setError("Google でログインできませんでした。メールアドレスとパスワードをお使いください。");
+  async function sendAgain() {
+    setBusy(true);
+    const result = await resendConfirmation(email);
+    setBusy(false);
+    if (result.ok) {
+      setUnconfirmed(false);
+      setError("");
+      setNotice(sentNotice(email));
+    } else setError(mailError(result));
   }
 
   return (
@@ -146,6 +155,11 @@ export function LoginForm() {
               {error}
             </p>
           ) : null}
+          {unconfirmed ? (
+            <button type="button" className="btn-quiet" onClick={sendAgain} disabled={busy}>
+              確認メールをもう一度送る
+            </button>
+          ) : null}
           <button type="submit" className="btn" disabled={busy}>
             {busy ? "確認しています…" : mode === "login" ? "ログイン" : "登録する"}
           </button>
@@ -158,9 +172,7 @@ export function LoginForm() {
       )}
 
       <div className={styles.or}>または</div>
-      <button type="button" className="btn-quiet" onClick={google}>
-        Google で続ける
-      </button>
+      <GoogleButton onError={setError} />
     </div>
   );
 }

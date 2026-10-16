@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { requestReset } from "../actions";
 import styles from "../login.module.css";
 
 export function ForgotForm() {
@@ -11,11 +11,9 @@ export function ForgotForm() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setState("sending");
-    const { error } = await createClient().auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/login/reset`,
-    });
-    // Rate limiting is the only error worth telling apart; whether the address exists is never revealed.
-    setState(error?.status === 429 ? "error" : "sent");
+    // ことのあめ's own mail (actions.ts). Only the daily limit is told apart; whether the address exists is never revealed.
+    const result = await requestReset(email);
+    setState(!result.ok && result.reason === "limit" ? "error" : "sent");
   }
 
   if (state === "sent") {
@@ -42,7 +40,7 @@ export function ForgotForm() {
       />
       {state === "error" ? (
         <p className={styles.error} role="alert">
-          送信が続いたため、少し待つ必要があります。1分ほどしてからお試しください。
+          このアドレスへのメールは、今日はもう送れません。明日もう一度お試しください。
         </p>
       ) : null}
       <button type="submit" className="btn" disabled={state === "sending"}>
