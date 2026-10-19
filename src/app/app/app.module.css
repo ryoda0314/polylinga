@@ -264,6 +264,12 @@
   background: var(--tint); color: var(--accent); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
 }
 
+/* 学習の記録: the whole text as it will be copied, in its own scrolling box. */
+.exportText {
+  margin: 4px 0 0; max-height: 60vh; overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); font-family: inherit; font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
 /* A quiet way somewhere else from a page (メモ → 単語の雨). */
 .quietAction { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font-size: 14px; font-weight: 500; color: var(--accent); text-decoration: none; }
 

@@ -70,6 +70,8 @@ export default function Loading() {
           ? subbar(t.me.title, false, pill("sliders", t.me.settings))
           : path === "/app/me/settings"
             ? subbar(t.me.settings, true)
+            : path === "/app/me/export"
+              ? subbar(t.me.exportTitle, true)
             : subbar("", path.split("/").length > 3);
   return (
     <div role="status" aria-label={t.common.loading}>

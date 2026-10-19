@@ -66,7 +66,9 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   they used them; `/app/me/f/[id]` shows the lit part, their sentences with it and the ones they bathed in, and lets them
   try it again) and 自分の文 (corrections, sentences hearted in みんなの雨, their own shared ones; withdraw hides every
   row of that correction). A correction is shown everywhere here as what they wrote above what it became, the changes
-  marked as on its own page (`SaidPair` in views.tsx). Rain before `pl_rain_days` existed shows only on each pattern's last day.
+  marked as on its own page (`SaidPair` in views.tsx).
+  学習の記録 (`/app/me/export`, `loadExport` + `src/lib/export.ts`): all of it as one Markdown text to copy or save, opening
+  with a request the learner can paste into an AI of their choice. The app itself makes no AI call for it. Rain before `pl_rain_days` existed shows only on each pattern's last day.
 - `src/lib/corpus.ts`: the sentence library (search for 書いてみる hints, examples by pattern). RLS hides drafts.
   書いてみる hints (`searchCorpus` → `pl_hint_sentences`) are one sentence per function (かたち), ranked by the
   sentence's closeness in meaning plus the function's average meaning, so they share a way of saying with the intent

@@ -55,6 +55,9 @@ export default async function MePage({ searchParams }: PageProps<"/app/me">) {
             ))}
           </dl>
           <p className={styles.note}>{t.me.sofarNote}</p>
+          <Link href="/app/me/export" className={styles.quietAction}>
+            {t.me.exportLink}
+          </Link>
         </section>
 
         <nav className={styles.views} aria-label={t.me.viewsLabel}>

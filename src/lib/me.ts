@@ -3,7 +3,9 @@ import type { CorrectionResult } from "@/lib/ai";
 import { getSession } from "@/lib/auth";
 import { approvedPatterns, functionLabels, loadSentences, type ShownSentence } from "@/lib/corpus";
 import type { Range } from "@/lib/diff";
+import type { ExportData } from "@/lib/export";
 import type { Lang } from "@/lib/langs";
+import { wordStage } from "@/lib/shower-core";
 import { createAdminClient } from "@/lib/supabase/server";
 
 // 自分: a quiet look back at what the learner has bathed in, noticed and said, in the language they are learning.
@@ -395,4 +397,104 @@ export async function withdrawShared(userId: string, sharedId: string) {
   const { data: row } = await admin.from("pl_shared").select("correction_id, user_id").eq("id", sharedId).maybeSingle();
   if (!row || row.user_id !== userId) return;
   await admin.from("pl_shared").update({ status: "hidden" }).eq("correction_id", row.correction_id).eq("user_id", userId);
+}
+
+const EXPORT_SAID = 500;
+
+/**
+ * Everything the learning record (書き出す) writes out, read as the learner (RLS): their sentences with what changed and
+ * why, the patterns they bathed in, their memo words and their days. Names of languages come from the caller.
+ */
+export async function loadExport(
+  userId: string,
+  target: Lang,
+  native: Lang,
+  names: { target: string; native: string },
+  cue: string | null,
+): Promise<ExportData> {
+  const { supabase } = await getSession();
+  const [sofar, { data: exposures }, { data: said }, { data: words }, { data: rains }, patterns, labels] = await Promise.all([
+    loadSofar(userId, target),
+    supabase
+      .from("pl_exposures")
+      .select("pattern_id, times, last_at, pl_patterns!inner(lang)")
+      .eq("user_id", userId)
+      .eq("pl_patterns.lang", target),
+    supabase
+      .from("pl_corrections")
+      .select("input, corrected, intent, result, created_at")
+      .eq("user_id", userId)
+      .eq("target_lang", target)
+      .order("created_at", { ascending: false })
+      .limit(EXPORT_SAID),
+    supabase
+      .from("pl_words")
+      .select("text, note, encounters, uses, understood, created_at")
+      .eq("user_id", userId)
+      .eq("lang", target)
+      .order("created_at", { ascending: false })
+      .limit(2000),
+    supabase.from("pl_rain_days").select("day, times").eq("user_id", userId).eq("lang", target).limit(5000),
+    approvedPatterns(target),
+    functionLabels(),
+  ]);
+  const byId = new Map(patterns.map((p) => [p.id, p]));
+  const labelOf = (id: string) => {
+    const p = byId.get(id);
+    return p ? (labels.get(p.functionId)?.[native] ?? "") : "";
+  };
+
+  // Days with anything in them: rain from pl_rain_days, sentences and words by when they were made (Japan time).
+  const days = new Map<string, { day: string; rains: number; said: number; words: number }>();
+  const dayFor = (day: string) => {
+    let d = days.get(day);
+    if (!d) days.set(day, (d = { day, rains: 0, said: 0, words: 0 }));
+    return d;
+  };
+  for (const r of rains ?? []) dayFor(String(r.day)).rains += (r.times as number) ?? 0;
+  for (const c of said ?? []) dayFor(dayOf(c.created_at)).said++;
+  for (const w of words ?? []) dayFor(dayOf(w.created_at)).words++;
+
+  return {
+    targetName: names.target,
+    nativeName: names.native,
+    cue,
+    today: dayOf(new Date().toISOString()),
+    totals: sofar,
+    said: (said ?? []).map((c) => {
+      const result = (c.result ?? {}) as Partial<CorrectionResult>;
+      return {
+        day: dayOf(c.created_at),
+        intent: (c.intent as string | null) ?? null,
+        input: String(c.input),
+        corrected: String(c.corrected),
+        natural: result.natural === true,
+        explanation: String(result.explanation ?? ""),
+        meaning: String(result.meaning ?? ""),
+        patterns: (result.patterns ?? []).flatMap((p) => {
+          const form = byId.get(p.id)?.form;
+          const label = labelOf(p.id);
+          return form ? [label ? `${form}（${label}）` : form] : [];
+        }),
+      };
+    }),
+    saidAll: sofar.said,
+    patterns: (exposures ?? []).flatMap((e) => {
+      const p = byId.get(e.pattern_id as string);
+      if (!p) return [];
+      const used = (said ?? []).some((c) =>
+        ((c.result as Partial<CorrectionResult> | null)?.patterns ?? []).some((x) => x.id === e.pattern_id),
+      );
+      return [{ form: p.form, label: labelOf(p.id), times: (e.times as number) ?? 0, used, lastDay: e.last_at ? dayOf(e.last_at as string) : null }];
+    }),
+    words: (words ?? []).map((w) => ({
+      text: String(w.text),
+      note: (w.note as string | null) ?? null,
+      stage: wordStage({ encounters: w.encounters as number, uses: w.uses as number, understood: w.understood === true }),
+      encounters: w.encounters as number,
+      uses: w.uses as number,
+      since: dayOf(w.created_at),
+    })),
+    days: [...days.values()].sort((a, b) => b.day.localeCompare(a.day)),
+  };
 }
