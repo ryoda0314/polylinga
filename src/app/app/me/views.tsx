@@ -71,20 +71,6 @@ export async function DaysView({ userId, target, native, t, before }: ViewProps 
                 {chips(d.minna)}
               </div>
             ) : null}
-            {d.said.length ? (
-              <div className={styles.dayRow}>
-                <dt>{t.me.daySaid}</dt>
-                <dd>
-                  <ul className={styles.plainList}>
-                    {d.said.map((s) => (
-                      <li key={s.id}>
-                        <SaidLink said={s} target={target} native={native} t={t} compact />
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </div>
-            ) : null}
             {d.words.length ? (
               <div className={styles.dayRow}>
                 <dt>{t.me.dayWords}</dt>
@@ -92,6 +78,22 @@ export async function DaysView({ userId, target, native, t, before }: ViewProps 
               </div>
             ) : null}
           </dl>
+          {/* The sentences need the whole width (what they wrote above what it became), so they follow the short rows. */}
+          {d.said.length ? (
+            <div className={styles.daySaid}>
+              <h3 className={styles.daySaidHead}>
+                {t.me.daySaid}
+                <span className={styles.count}>{t.common.count(d.said.length)}</span>
+              </h3>
+              <ul className={styles.plainList}>
+                {d.said.map((s) => (
+                  <li key={s.id}>
+                    <SaidLink said={s} target={target} native={native} t={t} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
       ))}
       {earlier ? (
@@ -152,21 +154,21 @@ export function SaidPair({
 }
 
 /** One of the learner's corrected sentences, opening its correction page. */
-function SaidLink({ said, target, native, t, compact = false }: { said: MySaid; target: Lang; native: Lang; t: Dict; compact?: boolean }) {
+function SaidLink({ said, target, native, t }: { said: MySaid; target: Lang; native: Lang; t: Dict }) {
   const body = (
     <>
       <span className={styles.rowText}>
-        <SaidPair input={said.input} text={said.text} target={target} t={t} afterClass={compact ? styles.saidText : styles.rowMain} />
+        <SaidPair input={said.input} text={said.text} target={target} t={t} afterClass={styles.rowMain} />
         {said.gloss ? <span className={`${styles.rowSub} ${langClass(native)}`}>{said.gloss}</span> : null}
       </span>
       {said.natural ? <span className={styles.usedTag}>{t.me.natural}</span> : null}
     </>
   );
-  if (!said.sayingId) return <div className={compact ? styles.saidRow : styles.row}>{body}</div>;
+  if (!said.sayingId) return <div className={styles.row}>{body}</div>;
   return (
-    <Link href={`/app/s/${said.sayingId}`} className={compact ? styles.saidRow : styles.rowLink}>
+    <Link href={`/app/s/${said.sayingId}`} className={styles.rowLink}>
       {body}
-      {compact ? null : <Icon name="arrow" size={18} />}
+      <Icon name="arrow" size={18} />
     </Link>
   );
 }
