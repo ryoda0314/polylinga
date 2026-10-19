@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { SentenceText, type Highlight } from "@/components/SentenceText";
+import { diffRanges, type Range } from "@/lib/diff";
 import type { Dict } from "@/lib/i18n";
 import { LANG_LOCALE, langClass, type Lang } from "@/lib/langs";
 import { loadDays, loadMine, loadPatterns, type DayRain, type MySaid } from "@/lib/me";
@@ -105,18 +107,57 @@ export async function DaysView({ userId, target, native, t, before }: ViewProps 
   );
 }
 
+/**
+ * What the learner wrote and what it became, as on the correction page: the removed parts struck through, the added
+ * ones underlined. A sentence that needed nothing is shown once. `mark` lights a pattern in the corrected one.
+ */
+export function SaidPair({
+  input,
+  text,
+  target,
+  t,
+  afterClass,
+  mark = null,
+  reading = null,
+}: {
+  input: string;
+  text: string;
+  target: Lang;
+  t: Dict;
+  afterClass: string;
+  mark?: Range | null;
+  reading?: string[] | null;
+}) {
+  const lit: Highlight[] = mark ? [{ ...mark, kind: "mark" }] : [];
+  if (input.trim() === text.trim()) {
+    return (
+      <span className={`${afterClass} ${langClass(target)}`}>
+        <SentenceText text={text} highlights={lit} reading={reading} />
+      </span>
+    );
+  }
+  const { removed, added } = diffRanges(input, text, target);
+  return (
+    <span className={styles.saidPair}>
+      <span className={styles.saidTag}>{t.me.wrote}</span>
+      <span className={`${styles.saidBefore} ${langClass(target)}`}>
+        <SentenceText text={input} highlights={removed.map((r) => ({ ...r, kind: "del" as const }))} />
+      </span>
+      <span className={styles.saidTag}>{t.me.fixed}</span>
+      <span className={`${afterClass} ${langClass(target)}`}>
+        <SentenceText text={text} highlights={[...added.map((r) => ({ ...r, kind: "ins" as const })), ...lit]} reading={reading} />
+      </span>
+    </span>
+  );
+}
+
 /** One of the learner's corrected sentences, opening its correction page. */
 function SaidLink({ said, target, native, t, compact = false }: { said: MySaid; target: Lang; native: Lang; t: Dict; compact?: boolean }) {
   const body = (
     <>
       <span className={styles.rowText}>
-        <span className={`${compact ? styles.saidText : styles.rowMain} ${langClass(target)}`}>{said.text}</span>
+        <SaidPair input={said.input} text={said.text} target={target} t={t} afterClass={compact ? styles.saidText : styles.rowMain} />
         {said.gloss ? <span className={`${styles.rowSub} ${langClass(native)}`}>{said.gloss}</span> : null}
-        {!compact && said.input !== said.text ? (
-          <span className={`${styles.rowSub} ${langClass(target)}`}>
-            {t.me.wrote}　{said.input}
-          </span>
-        ) : null}
       </span>
       {said.natural ? <span className={styles.usedTag}>{t.me.natural}</span> : null}
     </>

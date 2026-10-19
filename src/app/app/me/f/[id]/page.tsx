@@ -13,7 +13,7 @@ import { requireSettings } from "@/lib/settings";
 import type { ShowerSentence } from "@/lib/shower";
 import { TryForm } from "../../../_shower/TryForm";
 import styles from "../../../app.module.css";
-import { dayLabel } from "../../views";
+import { dayLabel, SaidPair } from "../../views";
 
 export const metadata = { title: "かたち" };
 
@@ -115,12 +115,18 @@ export default async function PatternLookPage({ params, searchParams }: PageProp
           ) : (
             <ul className={styles.plainList}>
               {look.mine.map((s) => {
-                const lit: Highlight[] = s.mark ? [{ ...s.mark, kind: "mark" }] : [];
+                // What they wrote above what it became, the pattern lit in the corrected one.
                 const text = (
                   <span className={styles.rowText}>
-                    <span className={`${styles.exampleText} ${targetClass}`}>
-                      <SentenceText text={s.text} highlights={lit} reading={readingFor(s.text, target)} />
-                    </span>
+                    <SaidPair
+                      input={s.input}
+                      text={s.text}
+                      target={target}
+                      t={t}
+                      afterClass={styles.exampleText}
+                      mark={s.mark}
+                      reading={readingFor(s.text, target)}
+                    />
                     {s.gloss ? <span className={`${styles.gloss} ${nativeClass}`}>{s.gloss}</span> : null}
                   </span>
                 );

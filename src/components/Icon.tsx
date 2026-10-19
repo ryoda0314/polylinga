@@ -1,4 +1,4 @@
-type IconName = "speaker" | "back" | "pencil" | "bookmark" | "user" | "close" | "arrow" | "shower" | "copy" | "sliders" | "search";
+type IconName = "speaker" | "back" | "pencil" | "bookmark" | "user" | "close" | "arrow" | "shower" | "copy" | "sliders" | "search" | "check";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   speaker: (
@@ -9,6 +9,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   back: <path d="M15 18l-6-6 6-6" />,
+  check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   pencil: <path d="M4 20h4L19 9l-4-4L4 16z" />,
   bookmark: <path d="M6 3h12v18l-6-4-6 4z" />,
   user: (

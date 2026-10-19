@@ -1,18 +1,22 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
 import { saveWord, type WordState } from "../actions";
+import { SaveButton } from "./SaveButton";
 import styles from "./memo.module.css";
 
 /** Type a word in yourself (never filled in for you); the same word again simply counts as another meeting. */
 export function WordAddForm({ native, target }: { native: Lang; target: Lang }) {
   const t = getDict(native);
   const [state, action, pending] = useActionState<WordState, FormData>(saveWord, { error: null, saved: null });
+  // Typing again after a save clears the "saved" look, so it always speaks of the word just sent.
+  const [typing, setTyping] = useState(false);
+  const done = !pending && Boolean(state.saved) && !typing;
 
   return (
-    <form action={action} className={styles.addForm}>
+    <form action={action} onSubmit={() => setTyping(false)} onInput={() => setTyping(true)} className={styles.addForm}>
       <label htmlFor="add-word" className="label">
         {t.words.add}
       </label>
@@ -27,9 +31,7 @@ export function WordAddForm({ native, target }: { native: Lang; target: Lang }) 
           spellCheck={false}
           className={`${styles.addWord} ${langClass(target)}`}
         />
-        <button type="submit" className="btn" disabled={pending}>
-          {t.word.save}
-        </button>
+        <SaveButton pending={pending} done={done} labels={{ save: t.word.save, saving: t.word.saving, saved: t.word.savedButton }} />
       </div>
       <input
         id="add-note"
@@ -44,7 +46,7 @@ export function WordAddForm({ native, target }: { native: Lang; target: Lang }) 
         <p className={styles.formError} role="alert">
           {state.error}
         </p>
-      ) : state.saved ? (
+      ) : done ? (
         <p className={styles.formSaved} role="status">
           {state.saved}
         </p>

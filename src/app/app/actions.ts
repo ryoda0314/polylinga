@@ -138,7 +138,7 @@ export async function saveWord(_prev: WordState, formData: FormData): Promise<Wo
   if (error) return { error: t.words.failed, saved: null };
 
   revalidatePath("/app/memo");
-  return { error: null, saved: existing ? t.words.savedAgain(existing.memo_count + 1) : t.words.saved };
+  return { error: null, saved: existing ? t.words.savedAgain(text, existing.memo_count + 1) : t.words.saved(text) };
 }
 
 export async function setUnderstood(wordId: string, understood: boolean) {

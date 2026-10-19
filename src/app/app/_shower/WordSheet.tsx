@@ -7,6 +7,7 @@ import { SpeakButton, type AudioSource } from "@/components/SpeakButton";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
 import { findSentencesWith, saveWord, type WordState } from "../actions";
+import { SaveButton } from "../memo/SaveButton";
 import styles from "./shower.module.css";
 
 type Other = {
@@ -57,6 +58,9 @@ export function WordSheet({
   const [others, setOthers] = useState<Other[] | null>(null);
   const [loading, startLoading] = useTransition();
   const [state, saveAction, saving] = useActionState<WordState, FormData>(saveWord, { error: null, saved: null });
+  // Typing again after a save clears the "saved" look, so it always speaks of the word just sent.
+  const [typing, setTyping] = useState(false);
+  const done = !saving && Boolean(state.saved) && !typing;
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -148,7 +152,7 @@ export function WordSheet({
           </section>
         ) : null}
 
-        <form action={saveAction} className={styles.memoForm}>
+        <form action={saveAction} onSubmit={() => setTyping(false)} onInput={() => setTyping(true)} className={styles.memoForm}>
           <label htmlFor="memo-word" className="label">
             {t.word.memoLabel}
           </label>
@@ -172,14 +176,12 @@ export function WordSheet({
             <p className={styles.error} role="alert">
               {state.error}
             </p>
-          ) : state.saved ? (
+          ) : done ? (
             <p className={styles.saved} role="status">
               {state.saved}
             </p>
           ) : null}
-          <button type="submit" className="btn" disabled={saving}>
-            {t.word.save}
-          </button>
+          <SaveButton pending={saving} done={done} labels={{ save: t.word.save, saving: t.word.saving, saved: t.word.savedButton }} />
         </form>
       </div>
     </div>

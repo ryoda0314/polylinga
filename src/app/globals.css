@@ -99,6 +99,8 @@ h1, h2, h3 { text-wrap: balance; }
   font-size: 16px; font-weight: 600; text-decoration: none; cursor: pointer;
 }
 .btn:disabled { opacity: 0.55; cursor: default; }
+/* Just done (メモしました): the button itself says so until the learner types again. */
+.btn[data-done] { background: var(--tint); border-color: var(--tint); color: var(--accent); }
 .btn-quiet {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 52px; padding: 0 20px; border-radius: var(--radius);
