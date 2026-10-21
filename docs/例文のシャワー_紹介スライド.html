@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>例文のシャワー 紹介スライド</title>
+<!--
+  学び方「例文のシャワー」（浴びる → 気づく → 言ってみる → また出会う）の紹介スライド。アプリは出さない版。
+  情報は絵で見せる: 図・グラフ・人物・アイコンが中身を運び、文字は見出しと短い添え書きだけ。研究の細部は発表メモ（N）に。
+  話の流れ: 壁 → わたしの場合 → なぜ → 赤ちゃんの4つ → よくある勉強 → 大人の条件 → 例文のシャワー → 4つの動き → 比べる → まとめ。
+  再生のしくみは PBC2026_提案スライド と同じ（1枚が1場面、render(t) で t 秒目を描き、stops ごとに待つ）。
+  赤ちゃんの場面では、大人と赤ちゃんの絵が場面をまたいで同じ場所に残る（box に置いたものは場面の退場で消えない）。
+  操作: → / スペース / クリックで次へ、← / 左端クリックで戻る、F 全画面、N 発表メモ、Home 最初から。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Shippori+Mincho:wght@700&display=block">
+<style>
+/* Layout: a 1920×1080 stage scaled to the window. Each slide carries its point in a picture (a scene, a chart,
+   icons, a diagram) with a short heading and short labels. In the babies' part the scene is on the left and what
+   research found is drawn on the right. One light look on purpose: paper and ink, one blue accent, violet for what
+   comes back, the rain colours only in the rain. */
+:root {
+  --paper: #fcfbf8;
+  --surface: #f1f4f8;
+  --ink: #172033;
+  --ink-2: #3b4558;
+  --muted: #5c6578;
+  --faint: #8c94a5;
+  --line: #e4e7ec;
+  --line-2: #d4d9e1;
+  --accent: #0a64f0;
+  --tint: #e6f0ff;
+  --again: #6a4fe0;
+  --again-tint: #efebff;
+  --rain-blue: #0470fd;
+  --rain-sky: #4ea7fd;
+  --rain-violet: #a792fa;
+  --rain-pink: #e79dfa;
+  --rain-peach: #fec9a8;
+  --on-accent: #ffffff;
+
+  --font-ja: "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-ko: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-en: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+  --font-mincho: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  color-scheme: light;
+}
+html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); overflow: hidden; }
+body { -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; cursor: default; }
+#viewport {
+  position: fixed; background: var(--paper);
+  inset: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+#stage {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0;
+  background: var(--paper); color: var(--ink); font-family: var(--font-ja); word-break: auto-phrase; line-break: strict;
+}
+#tick { position: fixed; inset: 0; pointer-events: none; background: var(--paper); opacity: 0.001; will-change: opacity; }
+.scene { position: absolute; inset: 0; overflow: hidden; }
+.inner { position: absolute; inset: 0; will-change: transform, opacity; }
+
+#ui { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+#prog { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--surface); }
+#progFill { position: absolute; inset: 0; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.5s ease; }
+#pageNo { position: absolute; right: 48px; bottom: 24px; font-size: 20px; font-weight: 600; color: var(--faint); font-variant-numeric: tabular-nums; }
+#hint { position: absolute; left: 48px; bottom: 24px; font-size: 20px; color: var(--faint); transition: opacity 1s; }
+#loading { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--paper); font-size: 30px; font-weight: 600; color: var(--faint); }
+#notesBar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; max-height: 40%; overflow: auto;
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: var(--paper); border-top: 1px solid var(--line-2); color: var(--ink); font: 500 16px/1.7 var(--font-ja);
+}
+#notesBar b { display: block; font-size: 13px; color: var(--muted); }
+
+.t-ko { font-family: var(--font-ko); }
+.t-en { font-family: var(--font-en); }
+.abs { position: absolute; }
+.v { will-change: transform, opacity; }
+.ov { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; pointer-events: none; }
+.ov path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+/* Line icons, one weight, drawn in the colour of their text. */
+.ic { display: block; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* A slide's heading: which part of the talk, then the one thing the slide says. */
+.head { position: absolute; left: 120px; top: 76px; width: 1680px; }
+.kick { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; color: var(--accent); letter-spacing: 0.04em; }
+.kick::before { content: ""; width: 5px; height: 28px; border-radius: 3px; background: var(--accent); }
+.title { margin: 14px 0 0; font-size: 64px; line-height: 1.3; font-weight: 700; letter-spacing: -0.005em; white-space: nowrap; }
+.label { font-size: 26px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; white-space: nowrap; }
+.cap { margin: 0; display: flex; align-items: center; gap: 18px; font-size: 40px; font-weight: 700; white-space: nowrap; }
+.cap::before { content: ""; flex: none; width: 6px; height: 44px; border-radius: 3px; background: var(--accent); }
+.take { margin: 0; font-size: 46px; line-height: 1.45; font-weight: 700; white-space: nowrap; }
+.src, cite { display: block; margin: 0; font-style: normal; font-size: 20px; line-height: 1.5; color: var(--muted); white-space: nowrap; }
+
+/* A sentence list as rain: each falls in, its drop lands beside it, and it stays. */
+.rl { position: absolute; margin: 0; padding: 0; list-style: none; border-top: 2px solid var(--line); }
+.ri { display: flex; align-items: center; gap: 22px; padding: var(--pad, 20px) 0; border-bottom: 2px solid var(--line); will-change: transform, opacity; }
+.ri .drop { flex: none; align-self: stretch; width: 5px; margin-block: 8px; border-radius: 3px; background: var(--line-2); transform-origin: top; transform: scaleY(0); }
+.ri .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ri .s { font-size: var(--fs, 44px); font-weight: 500; line-height: 1.5; color: var(--ink); white-space: nowrap; will-change: transform; }
+.ri .g { font-size: var(--gs, 24px); line-height: 1.5; color: var(--muted); white-space: nowrap; }
+.ri.on .drop { background: var(--accent); }
+.ri.on .s { color: var(--accent); }
+.play { position: relative; flex: none; width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--line-2); background: var(--paper); color: var(--ink); display: grid; place-items: center; box-sizing: border-box; }
+.play svg { position: relative; width: 40%; height: 40%; }
+.play .ring { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; }
+.play.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.mk { border-radius: 0.15em; padding: 0 0.06em; margin: 0 -0.06em; }
+.colframe { border: 3px solid var(--accent); border-radius: 18px; opacity: 0; transform-origin: 50% 50%; }
+/* A bracket beside lined-up endings: these are the same. */
+.colbr { border: 3px solid var(--accent); border-left: 0; border-radius: 0 16px 16px 0; opacity: 0; transform-origin: 0 50%; }
+.brl { font-size: 32px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+/* Title and the end. */
+.rainfield { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+.dtitle { margin: 0; font-size: 132px; line-height: 1.2; font-weight: 700; letter-spacing: 0.01em; white-space: nowrap; }
+.dtitle span, .closing span { display: inline-block; }
+.lead { margin: 0; font-size: 44px; line-height: 1.5; font-weight: 500; white-space: nowrap; }
+.flowline { margin: 0; font-size: 32px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.flowline i { font-style: normal; color: var(--faint); margin: 0 0.6em; }
+.closing { margin: 0; font-family: var(--font-mincho); font-weight: 700; font-size: 104px; line-height: 1.35; letter-spacing: 0.04em; white-space: nowrap; }
+
+/* People: a grown-up and a baby in one ink line, what they say, what they think. */
+.ink { fill: var(--paper); stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.fig svg { display: block; }
+.figl { text-align: center; font-size: 24px; font-weight: 600; color: var(--muted); }
+.floor { height: 2px; background: var(--line-2); }
+.say { position: absolute; padding: 20px 32px; background: var(--surface); border-radius: 32px 32px 32px 10px; font-size: 40px; line-height: 1.4; font-weight: 500; white-space: nowrap; will-change: transform, opacity; }
+.say.r { border-radius: 32px 32px 10px 32px; }
+.say.kid { background: var(--paper); border: 2px solid var(--line-2); border-radius: 32px 32px 10px 32px; }
+.say.dim { color: var(--faint); }
+.dots { display: inline-flex; gap: 12px; padding: 14px 6px; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--faint); }
+.gl2 { font-size: 24px; color: var(--muted); white-space: nowrap; }
+.cloud { border: 3px solid var(--ink); border-radius: 64px; background: var(--paper); transform-origin: 65% 100%; }
+.cloud i { position: absolute; border: 3px solid var(--ink); border-radius: 50%; background: var(--paper); }
+.cloud .t1 { width: 30px; height: 30px; left: 410px; bottom: -50px; }
+.cloud .t2 { width: 18px; height: 18px; left: 440px; bottom: -84px; }
+.wcard { position: absolute; width: 300px; height: 80px; display: flex; align-items: center; gap: 14px; padding: 0 20px; box-sizing: border-box; border-radius: 14px; background: var(--surface); will-change: transform, opacity; }
+.wcard b { font-size: 34px; font-weight: 600; white-space: nowrap; }
+.wcard span { font-size: 24px; color: var(--ink-2); white-space: nowrap; }
+.tag3 { display: flex; align-items: center; gap: 10px; font-size: 28px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.tag3 .ic { width: 34px; height: 34px; }
+.tag3.bad { color: var(--muted); }
+.thought { transform-origin: 0 100%; }
+.thought p { margin: 0; padding: 32px 44px; border: 3px solid var(--ink); border-radius: 46px; background: var(--paper); font-size: 42px; line-height: 1.5; font-weight: 600; white-space: nowrap; }
+.thought i { position: absolute; border: 3px solid var(--ink); border-radius: 50%; background: var(--paper); }
+.thought .d1 { width: 28px; height: 28px; left: -38px; bottom: -6px; }
+.thought .d2 { width: 16px; height: 16px; left: -68px; bottom: -32px; }
+.bang { position: absolute; width: 40px; text-align: center; font-size: 68px; line-height: 1; font-weight: 700; color: var(--accent); opacity: 0; will-change: transform, opacity; }
+.bigq { margin: 0; font-size: 80px; line-height: 1.3; font-weight: 700; white-space: nowrap; }
+.biga { margin: 0; font-size: 60px; line-height: 1.4; font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+/* My own way: the same sentences lined up, and a year. */
+.arow { display: grid; grid-template-columns: 220px auto 90px auto; align-items: baseline; }
+.arow .var { text-align: right; font-size: 60px; font-weight: 500; }
+.arow .com { font-size: 60px; font-weight: 500; padding-left: 22px; }
+.arow .eq { text-align: center; font-size: 36px; color: var(--faint); }
+.arow .gl3 { font-size: 34px; color: var(--ink-2); }
+.journey { display: flex; align-items: center; gap: 24px; }
+.jitem { display: flex; align-items: center; gap: 16px; font-size: 36px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.jitem.use { color: var(--accent); }
+.jarrow { position: relative; width: 420px; height: 60px; }
+.jarrow svg { display: block; }
+.jarrow b { position: absolute; left: 0; right: 0; top: -14px; text-align: center; font-size: 30px; font-weight: 700; color: var(--accent); }
+.jline { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+
+/* The research beside the babies: drawn, with a short caption and the source. */
+.panel { position: absolute; left: 1320px; top: 262px; width: 480px; height: 600px; }
+.pcap { margin: 0; font-size: 32px; line-height: 1.45; font-weight: 700; white-space: nowrap; }
+.donut .trk { fill: none; stroke: var(--surface); stroke-width: 46; }
+.donut .val { fill: none; stroke: var(--accent); stroke-width: 46; stroke-dasharray: 0 100; }
+.dcenter { text-align: center; font-size: 46px; font-weight: 700; color: var(--accent); }
+.frames { display: flex; gap: 12px; }
+.frames span { padding: 6px 14px; border: 2px solid var(--line-2); border-radius: 8px; font-size: 22px; font-weight: 500; white-space: nowrap; }
+.gh2 { font-size: 24px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.shp { display: block; margin: 8px auto 0; }
+.shp .fr { fill: var(--surface); stroke: var(--ink-2); stroke-width: 2.5; }
+.shp .mid * { fill: var(--paper); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.gres { text-align: center; font-size: 48px; line-height: 1; font-weight: 700; color: var(--faint); }
+.gres.ok { color: var(--accent); }
+.gres small { display: block; margin-top: 8px; font-size: 22px; font-weight: 600; }
+.mark2 { color: var(--faint); }
+.mark2.ok { color: var(--accent); }
+.rl2 { font-size: 24px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.cal5 rect { fill: var(--paper); stroke: var(--line-2); stroke-width: 2; }
+.cal5 circle { fill: var(--accent); }
+.res { display: flex; align-items: center; gap: 8px; font-size: 28px; font-weight: 700; color: var(--faint); white-space: nowrap; }
+.res.ok { color: var(--accent); }
+.res .ic { width: 34px; height: 34px; }
+.wday { width: 140px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 12px; border-top: 2px solid var(--line); }
+.wday .d { font-size: 24px; font-weight: 600; color: var(--muted); }
+.wday .n { font-size: 22px; color: var(--ink-2); white-space: nowrap; }
+.wday .c { font-size: 32px; font-weight: 600; white-space: nowrap; }
+.wday .none { font-size: 32px; color: var(--faint); }
+.del { position: relative; color: var(--faint); }
+.del .st { position: absolute; left: -2px; right: -2px; top: 54%; height: 3px; background: var(--faint); transform-origin: 0 50%; transform: scaleX(0); }
+.later { font-size: 26px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+
+/* Grown-ups: the usual order as icon cards, what differs as small charts. */
+.icard { width: 250px; height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; box-sizing: border-box; border: 3px solid var(--accent); border-radius: 20px; background: var(--paper); color: var(--accent); }
+.icard b { font-size: 32px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.icard.dull { border-color: var(--line-2); color: var(--muted); }
+.icard.dull b { color: var(--ink-2); font-weight: 600; }
+.farr { color: var(--faint); }
+.ires { display: flex; align-items: center; gap: 16px; height: 170px; color: var(--accent); }
+.ires b { font-size: 36px; font-weight: 700; white-space: nowrap; }
+.ires.dull { color: var(--muted); }
+.dpanel { height: 520px; }
+.dhead { font-size: 36px; font-weight: 700; }
+.ring24 .trk { fill: none; stroke: var(--surface); stroke-width: 26; }
+.ring24 .val { fill: none; stroke: var(--accent); stroke-width: 26; stroke-dasharray: 0 24; }
+.ring24 .tick { stroke: var(--faint); stroke-width: 3; stroke-linecap: round; }
+.rcen { text-align: center; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.crow { display: flex; gap: 10px; }
+.wchip { padding: 8px 14px; border-radius: 10px; background: var(--surface); font-size: 30px; font-weight: 500; white-space: nowrap; will-change: transform, opacity; }
+.wchip.jl { border-radius: 10px 0 0 10px; margin-right: -8px; }
+.wchip.jr { position: relative; border-radius: 0 10px 10px 0; border-left: 2px solid var(--paper); }
+.wchip .st { position: absolute; left: 6px; right: 6px; top: 52%; height: 3px; background: var(--faint); transform-origin: 0 50%; transform: scaleX(0); }
+.note2 { font-size: 22px; color: var(--muted); white-space: nowrap; }
+.chart .early { fill: var(--tint); }
+.chart .axis { fill: none; stroke: var(--ink-2); stroke-width: 2.5; }
+.chart .cv { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.chart .cv.adult { stroke: var(--accent); }
+.chart .cv.child { stroke: var(--again); }
+.chart text { font-family: var(--font-ja); font-size: 20px; fill: var(--muted); }
+.chart .lb { font-size: 26px; font-weight: 700; }
+.chart .lb.adult { fill: var(--accent); }
+.chart .lb.child { fill: var(--again); }
+.pill { padding: 6px 16px; border: 2px solid var(--accent); border-radius: 999px; font-size: 24px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+/* The method: babies' four, rebuilt for grown-ups. */
+.mic { color: var(--accent); }
+.mic.again { color: var(--again); }
+.mname { display: flex; align-items: center; gap: 16px; }
+.mname .no { display: grid; place-items: center; width: 52px; height: 52px; box-sizing: border-box; border: 3px solid var(--accent); border-radius: 50%; color: var(--accent); font-size: 26px; font-weight: 700; }
+.mname.again .no { border-color: var(--again); color: var(--again); }
+.mname b { font-size: 58px; line-height: 1.3; font-weight: 700; }
+.mline { font-size: 34px; line-height: 1.5; font-weight: 600; color: var(--ink-2); }
+.arc { stroke: var(--again); stroke-width: 4; }
+.arcl { text-align: center; font-size: 32px; font-weight: 600; color: var(--again); }
+
+/* Each step: the picture on the left, why it works drawn on the right. */
+.pointer { position: absolute; left: 0; top: 0; width: 64px; height: 64px; box-sizing: border-box; border-radius: 50%; border: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); opacity: 0; will-change: transform, opacity; }
+.pointer .ring { position: absolute; inset: -3px; border-radius: 50%; border: 3px solid var(--accent); opacity: 0; }
+.ansline { display: flex; align-items: baseline; gap: 20px; white-space: nowrap; }
+.ansline b { font-size: 44px; font-weight: 700; color: var(--accent); }
+.mcard { width: 260px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; box-sizing: border-box; border: 3px solid var(--accent); border-radius: 20px; color: var(--accent); background: var(--paper); }
+.mcard b { font-size: 30px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.mcard.dull { border-color: var(--line-2); color: var(--muted); }
+.mcard.dull b { color: var(--ink-2); font-weight: 600; }
+.lt { font-size: 64px; font-weight: 700; color: var(--faint); }
+.intent { margin-top: 8px; font-size: 42px; font-weight: 600; }
+.field { height: 100px; border: 2px solid var(--line-2); border-radius: 16px; display: flex; align-items: center; gap: 2px; padding: 0 28px; box-sizing: border-box; background: var(--paper); font-size: 40px; }
+.caret { display: inline-block; flex: none; width: 3px; height: 48px; border-radius: 2px; background: var(--accent); }
+.fixl { display: flex; align-items: center; gap: 14px; font-size: 28px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.said { display: grid; grid-template-columns: auto 1fr; gap: 12px 22px; align-items: baseline; }
+.said .tag2 { font-size: 24px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; white-space: nowrap; }
+.said .before { font-size: 36px; color: var(--muted); }
+.said .after { font-size: 48px; font-weight: 600; }
+.ins { position: relative; color: var(--accent); font-weight: 700; }
+.ins .ul { position: absolute; left: 0; right: 0; bottom: -2px; height: 4px; border-radius: 2px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); }
+.pzrow { display: flex; gap: 12px; align-items: center; }
+.pz { padding: 12px 20px; border-radius: 12px; background: var(--surface); font-size: 38px; font-weight: 500; white-space: nowrap; }
+.pz.slot { display: grid; min-width: 150px; box-sizing: border-box; place-items: center; border: 3px dashed var(--accent); background: transparent; padding: 9px 17px; }
+.pz.slot > * { grid-area: 1 / 1; }
+.pz.slot i { font-style: normal; font-weight: 700; color: var(--accent); }
+.pz.slot b { font-weight: 700; color: var(--accent); opacity: 0; }
+.tl { height: 4px; border-radius: 2px; background: var(--ink-2); transform-origin: 0 50%; }
+.dot { position: absolute; width: 22px; height: 22px; border: 4px solid var(--paper); border-radius: 50%; background: var(--accent); will-change: transform; }
+.dot.again { background: var(--again); }
+.gap { position: absolute; top: 334px; width: 120px; margin-left: -60px; text-align: center; font-size: 28px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.chip { padding: 10px 20px; border: 2px solid var(--line-2); border-radius: 14px; background: var(--paper); font-size: 30px; font-weight: 500; white-space: nowrap; }
+.leader { stroke: var(--line-2); stroke-width: 2; }
+.rowl { font-size: 30px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.rowl b { color: var(--ink); }
+.sdot { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--accent); will-change: transform, opacity; }
+.sdot.again { background: var(--again); }
+.same { font-size: 48px; line-height: 1.35; font-weight: 700; color: var(--again); white-space: nowrap; }
+
+/* Side by side, as icons. */
+.colhl { border-radius: 22px; background: var(--tint); opacity: 0; }
+.mhead { text-align: center; font-size: 30px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.mhead.me { color: var(--accent); }
+.mrow { font-size: 34px; font-weight: 700; white-space: nowrap; }
+.mcell { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--ink-2); }
+.mcell span { font-size: 30px; font-weight: 600; white-space: nowrap; }
+.mcell.dull { color: var(--faint); }
+.mcell.dull span { color: var(--muted); font-weight: 500; }
+.mcell.me { color: var(--accent); }
+.mcell.me span { color: var(--ink); font-weight: 700; }
+.msep { height: 2px; background: var(--line); }
+</style>
+</head>
+<body>
+<div id="viewport">
+  <div id="tick"></div>
+  <div id="stage" lang="ja">
+    <div id="ui"><div id="prog"><i id="progFill"></i></div><div id="pageNo"></div><div id="hint"></div></div>
+    <div id="loading">読み込んでいます…</div>
+  </div>
+  <div id="notesBar" hidden></div>
+</div>
+<script>
+"use strict";
+(async function () {
+  if (!document.documentElement.lang) document.documentElement.lang = "ja";
+  const stage = document.getElementById("stage");
+  const ui = document.getElementById("ui");
+  const vp = document.getElementById("viewport");
+  const W = 1920, H = 1080;
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let scale = 1;
+  function fit() {
+    const w = vp.clientWidth, h = vp.clientHeight;
+    scale = Math.min(w / W, h / H);
+    stage.style.transform = `translate(${(w - W * scale) / 2}px, ${(h - H * scale) / 2}px) scale(${scale})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- Timing: everything is a function of the scene's time t (seconds) ----------------------------
+  const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+  const seg = (t, a, b) => clamp01((t - a) / (b - a));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const eo = (x) => 1 - Math.pow(1 - clamp01(x), 3);
+  const eoq = (x) => 1 - Math.pow(1 - clamp01(x), 4);
+  const eio = (x) => { x = clamp01(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+  const eob = (x, o = 1.6) => { x = clamp01(x); return 1 + (o + 1) * Math.pow(x - 1, 3) + o * Math.pow(x - 1, 2); };
+
+  // The colours, read from the tokens above so the JS never has its own.
+  const css = getComputedStyle(document.documentElement);
+  const hex = (n) => { const v = css.getPropertyValue("--" + n).trim(); return [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16)); };
+  const C = {
+    ink: hex("ink"), ink2: hex("ink-2"), muted: hex("muted"), faint: hex("faint"), line2: hex("line-2"), surface: hex("surface"),
+    accent: hex("accent"), tint: hex("tint"),
+    rain: ["rain-blue", "rain-sky", "rain-violet", "rain-pink", "rain-peach"].map(hex),
+  };
+  const mix = (a, b, k) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(",")})`;
+  const rgba = (a, k) => `rgba(${a.join(",")},${clamp01(k).toFixed(3)})`;
+
+  // ---- Building and moving parts ---------------------------------------------------------------------
+  function el(parent, html) {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html.trim();
+    const n = tpl.content.firstElementChild;
+    parent.appendChild(n);
+    return n;
+  }
+  // In at tin, fading, from dx/dy. (A slide's parts leave together; see draw().)
+  function vis(n, t, tin, o = {}) {
+    const k = eo(seg(t, tin, tin + (o.d || 0.5)));
+    const dx = o.dx === undefined ? 26 : o.dx, dy = o.dy || 0;
+    n.style.opacity = k.toFixed(3);
+    n.style.transform = k >= 1 ? "none" : `translate(${((1 - k) * dx).toFixed(1)}px,${((1 - k) * dy).toFixed(1)}px)`;
+    return k;
+  }
+  // Falling in like a raindrop: from 44px above, opaque by the middle, landing softly.
+  function fall(n, t, tin) {
+    const p = seg(t, tin, tin + 0.75);
+    n.style.opacity = Math.min(1, p / 0.55).toFixed(3);
+    n.style.transform = p >= 1 ? "none" : `translateY(${(-44 * (1 - eoq(p))).toFixed(1)}px)`;
+    return p;
+  }
+  // Popping up from nothing at x, y (a dot, a mark).
+  const pop = (n, t, tin, x, y) => { const k = eob(seg(t, tin, tin + 0.35)); n.style.transform = `translate(${x}px,${y}px) scale(${Math.max(0, k).toFixed(3)})`; n.style.opacity = clamp01(k * 3).toFixed(3); };
+  // Growing in place (a card, a cloud).
+  const grow = (n, t, tin) => { const k = eob(seg(t, tin, tin + 0.45), 1.2); n.style.transform = `scale(${(0.9 + 0.1 * k).toFixed(3)})`; n.style.opacity = clamp01(k * 2).toFixed(3); };
+  const land = (drop, t, tin) => { drop.style.transform = `scaleY(${eo(seg(t, tin + 0.25, tin + 0.7)).toFixed(3)})`; };
+  // A part lit: the tint behind it and the accent on it.
+  function mark(n, k, base) {
+    n.style.backgroundColor = k > 0 ? rgba(C.tint, k) : "";
+    n.style.color = k > 0 ? mix(base || C.ink, C.accent, k) : "";
+  }
+  const stroke = (path, k) => { path.style.strokeDashoffset = (1 - clamp01(k)).toFixed(4); };
+  // Parts kept outside .inner (they stay across the cut) leave on their own: this is how far along that is.
+  function leave(def, t) { return eio(seg(t, def.out, def.out + 0.45)); }
+  function srect(n) {
+    const b = n.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    return { x: (b.left - s.left) / scale, y: (b.top - s.top) / scale, w: b.width / scale, h: b.height / scale };
+  }
+  function head(parent, kick, title) {
+    const h = el(parent, `<div class="head"><div class="kick v">${kick}</div><h2 class="title v">${title}</h2></div>`);
+    return { kick: h.querySelector(".kick"), title: h.querySelector(".title") };
+  }
+  function headVis(h, t, tin = 0) {
+    vis(h.kick, t, tin, { d: 0.4 });
+    vis(h.title, t, tin + 0.12);
+  }
+
+  // ---- Pictures ---------------------------------------------------------------------------------------
+  // Line icons on a 64 grid.
+  const IC = {
+    listen: '<path d="M8 25H18L31 14V50L18 39H8Z"/><path d="M39 24C43 28 43 36 39 40"/><path d="M46 17C54 25 54 39 46 47"/>',
+    rain: '<path d="M19 36C12 36 8 32 8 26.5C8 21 12.5 17.5 18 17.5C19.5 11.5 25 8 31 8C38.5 8 44 13 45 19.5C51 19.5 56 23.5 56 28.5C56 33 52.5 36 47.5 36Z"/><path d="M22 44V52"/><path d="M32 42V56"/><path d="M42 44V52"/>',
+    find: '<circle cx="27" cy="27" r="15"/><path d="M38 38L54 54"/>',
+    bulb: '<path d="M24 41C19 37.5 16 32.5 16 26.5C16 17.5 23 10.5 32 10.5C41 10.5 48 17.5 48 26.5C48 32.5 45 37.5 40 41V47H24Z"/><path d="M26 53H38"/>',
+    say: '<path d="M10 12H54V40H28L18 50V40H10Z"/>',
+    again: '<path d="M51 32A19 19 0 1 1 45 18"/><path d="M34 18H45V7"/>',
+    book: '<path d="M32 18C26 13 17 12 8 15V50C17 47 26 48 32 53C38 48 47 47 56 50V15C47 12 38 13 32 18Z"/><path d="M32 18V53"/>',
+    list: '<rect x="14" y="8" width="36" height="48" rx="4"/><path d="M22 20H42"/><path d="M22 30H42"/><path d="M22 40H34"/>',
+    test: '<path d="M14 8H42L50 16V56H14Z"/><path d="M42 8V16H50"/><path d="M21 27L25 31L33 23"/><path d="M22 39L30 47M30 39L22 47"/>',
+    cram: '<rect x="8" y="12" width="48" height="42" rx="4"/><path d="M8 22H56"/><path d="M20 6V16"/><path d="M44 6V16"/><path d="M38 29H49"/><path d="M38 35H49"/><path d="M38 41H49"/><path d="M38 47H49"/>',
+    know: '<path d="M18 40C11 40 7 35.5 7 30C7 24.5 11.5 21 17 21C18.5 14.5 24.5 10 31 10C38.5 10 44 15 45 21.5C51.5 21.5 57 25.5 57 31C57 36 53 40 47 40Z"/><path d="M24 29L30 34L40 24"/><circle cx="20" cy="48" r="3"/><circle cx="14" cy="55" r="2"/>',
+    mute: '<path d="M10 12H54V40H28L18 50V40H10Z"/><circle cx="22" cy="26" r="2.6" fill="currentColor" stroke="none"/><circle cx="32" cy="26" r="2.6" fill="currentColor" stroke="none"/><circle cx="42" cy="26" r="2.6" fill="currentColor" stroke="none"/>',
+    check: '<path d="M12 33L26 47L52 19"/>',
+    cross: '<path d="M18 18L46 46M46 18L18 46"/>',
+  };
+  const icon = (name, size) => `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true">${IC[name]}</svg>`;
+  const PLAY = '<span class="play"><i class="ring"></i><i class="ring"></i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>';
+  const ARROW = '<svg width="44" height="24" viewBox="0 0 44 24" aria-hidden="true"><path d="M2 12H40M30 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const DOWN = '<svg width="28" height="40" viewBox="0 0 28 40" aria-hidden="true"><path d="M14 2V36M5 27l9 9 9-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // A rain list. items: [sentence html, translation html]; .mk spans are the parts that light.
+  function rainList(parent, items, o = {}) {
+    const ul = document.createElement("ul");
+    ul.className = "rl";
+    ul.style.cssText = `left:${o.left}px;top:${o.top}px;width:${o.width}px;`;
+    if (o.fs) ul.style.setProperty("--fs", o.fs + "px");
+    if (o.gs) ul.style.setProperty("--gs", o.gs + "px");
+    if (o.pad) ul.style.setProperty("--pad", o.pad + "px");
+    ul.innerHTML = items.map(([s, g]) =>
+      `<li class="ri"><i class="drop"></i><div class="main"><div class="s t-ko">${s}</div><div class="g">${g}</div></div>${o.play ? PLAY : ""}</li>`).join("");
+    parent.appendChild(ul);
+    const rows = [...ul.children].map((li) => ({
+      li, drop: li.querySelector(".drop"), s: li.querySelector(".s"), play: li.querySelector(".play"),
+      marks: [...li.querySelectorAll(".s .mk")], gmarks: [...li.querySelectorAll(".g .mk")],
+    }));
+    return { ul, rows };
+  }
+  // While a clip plays, its row turns blue and ripples spread from the button.
+  function playing(row, t, a, b) {
+    const on = t >= a && t < b;
+    row.li.classList.toggle("on", on);
+    row.play.classList.toggle("on", on);
+    row.play.querySelectorAll(".ring").forEach((r, i) => {
+      if (!on) { r.style.opacity = 0; return; }
+      const ph = ((t - a) / 1.6 + i * 0.5) % 1;
+      r.style.opacity = (0.55 * (1 - ph)).toFixed(3);
+      r.style.transform = `scale(${(1 + 0.9 * ph).toFixed(3)})`;
+    });
+  }
+  // Fine rain behind the title and the end.
+  function rng(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function rainField(parent, seed, from) {
+    const cv = el(parent, '<canvas class="rainfield" width="1920" height="1080"></canvas>');
+    const ctx = cv.getContext("2d");
+    const r = rng(seed);
+    const drops = Array.from({ length: 110 }, () => {
+      const near = r() < 0.8;
+      return {
+        x: near ? lerp(from, 1890, r()) : lerp(40, from, r()), y: r() * 1400, v: lerp(150, 330, r()),
+        len: lerp(24, 62, r()), w: r() < 0.3 ? 5 : 3.5, c: C.rain[Math.floor(r() * 5)], a: (near ? 1 : 0.35) * lerp(0.3, 0.7, r()),
+      };
+    });
+    let still = false;
+    return {
+      canvas: cv,
+      draw(now) {
+        if (RM) { if (still) return; still = true; now = 3000; }
+        ctx.clearRect(0, 0, W, H);
+        ctx.lineCap = "round";
+        for (const d of drops) {
+          const span = H + d.len + 160;
+          const y = ((d.y + (d.v * now) / 1000) % span) - d.len - 80;
+          ctx.strokeStyle = rgba(d.c, d.a);
+          ctx.lineWidth = d.w;
+          ctx.beginPath();
+          ctx.moveTo(d.x, y);
+          ctx.lineTo(d.x, y + d.len);
+          ctx.stroke();
+        }
+      },
+    };
+  }
+  // The experiment's strings as shapes: a fixed pair of squares around a middle that changes (or barely does).
+  function starPath(cx, cy, R, r) {
+    let d = "";
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r : R;
+      d += (i ? "L" : "M") + (cx + rr * Math.cos(a)).toFixed(1) + " " + (cy + rr * Math.sin(a)).toFixed(1);
+    }
+    return d + "Z";
+  }
+  function shapes(mids) {
+    const M = {
+      c: (y) => `<circle cx="110" cy="${y}" r="14"/>`,
+      t: (y) => `<path d="M110 ${y - 15}L126 ${y + 12}H94Z"/>`,
+      s: (y) => `<path d="${starPath(110, y, 17, 7)}"/>`,
+      d: (y) => `<path d="M110 ${y - 16}L126 ${y}L110 ${y + 16}L94 ${y}Z"/>`,
+    };
+    return '<svg class="shp" width="220" height="250" viewBox="0 0 220 250" aria-hidden="true">' +
+      mids.map((m, i) => { const y = 30 + i * 62; return `<rect class="fr" x="20" y="${y - 14}" width="28" height="28" rx="5"/><g class="mid">${M[m](y)}</g><rect class="fr" x="172" y="${y - 14}" width="28" height="28" rx="5"/>`; }).join("") + "</svg>";
+  }
+  // A day as a ring, midnight at the top, clockwise; the filled arc is the time spent hearing the language.
+  function ring24() {
+    const ticks = [0, 6, 12, 18].map((h) => {
+      const a = (h / 24) * 2 * Math.PI - Math.PI / 2;
+      return `<path class="tick" d="M${(110 + 98 * Math.cos(a)).toFixed(1)} ${(110 + 98 * Math.sin(a)).toFixed(1)}L${(110 + 106 * Math.cos(a)).toFixed(1)} ${(110 + 106 * Math.sin(a)).toFixed(1)}"/>`;
+    }).join("");
+    return '<svg class="ring24" width="220" height="220" viewBox="0 0 220 220" aria-hidden="true"><circle class="trk" cx="110" cy="110" r="80"/>' +
+      `<circle class="val" cx="110" cy="110" r="80" pathLength="24" transform="rotate(-90 110 110)"/>${ticks}</svg>`;
+  }
+  function fillRing(svg, start, hours, k) {
+    const v = svg.querySelector(".val");
+    v.style.strokeDasharray = `${(hours * k).toFixed(3)} 24`;
+    v.style.strokeDashoffset = String(-start);
+  }
+
+  // Sentences of one way of saying (inviting), lit where it is.
+  const INVITE = [
+    ['내일 카페 <span class="mk">갈래</span>?', '明日カフェ行か<span class="mk">ない</span>？'],
+    ['주말에 영화 <span class="mk">볼래</span>?', '週末、映画見<span class="mk">ない</span>？'],
+    ['같이 밥 <span class="mk">먹을래</span>?', '一緒にご飯食べ<span class="mk">ない</span>？'],
+    ['오늘 노래방 <span class="mk">갈래</span>?', '今日カラオケ行か<span class="mk">ない</span>？'],
+  ];
+
+  // The babies' scenes share one stage on the left: a grown-up, a baby, one floor, what is said between them.
+  // Each of those scenes builds the two in the same place outside .inner, so they stay put across the cuts.
+  const ADULT = '<svg width="200" height="240" viewBox="0 0 150 180" aria-hidden="true"><g class="ink"><path d="M18 178V160C18 126 42 110 75 110S132 126 132 160V178Z"/><circle cx="75" cy="50" r="32"/></g></svg>';
+  const BABY = '<svg width="160" height="208" viewBox="0 0 120 156" aria-hidden="true"><g class="ink"><path d="M30 146V124C30 105 43 97 60 97S90 105 90 124V146Z"/><ellipse cx="40" cy="146" rx="18" ry="8"/><ellipse cx="80" cy="146" rx="18" ry="8"/><circle cx="60" cy="56" r="36"/><path d="M57 21C54 12 64 8 68 14C70 18 66 22 62 19" fill="none"/></g></svg>';
+  function figures(box) {
+    return [
+      el(box, '<div class="floor abs" style="left:140px;top:801px;width:1080px"></div>'),
+      el(box, `<div class="fig abs" style="left:200px;top:561px">${ADULT}</div>`),
+      el(box, `<div class="fig abs" style="left:960px;top:593px">${BABY}</div>`),
+    ];
+  }
+  // What the grown-up says, day after day: the same way of saying with something new in it.
+  function grownUpSays(box) {
+    return ["おさんぽ", "おふろ", "ねんね", "ごはん"].map((w, i) => el(box, `<div class="say" style="left:430px;top:${262 + i * 112}px">${w}、<span class="mk">しよっか</span></div>`));
+  }
+
+  // ---- The scenes ----------------------------------------------------------------------------------
+  // stops: [time, speaker note]. The scene waits at each; the last one is where its parts leave.
+  const SCENES = [];
+  const scene = (id, def) => SCENES.push(Object.assign({ id }, def));
+
+  scene("title", {
+    name: "表紙",
+    stops: [[1.7, "例文のシャワーという、外国語の学び方を紹介します。赤ちゃんが母語を覚えるしくみを、大人の外国語学習に合わせて組み直したものです。"]],
+    init(box) {
+      this.rain = rainField(box, 5, 1100);
+      this.kick = el(box, '<div class="kick abs v" style="left:120px;top:300px">学び方の紹介</div>');
+      const h = el(box, '<h1 class="dtitle abs" style="left:112px;top:352px"></h1>');
+      this.chars = [..."例文のシャワー"].map((c) => el(h, `<span class="v">${c}</span>`));
+      this.lead = el(box, '<p class="lead abs v" style="left:120px;top:548px">赤ちゃんの言葉の覚え方を、大人の外国語学習に。</p>');
+      this.flow = el(box, '<p class="flowline abs v" style="left:120px;top:642px">浴びる<i>→</i>気づく<i>→</i>言ってみる<i>→</i>また出会う</p>');
+    },
+    render(t) {
+      this.rain.canvas.style.opacity = eo(seg(t, 0, 1.2)).toFixed(3);
+      vis(this.kick, t, 0.1, { d: 0.4 });
+      this.chars.forEach((s, i) => fall(s, t, 0.2 + i * 0.08));
+      vis(this.lead, t, 0.95);
+      vis(this.flow, t, 1.2);
+    },
+    idle(now) { this.rain.draw(now); },
+  });
+
+  scene("wall", {
+    name: "壁",
+    stops: [
+      [2.4, "外国語を勉強すると、単語帳で単語を覚えて、文法も覚えます。頭の中には、ちゃんと入っています。"],
+      [4.4, "でも、友だちに「今週末なにするの？」と聞かれた瞬間に、言葉が出てこない。知っていることと、使えることは別なんです。"],
+      [5.3, "わたしも、韓国語を勉強していたとき、まさにこの壁にぶつかりました。"],
+    ],
+    init(box) {
+      this.h = head(box, "はじめに", "覚えたのに、出てこない");
+      this.floor = el(box, '<div class="floor abs v" style="left:360px;top:841px;width:1200px"></div>');
+      this.me = el(box, `<div class="fig abs v" style="left:480px;top:601px">${ADULT}</div>`);
+      this.meL = el(box, '<div class="figl abs v" style="left:480px;top:856px;width:200px">わたし</div>');
+      this.fr = el(box, `<div class="fig abs v" style="left:1240px;top:601px">${ADULT}</div>`);
+      this.frL = el(box, '<div class="figl abs v" style="left:1240px;top:856px;width:200px">友だち</div>');
+      // What I know: a thought cloud full of words.
+      this.cloud = el(box, '<div class="cloud abs" style="left:140px;top:280px;width:680px;height:226px"><i class="t1"></i><i class="t2"></i></div>');
+      this.know = el(box, `<div class="tag3 abs v" style="left:150px;top:232px">${icon("check", 34)}知っている</div>`);
+      this.words = [["주말", "週末"], ["영화", "映画"], ["같이", "一緒に"], ["(으)ㄹ래?", "〜する？"]]
+        .map((w, i) => el(box, `<div class="wcard" style="left:${172 + (i % 2) * 316}px;top:${306 + Math.floor(i / 2) * 92}px"><b class="t-ko">${w[0]}</b><span>${w[1]}</span></div>`));
+      // The friend asks; my bubble stays empty.
+      this.ask = el(box, '<div class="say r t-ko" style="right:520px;top:430px">이번 주말에 뭐 해?</div>');
+      this.askG = el(box, '<div class="gl2 abs v" style="right:520px;top:540px">今週末、なにするの？</div>');
+      this.mine = el(box, '<div class="say kid" style="left:700px;top:600px"><span class="dots"><i></i><i></i><i></i></span></div>');
+      this.dots = [...this.mine.querySelectorAll(".dots i")];
+      this.cant = el(box, `<div class="tag3 bad abs v" style="left:706px;top:712px">${icon("cross", 34)}言えない</div>`);
+      this.cap = el(box, '<p class="cap abs v" style="left:120px;top:926px">わたしも、韓国語でそうだった</p>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      [this.floor, this.me, this.meL].forEach((n) => vis(n, t, 0.15, { dx: 0, dy: 12 }));
+      grow(this.cloud, t, 0.3);
+      vis(this.know, t, 0.5);
+      this.words.forEach((w, i) => fall(w, t, 0.6 + i * 0.3));
+      [this.fr, this.frL].forEach((n) => vis(n, t, 2.6, { dx: 0, dy: 12 }));
+      fall(this.ask, t, 2.8);
+      vis(this.askG, t, 3.2);
+      fall(this.mine, t, 3.5);
+      this.dotsOn = t >= 3.5;
+      vis(this.cant, t, 3.9);
+      vis(this.cap, t, 4.6);
+    },
+    idle(now) {
+      this.dots.forEach((d, i) => { d.style.opacity = this.dotsOn && !RM ? (0.3 + 0.7 * Math.max(0, Math.sin(now / 260 - i * 0.9))).toFixed(3) : "1"; });
+    },
+  });
+
+  scene("me", {
+    name: "わたしの場合",
+    stops: [
+      [2.6, "壁を越えられたのは、やり方を変えてからです。一つの文をそのまま覚えるのをやめて、似た文をいくつも集めました。"],
+      [4.4, "そろえて並べると、「고 싶어요」がまっすぐ一列にそろいます。訳はどれも「〜したい」。もしかして、この部分が「〜したい」を表しているんじゃないか、と自分で気づきます。"],
+      [6.0, "これをくり返して、1年で韓国語が、勉強する言葉から使う言葉になりました。"],
+    ],
+    init(box) {
+      this.h = head(box, "わたしの場合", "似た文を並べて、共通部分を探した");
+      this.rows = [["가", "行き"], ["먹", "食べ"], ["말하", "話し"]].map((r, i) => el(box,
+        `<div class="arow abs" style="left:120px;top:${300 + i * 120}px"><span class="var t-ko">${r[0]}</span><span class="com t-ko"><span class="mk">고 싶어요</span></span><span class="eq">＝</span><span class="gl3">${r[1]}<span class="mk">たい</span>です</span></div>`));
+      this.frame = el(box, '<div class="colframe abs"></div>');
+      this.think = el(box, '<div class="thought abs" style="left:1200px;top:330px"><p>ここが<br>「〜したい」？</p><i class="d1"></i><i class="d2"></i></div>');
+      this.j = el(box, '<div class="journey abs" style="left:120px;top:790px">' +
+        `<div class="jitem v">${icon("book", 72)}<span>勉強する言葉</span></div>` +
+        '<div class="jarrow v"><svg width="420" height="60" viewBox="0 0 420 60" aria-hidden="true"><path class="jline" pathLength="1" d="M6 40H408M394 27L408 40L394 53"/></svg><b>1年</b></div>' +
+        `<div class="jitem use v">${icon("say", 72)}<span>使う言葉</span></div></div>`);
+      this.jparts = [...this.j.children];
+      this.jline = this.j.querySelector(".jline");
+    },
+    measure() {
+      const a = srect(this.rows[0].querySelector(".com")), c = srect(this.rows[2].querySelector(".com"));
+      // The frame starts in the gap before the shared part, so it never cuts the letters in front of it.
+      Object.assign(this.frame.style, { left: `${a.x + 4}px`, top: `${a.y - 8}px`, width: `${a.w + 10}px`, height: `${c.y + c.h - a.y + 16}px` });
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.rows.forEach((r, i) => {
+        fall(r, t, 0.6 + i * 0.55);
+        const k = eo(seg(t, 2.9 + i * 0.12, 3.25 + i * 0.12));
+        r.querySelectorAll(".mk").forEach((m, j) => mark(m, k, j ? C.ink2 : C.ink));
+      });
+      grow(this.frame, t, 3.2);
+      const k = eo(seg(t, 3.6, 4.1));
+      this.think.style.opacity = k.toFixed(3);
+      this.think.style.transform = `scale(${(0.94 + 0.06 * k).toFixed(3)})`;
+      vis(this.jparts[0], t, 4.6);
+      vis(this.jparts[1], t, 4.8, { dx: 0 });
+      stroke(this.jline, eo(seg(t, 4.9, 5.5)));
+      vis(this.jparts[2], t, 5.4);
+    },
+  });
+
+  scene("why", {
+    name: "なぜうまくいったのか",
+    stops: [
+      [1.3, "なぜ、これでうまくいったのか。"],
+      [3.0, "あとで調べてみると、赤ちゃんが母語を覚えるやり方に近かったんです。赤ちゃんは、文法の説明を受けずに母語を話せるようになります。何をしているのか、4つに分けて見ていきます。"],
+    ],
+    init(inner, box) {
+      this.kick = el(inner, '<div class="kick abs v" style="left:120px;top:226px">なぜ？</div>');
+      this.q = el(inner, '<h2 class="bigq abs v" style="left:116px;top:276px">なぜ、うまくいったのか？</h2>');
+      this.a = el(inner, '<p class="biga abs v" style="left:120px;top:420px">赤ちゃんと同じやり方だったから。</p>');
+      this.fig = figures(box);
+    },
+    render(t) {
+      vis(this.kick, t, 0, { d: 0.4 });
+      vis(this.q, t, 0.15);
+      vis(this.a, t, 1.6);
+      this.fig.forEach((f, i) => vis(f, t, 2.0 + i * 0.15, { dx: 0, dy: 16 }));
+    },
+  });
+
+  scene("hear", {
+    name: "赤ちゃん① 聞く",
+    stops: [
+      [4.0, "赤ちゃんは、まず聞きます。それも、同じかたちを、中身を少しずつ変えながら、何度も。「おさんぽ、しよっか」「おふろ、しよっか」「ねんね、しよっか」「ごはん、しよっか」。"],
+      [5.6, "実際に、英語を話す親子12組の話しかけを調べると、約半分が「Look at the …」「Let's …」のような、52種類の決まった出だしで始まっていました（Cameron-Faulkner ほか 2003）。こうして少しずつ変えてくり返す話し方は、大人が新しい言葉を学ぶときにも助けになることが分かっています（Küntay & Slobin 1996、Onnis ほか 2008）。"],
+    ],
+    init(inner, box) {
+      this.h = head(inner, "赤ちゃんは ①", "同じかたちを、何度も聞く");
+      figures(box);
+      this.says = grownUpSays(box);
+      this.p = el(inner, '<div class="panel v">' +
+        '<div class="label abs" style="left:0;top:0">子どもへの話しかけ（英語）</div>' +
+        '<svg class="donut abs" style="left:90px;top:52px" width="300" height="300" viewBox="0 0 300 300" aria-hidden="true"><circle class="trk" cx="150" cy="150" r="112"/><circle class="val" cx="150" cy="150" r="112" pathLength="100" transform="rotate(-90 150 150)"/></svg>' +
+        '<div class="dcenter abs" style="left:90px;top:170px;width:300px">約半分</div>' +
+        '<p class="pcap abs" style="left:0;top:376px;width:480px;text-align:center">決まった出だしで始まる</p>' +
+        '<div class="frames t-en abs" style="left:0;top:434px;width:480px;justify-content:center"><span>Look at the ＿</span><span>Let\'s ＿</span></div>' +
+        '<cite class="abs" style="left:0;top:494px;width:480px;text-align:center">Cameron-Faulkner ほか 2003</cite></div>');
+      this.val = this.p.querySelector(".donut .val");
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.says.forEach((s, i) => fall(s, t, 0.6 + i * 0.8));
+      vis(this.p, t, 4.2);
+      this.val.style.strokeDasharray = `${(50 * eo(seg(t, 4.4, 5.2))).toFixed(2)} 100`;
+    },
+  });
+
+  scene("notice", {
+    name: "赤ちゃん② 気づく",
+    stops: [
+      [1.9, "そして、共通しているところに自分で気づきます。何度も聞くうちに、「しよっか」は何かを一緒にしようというときに出てくる、と分かってきます。"],
+      [4.1, "実験でも、まん中が入れ替わるほど、赤ちゃんは前後の変わらない組み合わせに気づきました。まん中の種類が少ないと気づかず、多いと気づく（Gómez 2002、人工の言葉での実験）。8か月の赤ちゃんが、2分聞いただけで、音のつながり方から単語の切れ目を見つけることも分かっています（Saffran ほか 1996）。"],
+    ],
+    init(inner, box) {
+      this.h = head(inner, "赤ちゃんは ②", "共通しているところに、気づく");
+      figures(box);
+      this.says = grownUpSays(box);
+      this.bang = el(inner, '<div class="bang" style="left:0;top:0">!</div>');
+      this.pl = el(inner, '<div class="label abs v" style="left:1320px;top:262px">実験（人工の言葉）</div>');
+      this.few = el(inner, `<div class="abs v" style="left:1320px;top:310px;width:220px;text-align:center"><div class="gh2">まん中が少ない</div>${shapes(["c", "t", "c", "t"])}</div>`);
+      this.many = el(inner, `<div class="abs v" style="left:1580px;top:310px;width:220px;text-align:center"><div class="gh2">まん中が多い</div>${shapes(["c", "t", "s", "d"])}</div>`);
+      this.frames = [...this.many.querySelectorAll(".fr")];
+      this.r1 = el(inner, '<div class="gres abs v" style="left:1320px;top:612px;width:220px">？<small>気づかない</small></div>');
+      this.r2 = el(inner, '<div class="gres ok abs v" style="left:1580px;top:612px;width:220px">！<small>気づいた</small></div>');
+      this.cap = el(inner, '<div class="abs v" style="left:1320px;top:730px"><p class="pcap">入れ替わるほど、変わらない<br>部分が見える</p><cite style="margin-top:8px">Gómez 2002</cite></div>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      const q = leave(this, t);
+      this.says.forEach((s, i) => {
+        mark(s.querySelector(".mk"), eo(seg(t, 0.5 + i * 0.15, 0.85 + i * 0.15)));
+        s.style.opacity = (1 - q).toFixed(3);
+      });
+      pop(this.bang, t, 1.25, 1020, 520);
+      vis(this.pl, t, 2.1);
+      vis(this.few, t, 2.25, { dx: 0, dy: 12 });
+      vis(this.many, t, 2.4, { dx: 0, dy: 12 });
+      const lit = eo(seg(t, 3.0, 3.4));
+      this.frames.forEach((f) => { f.style.fill = mix(C.surface, C.accent, lit); f.style.stroke = mix(C.ink2, C.accent, lit); });
+      vis(this.r1, t, 3.2, { dx: 0, dy: 10 });
+      vis(this.r2, t, 3.35, { dx: 0, dy: 10 });
+      vis(this.cap, t, 3.6);
+    },
+  });
+
+  scene("say", {
+    name: "赤ちゃん③ 言ってみる",
+    stops: [
+      [2.3, "気づいたかたちを、赤ちゃんは自分でも使ってみます。たとえば、覚えた「しよっか」を、動きの言葉にもくっつけて「あそぶ、しよっか！」。かたちをつかんだからこその間違いです。大人は「違うよ」とは言わずに、「うん、あそぼっか」と正しい形で言い直して返します。"],
+      [4.4, "何日かすると、「あそぼっか！」と言えるようになります。大人は子どもの言い間違いを、叱るより、正しい形で言い直して返すことが多く、子どもはそこから自分の言い方とのちがいに気づけます（Chouinard & Clark 2003）。"],
+    ],
+    init(inner, box) {
+      this.h = head(inner, "赤ちゃんは ③", "まちがえて、言い直してもらう");
+      figures(box);
+      // The "しよっか" just learned, stuck onto a verb: あそぶ、しよっか → あそぼっか.
+      this.b1 = el(inner, '<div class="say kid" style="right:680px;top:262px">あそ<span class="del">ぶ、しよ<i class="st"></i></span>っか！</div>');
+      this.st = this.b1.querySelector(".st");
+      this.a1 = el(inner, '<div class="say" style="left:430px;top:382px">うん、<span class="mk">あそぼっか</span></div>');
+      this.later = el(inner, '<div class="later abs v" style="left:640px;top:530px">何日かあと</div>');
+      this.b2 = el(inner, '<div class="say kid" style="right:680px;top:500px"><span class="mk">あそぼっか</span>！</div>');
+      // How grown-ups answer: not "wrong!", the right form.
+      this.pl = el(inner, '<div class="label abs v" style="left:1320px;top:262px">大人の返し方</div>');
+      this.no = el(inner, `<div class="abs v" style="left:1320px;top:316px;width:480px"><div class="say dim" style="left:0;top:0">ちがうよ！</div><div class="mark2 abs" style="left:300px;top:14px">${icon("cross", 64)}</div></div>`);
+      this.yes = el(inner, `<div class="abs v" style="left:1320px;top:446px;width:480px"><div class="say" style="left:0;top:0">うん、<span class="mk">あそぼっか</span></div><div class="mark2 ok abs" style="left:404px;top:14px">${icon("check", 64)}</div></div>`);
+      this.cap = el(inner, '<div class="abs v" style="left:1320px;top:610px"><p class="pcap">叱らずに、正しい形で返す</p><cite style="margin-top:8px">Chouinard & Clark 2003</cite></div>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      fall(this.b1, t, 0.4);
+      fall(this.a1, t, 1.1);
+      mark(this.a1.querySelector(".mk"), eo(seg(t, 1.45, 1.75)));
+      this.st.style.transform = `scaleX(${eo(seg(t, 1.75, 2.0)).toFixed(3)})`;
+      vis(this.later, t, 2.5);
+      fall(this.b2, t, 2.7);
+      mark(this.b2.querySelector(".mk"), eo(seg(t, 3.1, 3.4)));
+      vis(this.pl, t, 3.1);
+      vis(this.no, t, 3.25);
+      vis(this.yes, t, 3.45);
+      mark(this.yes.querySelector(".mk"), eo(seg(t, 3.7, 4.0)));
+      vis(this.cap, t, 3.8);
+    },
+  });
+
+  scene("meet", {
+    name: "赤ちゃん④ また出会う",
+    stops: [
+      [2.9, "そして、同じかたちに、毎日の生活の中で何度もまた出会います。月曜はおさんぽ、火曜はおふろ、木曜はおきがえ。中身も場面も毎回ちがいます。やがて赤ちゃんが、自分から「ごはん、しよっか！」と言うようになります。"],
+      [4.8, "2歳の子の実験では、新しい語を1日にまとめて聞くより、何日かに分けて聞いたほうが、よく言えるようになりました。決め手は、出会った日の数でした（Childers & Tomasello 2002）。"],
+    ],
+    init(inner, box) {
+      this.h = head(inner, "赤ちゃんは ④", "毎日、何度もまた出会う");
+      this.fig = figures(box);
+      const D = [["月", "おさんぽ"], ["火", "おふろ"], ["水", ""], ["木", "おきがえ"], ["金", "ねんね"], ["土", ""], ["日", ""]];
+      this.days = D.map((d, i) => el(inner, `<div class="wday abs v" style="left:${150 + i * 152}px;top:262px"><span class="d">${d[0]}</span>` +
+        (d[1] ? `<span class="n">${d[1]}、</span><span class="c"><span class="mk">しよっか</span></span>` : '<span class="n">&nbsp;</span><span class="none">—</span>') + "</div>"));
+      this.dayMarks = this.days.map((d) => d.querySelector(".mk"));
+      this.b = el(inner, '<div class="say kid" style="right:680px;top:470px">ごはん、<span class="mk">しよっか</span>！</div>');
+      // The experiment: the same four meetings, on one day or on four.
+      const cal = (days) => '<svg class="cal5" width="312" height="56" viewBox="0 0 312 56" aria-hidden="true">' +
+        [0, 1, 2, 3, 4].map((i) => `<rect x="${i * 64 + 1}" y="1" width="54" height="54" rx="8"/>`).join("") +
+        days.map(([d, dx, dy]) => `<circle cx="${d * 64 + 28 + dx}" cy="${28 + dy}" r="7"/>`).join("") + "</svg>";
+      this.pl = el(inner, '<div class="label abs v" style="left:1320px;top:262px">2歳児の実験</div>');
+      this.ra = el(inner, `<div class="abs v" style="left:1320px;top:312px"><div class="rl2">1日にまとめて</div><div style="margin-top:10px">${cal([[0, -10, -10], [0, 10, -10], [0, -10, 10], [0, 10, 10]])}</div></div>`);
+      this.rb = el(inner, `<div class="abs v" style="left:1320px;top:452px"><div class="rl2">何日かに分けて</div><div style="margin-top:10px">${cal([[0, 0, 0], [1, 0, 0], [3, 0, 0], [4, 0, 0]])}</div></div>`);
+      this.dotsA = [...this.ra.querySelectorAll("circle")];
+      this.dotsB = [...this.rb.querySelectorAll("circle")];
+      this.resA = el(inner, '<div class="res abs v" style="left:1660px;top:362px">……</div>');
+      this.resB = el(inner, `<div class="res ok abs v" style="left:1660px;top:502px">${icon("check", 34)}言えた</div>`);
+      this.cap = el(inner, '<div class="abs v" style="left:1320px;top:610px"><p class="pcap">日を分けて出会うほど、<br>よく言える</p><cite style="margin-top:8px">Childers & Tomasello 2002</cite></div>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      const q = leave(this, t);
+      this.fig.forEach((f) => { f.style.opacity = (1 - q).toFixed(3); });
+      this.days.forEach((d, i) => {
+        const a = 0.4 + i * 0.3;
+        vis(d, t, a, { dx: 0, dy: -12 });
+        if (this.dayMarks[i]) mark(this.dayMarks[i], eo(seg(t, a + 0.3, a + 0.6)));
+      });
+      fall(this.b, t, 2.2);
+      mark(this.b.querySelector(".mk"), eo(seg(t, 2.5, 2.8)));
+      vis(this.pl, t, 3.1);
+      vis(this.ra, t, 3.2);
+      vis(this.rb, t, 3.35);
+      [...this.dotsA, ...this.dotsB].forEach((d, i) => { const k = eob(seg(t, 3.5 + (i % 4) * 0.12, 3.8 + (i % 4) * 0.12)); d.style.opacity = clamp01(k * 2).toFixed(3); });
+      vis(this.resA, t, 4.1);
+      vis(this.resB, t, 4.25);
+      vis(this.cap, t, 4.3);
+    },
+  });
+
+  scene("school", {
+    name: "よくある外国語の勉強",
+    stops: [
+      [1.9, "赤ちゃんの順番は、聞く、気づく、言ってみる、また出会う。その先で、話せるようになります。"],
+      [3.3, "では、大人の外国語の勉強はどうでしょう。規則の説明から入って、単語を暗記して、テストをして、試験の前にまとめて覚える。ほとんど逆の順番です。これだと「知っている」で止まりやすい。説明で分かった知識は、使って練習しないと、すぐには出てきません（DeKeyser 2007）。説明そのものが悪いわけではなく、明示的な指導にも効果はあります（Norris & Ortega 2000）。足りなくなりがちなのは、浴びる量と、使う機会と、また出会うことです。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "大人の外国語学習は", "よくある勉強は、順番が逆");
+      const row = (top, label, items, dull, result) => {
+        const parts = [el(inner, `<div class="label abs" style="left:120px;top:${top}px${dull ? "" : ";color:var(--accent)"}">${label}</div>`)];
+        items.forEach((it, i) => {
+          if (i) parts.push(el(inner, `<div class="farr abs" style="left:${120 + i * 320 - 57}px;top:${top + 113}px">${ARROW}</div>`));
+          parts.push(el(inner, `<div class="icard abs${dull ? " dull" : ""}" style="left:${120 + i * 320}px;top:${top + 42}px">${icon(it[0], 72)}<b>${it[1]}</b></div>`));
+        });
+        parts.push(el(inner, `<div class="farr abs" style="left:${120 + 4 * 320 - 57}px;top:${top + 113}px">${ARROW}</div>`));
+        parts.push(el(inner, `<div class="ires abs${dull ? " dull" : ""}" style="left:1420px;top:${top + 42}px">${result}</div>`));
+        parts.forEach((p) => p.classList.add("v"));
+        return parts;
+      };
+      this.a = row(262, "赤ちゃん", [["listen", "聞く"], ["bulb", "気づく"], ["say", "言ってみる"], ["again", "また出会う"]], false,
+        `${icon("say", 72)}<b>話せる</b>`);
+      this.b = row(532, "よくある勉強", [["book", "規則の説明"], ["list", "単語の暗記"], ["test", "テスト"], ["cram", "試験前に"]], true,
+        `${icon("know", 64)}${icon("mute", 64)}<b>知っている<br>だけ</b>`);
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.a.forEach((n, i) => vis(n, t, 0.3 + i * 0.1, { dx: 0, dy: 12 }));
+      this.b.forEach((n, i) => vis(n, t, 2.0 + i * 0.1, { dx: 0, dy: 12 }));
+    },
+  });
+
+  scene("differ", {
+    name: "大人の条件",
+    stops: [
+      [2.8, "では、赤ちゃんと同じようにすればいいのか。そうもいきません。まず時間。赤ちゃんは起きている間ずっと言葉を聞いていますが、大人が使えるのは1日に数十分です（図は1日を輪にしたイメージ）。それに母語がしみついていて、意味が分かると小さな部分を聞き流してしまいます。たとえば英語の「Yesterday I walked」。Yesterday で昨日のことだと分かるので、-ed を聞き流しやすい（Ellis 2006、Ellis & Sagarra 2010）。"],
+      [4.8, "一方で、大人には強みもあります。見比べて考えられるし、訳で意味がすぐ分かる。はじめの伸びは大人のほうが速いことも知られています。長い目で見ると子どもが追い越しますが（Krashen, Long & Scarcella 1979）、大人は、はじめの速さと考える力を使えます。だから、赤ちゃんのやり方を、大人の条件に合わせて組み直します。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "大人と赤ちゃんのちがい", "大人は、条件がちがう");
+      const P = (x, title) => el(inner, `<div class="dpanel abs v" style="left:${x}px;top:262px;width:520px"><div class="dhead">${title}</div></div>`);
+      // 時間: a day as a ring each.
+      this.p1 = P(120, "時間");
+      this.p1.insertAdjacentHTML("beforeend",
+        '<div class="label abs" style="left:0;top:56px;font-size:22px">1日（24時間）</div>' +
+        `<div class="abs" style="left:10px;top:92px">${ring24()}<div class="rcen abs" style="left:0;top:78px;width:220px;font-size:24px;line-height:1.35">起きて<br>いる間</div></div>` +
+        `<div class="abs" style="left:290px;top:92px">${ring24()}<div class="rcen abs" style="left:0;top:88px;width:220px;font-size:34px">30分</div></div>` +
+        '<div class="figl abs" style="left:10px;top:322px;width:220px">赤ちゃん</div><div class="figl abs" style="left:290px;top:322px;width:220px">大人</div>' +
+        '<p class="pcap abs" style="left:0;top:386px">聞く時間が、まるでちがう</p><cite class="abs" style="left:0;top:436px">図はイメージ</cite>');
+      this.rings = [...this.p1.querySelectorAll(".ring24")];
+      // 母語: the small part that slips by.
+      this.p2 = P(700, "母語");
+      this.p2.insertAdjacentHTML("beforeend",
+        '<div class="label abs" style="left:0;top:58px;font-size:22px">赤ちゃん</div>' +
+        '<div class="crow abs t-en" style="left:0;top:94px"><span class="wchip">Yesterday</span><span class="wchip">I</span><span class="wchip jl">walk</span><span class="wchip jr">ed</span></div>' +
+        '<div class="label abs" style="left:0;top:180px;font-size:22px">大人</div>' +
+        '<div class="crow abs t-en" style="left:0;top:216px"><span class="wchip y">Yesterday</span><span class="wchip">I</span><span class="wchip jl">walk</span><span class="wchip jr ed">ed<i class="st"></i></span></div>' +
+        '<div class="note2 abs" style="left:0;top:296px">「昨日」と分かるから、-ed を聞き流す</div>' +
+        '<p class="pcap abs" style="left:0;top:386px">小さな部分を、聞き流す</p><cite class="abs" style="left:0;top:436px">Ellis 2006／Ellis & Sagarra 2010</cite>');
+      this.yest = this.p2.querySelector(".wchip.y");
+      this.ed = this.p2.querySelector(".wchip.ed");
+      this.edSt = this.ed.querySelector(".st");
+      // 強み: a faster start, drawn as it is usually drawn.
+      this.p3 = P(1280, "強み");
+      this.p3.insertAdjacentHTML("beforeend",
+        '<svg class="chart abs" style="left:0;top:56px" width="520" height="236" viewBox="0 0 520 236" aria-hidden="true">' +
+        '<rect class="early" x="46" y="8" width="150" height="194" rx="6"/>' +
+        '<path class="axis" d="M46 8V202H512"/>' +
+        '<path class="cv child" pathLength="1" d="M46 202C232 198 332 112 508 26"/>' +
+        '<path class="cv adult" pathLength="1" d="M46 202C112 92 192 72 508 64"/>' +
+        '<text x="121" y="228" text-anchor="middle">はじめ</text><text x="508" y="228" text-anchor="end">時間</text><text x="56" y="28">伸び</text>' +
+        '<text class="lb adult" x="214" y="62">大人</text><text class="lb child" x="330" y="170" text-anchor="middle">子ども</text></svg>' +
+        '<div class="crow abs" style="left:0;top:310px"><span class="pill">見比べられる</span><span class="pill">訳がある</span></div>' +
+        '<p class="pcap abs" style="left:0;top:386px">はじめの伸びは、大人が速い</p><cite class="abs" style="left:0;top:436px">Krashen, Long & Scarcella 1979（図はイメージ）</cite>');
+      this.cvA = this.p3.querySelector(".cv.adult");
+      this.cvC = this.p3.querySelector(".cv.child");
+      this.pills = [...this.p3.querySelectorAll(".pill")];
+      this.cap = el(inner, '<p class="cap abs v" style="left:120px;top:870px;color:var(--accent)">だから、大人向けに組み直す</p>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      vis(this.p1, t, 0.3, { dx: 0, dy: 14 });
+      fillRing(this.rings[0], 7, 12, eo(seg(t, 0.6, 1.4)));
+      fillRing(this.rings[1], 20, 0.5, eo(seg(t, 1.1, 1.4)));
+      vis(this.p2, t, 1.3, { dx: 0, dy: 14 });
+      mark(this.yest, eo(seg(t, 1.9, 2.2)));
+      const g = eio(seg(t, 2.2, 2.6));
+      this.ed.style.opacity = (1 - 0.7 * g).toFixed(3);
+      this.ed.style.transform = `translateY(${(14 * g).toFixed(1)}px)`;
+      this.edSt.style.transform = `scaleX(${g.toFixed(3)})`;
+      vis(this.p3, t, 3.0, { dx: 0, dy: 14 });
+      stroke(this.cvA, eo(seg(t, 3.2, 3.8)));
+      stroke(this.cvC, eo(seg(t, 3.4, 4.1)));
+      this.pills.forEach((p, i) => vis(p, t, 3.9 + i * 0.1, { dx: 0, dy: 8 }));
+      vis(this.cap, t, 4.2);
+    },
+  });
+
+  scene("method", {
+    name: "例文のシャワー",
+    stops: [
+      [1.9, "それが、例文のシャワーです。赤ちゃんがしている4つを、大人向けに組み直しました。"],
+      [3.4, "似た文をまとめて浴びる。自分で探して、答え合わせをする。言ってみて、直してもらう。日をあけて、別の文でまた出会う。赤ちゃんが何か月もかけてすることを、大人の時間に合わせて詰めています。"],
+      [4.4, "そして、この4つをくり返します。忘れても、また出会います。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "例文のシャワー", "赤ちゃんの4つを、大人向けに");
+      const S = [["rain", "浴びる", "似た文を、<br>まとめて"], ["find", "気づく", "自分で探して、<br>答え合わせ"], ["say", "言ってみる", "言ってみて、<br>直してもらう"], ["again", "また出会う", "日をあけて、<br>別の文で"]];
+      const L = (i) => 120 + i * 435;
+      this.cols = S.map((s, i) => ({
+        ic: el(inner, `<div class="mic abs${i === 3 ? " again" : ""}" style="left:${L(i)}px;top:262px">${icon(s[0], 104)}</div>`),
+        name: el(inner, `<div class="mname abs v${i === 3 ? " again" : ""}" style="left:${L(i)}px;top:390px"><span class="no">${i + 1}</span><b>${s[1]}</b></div>`),
+        line: el(inner, `<div class="mline abs v" style="left:${L(i)}px;top:500px;width:375px">${s[2]}</div>`),
+      }));
+      const ov = el(inner, '<svg class="ov" viewBox="0 0 1920 1080"><path class="arc" pathLength="1" d="M1451 650C1451 770 146 770 146 658M133 672L146 658L159 672"/></svg>');
+      this.arc = ov.querySelector(".arc");
+      this.arcl = el(inner, '<div class="arcl abs v" style="left:498px;width:600px;top:766px">くり返す。忘れても、また出会う</div>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.cols.forEach((c, i) => {
+        grow(c.ic, t, 0.3 + i * 0.2);
+        vis(c.name, t, 0.45 + i * 0.2, { dx: 0, dy: 14 });
+        vis(c.line, t, 2.0 + i * 0.25, { dx: 0, dy: -10 });
+      });
+      stroke(this.arc, eio(seg(t, 3.5, 4.2)));
+      vis(this.arcl, t, 3.9, { dx: 0, dy: 8 });
+    },
+  });
+
+  scene("bathe", {
+    name: "1 浴びる",
+    stops: [
+      [5.3, "一つずつ見ていきます。まず、浴びる。同じかたちの短い文を、数文まとめて、音と一緒に浴びます。覚えようとしなくていい。聞きながら見比べるだけです。"],
+      [7.0, "終わりをそろえて並べると、変わらない部分が一列に浮かび上がります。前の部分が入れ替わるからこそです。赤ちゃんの実験と同じです（Gómez 2002）。少しずつ変えた文が続く並びは、大人の学習も助けました（Onnis ほか 2008）。いろいろな文で出会ったかたちほど、新しい文にも使えるようになります（Bybee 1995）。赤ちゃんが何か月もかけて出会う量を、ひと固まりにして浴びるわけです。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "1　浴びる", "似た文を、まとめて浴びる");
+      this.list = rainList(inner, INVITE, { left: 120, top: 290, width: 900, fs: 44, gs: 26, pad: 18, play: true });
+      this.frame = el(inner, '<div class="colbr abs"></div>');
+      this.brl = el(inner, '<div class="brl abs v">ここが同じ</div>');
+      this.take = el(inner, '<div class="abs v" style="left:1120px;top:440px"><p class="take">ちがいがあるから、<br>同じところが見える</p><cite style="margin-top:16px">Gómez 2002／Onnis ほか 2008／Bybee 1995</cite></div>');
+    },
+    measure() {
+      // How far each sentence moves so their endings line up, and a bracket just past the lined-up endings.
+      const range = document.createRange();
+      const box = this.list.rows.map((r) => { range.selectNodeContents(r.s); const b = range.getBoundingClientRect(); return b.width / scale; });
+      const right = Math.max(...box);
+      this.shift = box.map((w) => right - w);
+      const s0 = srect(this.list.rows[0].s), s3 = srect(this.list.rows[3].s);
+      const end = s0.x + right, top = s0.y + 8, bottom = s3.y + s3.h - 8;
+      Object.assign(this.frame.style, { left: `${end + 16}px`, top: `${top}px`, width: "22px", height: `${bottom - top}px` });
+      Object.assign(this.brl.style, { left: `${end + 54}px`, top: `${(top + bottom) / 2 - 24}px` });
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.list.rows.forEach((r, i) => {
+        const f = 0.5 + i * 1.1;
+        fall(r.li, t, f);
+        land(r.drop, t, f);
+        playing(r, t, f + 0.55, f + 1.45);
+        const k = eio(seg(t, 5.5 + i * 0.08, 6.2 + i * 0.08));
+        r.s.style.transform = k > 0 ? `translateX(${(this.shift[i] * k).toFixed(1)}px)` : "";
+        r.marks.forEach((m) => mark(m, eo(seg(t, 6.1, 6.4))));
+      });
+      grow(this.frame, t, 6.2);
+      vis(this.brl, t, 6.3);
+      vis(this.take, t, 6.4);
+    },
+  });
+
+  scene("find", {
+    name: "2 気づく",
+    stops: [
+      [2.9, "次に、共通していそうなところを、自分で探します。合っているかどうかは気にしなくていい。"],
+      [4.8, "そのあとで答え合わせです。文の中と訳の中で、対応するところに同じ色を付けます。自分で見つけた答えは、読んだだけの答えより記憶に残ります（生成効果、Slamecka & Graf 1978）。気づいたところが、身につく入口になります（Schmidt 1990）。大人が聞き流しやすい語尾のような小さな部分も、色を付けると目に入ります。文法の説明は、見つけたものを確かめるときに使います。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "2　気づく", "自分で探して、答え合わせ");
+      this.list = rainList(inner, INVITE, { left: 120, top: 290, width: 900, fs: 44, gs: 26, pad: 18 });
+      this.pointer = el(inner, '<div class="pointer"><i class="ring"></i></div>');
+      this.ring = this.pointer.querySelector(".ring");
+      this.ans = el(inner, '<div class="ansline abs v" style="left:120px;top:890px"><span class="label">答え合わせ</span><b>誘う</b></div>');
+      this.ca = el(inner, `<div class="mcard dull abs v" style="left:1110px;top:300px">${icon("book", 72)}<b>読んだ答え</b></div>`);
+      this.lt = el(inner, '<div class="lt abs v" style="left:1398px;top:356px">＜</div>');
+      this.cb = el(inner, `<div class="mcard abs v" style="left:1500px;top:300px">${icon("find", 72)}<b>見つけた答え</b></div>`);
+      this.take = el(inner, '<div class="abs v" style="left:1110px;top:560px"><p class="take">自分で見つけると、<br>覚えている</p><cite style="margin-top:16px">生成効果：Slamecka & Graf 1978</cite></div>');
+    },
+    measure() {
+      const r = srect(this.list.rows[0].marks[0]);
+      this.target = { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.list.rows.forEach((r, i) => { fall(r.li, t, 0.3 + i * 0.12); land(r.drop, t, 0.3 + i * 0.12); });
+      const a = eo(seg(t, 1.2, 1.5)) * (1 - seg(t, 2.5, 2.8));
+      const m = eio(seg(t, 1.3, 1.9));
+      const x = lerp(1010, this.target.x, m), y = lerp(960, this.target.y, m);
+      const press = Math.sin(Math.PI * seg(t, 1.95, 2.15));
+      this.pointer.style.opacity = a.toFixed(3);
+      this.pointer.style.transform = `translate(${(x - 32).toFixed(1)}px,${(y - 32).toFixed(1)}px) scale(${(1 - 0.15 * press).toFixed(3)})`;
+      const rp = seg(t, 1.98, 2.6);
+      this.ring.style.opacity = rp > 0 && rp < 1 ? (0.6 * (1 - rp)).toFixed(3) : 0;
+      this.ring.style.transform = `scale(${(1 + 1.2 * rp).toFixed(3)})`;
+      const guess = eo(seg(t, 2.0, 2.3));
+      this.list.rows.forEach((r, i) => {
+        const k = eo(seg(t, 3.1 + i * 0.15, 3.45 + i * 0.15));
+        r.marks.forEach((n) => mark(n, i === 0 ? Math.max(k, guess) : k));
+        r.gmarks.forEach((n) => mark(n, k, C.muted));
+      });
+      vis(this.ans, t, 3.6);
+      vis(this.ca, t, 3.7, { dx: 0, dy: 12 });
+      vis(this.lt, t, 3.85, { dx: 0 });
+      grow(this.cb, t, 3.95);
+      vis(this.take, t, 4.2);
+    },
+  });
+
+  const ATTEMPT = [..."주말에 영화 보러 가을래?"];
+  scene("speak", {
+    name: "3 言ってみる",
+    stops: [
+      [2.8, "そして、浴びたかたちで、自分の言いたいことを言ってみます。「週末、映画見に行かない？」と言いたい。間違っていて大丈夫です。言おうとすると、どこが分からないかが見えてきます。"],
+      [5.0, "それを直してもらいます。先生でも、ネイティブの友だちでも、AIでもかまいません。「가다」には「을래」ではなく「ㄹ래」が付いて「갈래」になる、と分かります。足りなかった一片が埋まる。言おうとすると、聞いているだけでは見えなかった穴が見えます（Swain 1985）。直してもらうことには、はっきりした学習効果があり、時間がたっても残ります（Li 2010）。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "3　言ってみる", "言ってみて、直してもらう");
+      this.intent = el(inner, '<div class="abs v" style="left:120px;top:290px"><div class="label">言いたいこと</div><div class="intent">週末、映画見に行かない？</div></div>');
+      this.field = el(inner, '<div class="field abs v" style="left:120px;top:420px;width:880px"><span class="typed t-ko"></span><i class="caret"></i></div>');
+      this.typed = this.field.querySelector(".typed");
+      this.caret = this.field.querySelector(".caret");
+      this.fix = el(inner, `<div class="fixl abs v" style="left:120px;top:552px">${DOWN}<span>直してもらう（先生・友だち・AI）</span></div>`);
+      this.pair = el(inner, '<div class="said abs" style="left:120px;top:636px;width:880px">' +
+        '<span class="tag2 v">書いた文</span><span class="before t-ko v">주말에 영화 보러 <span class="del">가을래<i class="st"></i></span>?</span>' +
+        '<span class="tag2 v">直った文</span><span class="after t-ko v">주말에 영화 보러 <span class="ins">갈래<i class="ul"></i></span>?</span></div>');
+      this.pairParts = [...this.pair.children];
+      this.st = this.pair.querySelector(".st");
+      this.ul = this.pair.querySelector(".ul");
+      // The sentence as pieces: one is missing until the correction fills it.
+      this.pl = el(inner, '<div class="label abs v" style="left:1110px;top:300px">言おうとすると…</div>');
+      this.pz = el(inner, '<div class="pzrow abs v" style="left:1110px;top:350px"><span class="pz t-ko">주말에</span><span class="pz t-ko">영화</span><span class="pz t-ko">보러</span><span class="pz slot t-ko"><i>？</i><b>갈래</b></span></div>');
+      this.slot = this.pz.querySelector(".slot");
+      this.q = this.slot.querySelector("i");
+      this.fill = this.slot.querySelector("b");
+      this.take = el(inner, '<div class="abs v" style="left:1110px;top:500px"><p class="take">足りない一片が、<br>見えてくる</p><cite style="margin-top:16px">Swain 1985／Li 2010</cite></div>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      vis(this.intent, t, 0.3);
+      vis(this.field, t, 0.6, { dx: 0, dy: 12 });
+      const n = Math.round(seg(t, 0.9, 2.5) * ATTEMPT.length);
+      if (this._n !== n) { this.typed.textContent = ATTEMPT.slice(0, n).join(""); this._n = n; }
+      this.caretOn = t >= 0.6 && t < 3.0;
+      this.typing = t >= 0.9 && t < 2.5;
+      vis(this.pl, t, 1.4);
+      vis(this.pz, t, 1.6, { dx: 0, dy: 12 });
+      vis(this.fix, t, 3.0, { dx: 0, dy: -10 });
+      vis(this.pairParts[0], t, 3.3);
+      vis(this.pairParts[1], t, 3.35);
+      this.st.style.transform = `scaleX(${eo(seg(t, 3.65, 3.9)).toFixed(3)})`;
+      vis(this.pairParts[2], t, 3.8);
+      vis(this.pairParts[3], t, 3.85);
+      this.ul.style.transform = `scaleX(${eo(seg(t, 4.15, 4.4)).toFixed(3)})`;
+      const f = eo(seg(t, 4.2, 4.5));
+      this.q.style.opacity = (1 - f).toFixed(3);
+      this.fill.style.opacity = f.toFixed(3);
+      this.slot.style.borderStyle = f > 0.5 ? "solid" : "dashed";
+      this.slot.style.backgroundColor = f > 0 ? rgba(C.tint, f) : "";
+      vis(this.take, t, 4.4);
+    },
+    idle(now) {
+      const blink = RM || this.typing || Math.floor(now / 530) % 2 === 0;
+      this.caret.style.opacity = this.caretOn && blink ? 1 : 0;
+    },
+  });
+
+  // Days between meetings, widening (1, 3, 7, 14, 30, 60), on a square-root scale.
+  const MEET = [0, 1, 4, 11, 25, 55, 115];
+  const MX = (d) => 160 + Math.sqrt(d / 115) * 1600;
+  // Bahrick et al. 1993: 26 sessions 14 days apart, and 13 sessions 56 days apart, on one time scale (px per day).
+  const PXD = 1.6;
+  scene("again", {
+    name: "4 また出会う",
+    stops: [
+      [2.6, "最後に、また出会う。日をあけて、別の文で、同じかたちにまた出会います。間は1日、3日、7日、14日と、少しずつ広げていきます。"],
+      [5.8, "間をあけて出会うほうが、まとめて詰めるより長く残ります（Cepeda ほか 2006）。外国語の単語を9年追った記録では、56日おきの13回が、14日おきの26回と同じくらい残りました。半分の回数です（Bahrick ほか 1993、4人の記録）。続けるには、「電車に乗ったら」のように、毎日していることのあとに決めておくと続きやすくなります（Gollwitzer 1999）。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "4　また出会う", "日をあけて、別の文で");
+      this.line = el(inner, '<div class="tl abs" style="left:160px;top:396px;width:1600px"></div>');
+      this.dots = MEET.map((d, i) => el(inner, `<i class="dot${i ? " again" : ""}" style="left:0;top:0"></i>`));
+      this.gaps = [1, 3, 7, 14, 30, 60].map((g, i) => el(inner, `<div class="gap v" style="left:${((MX(MEET[i]) + MX(MEET[i + 1])) / 2).toFixed(1)}px">${g}日</div>`));
+      const CH = ["내일 카페 갈래?", "같이 밥 먹을래?", "주말에 바다 갈래?"];
+      const cx = (i) => 120 + i * 320;
+      this.chips = CH.map((c, i) => el(inner, `<div class="chip abs v t-ko" style="left:${cx(i)}px;top:462px">${c}</div>`));
+      const ov = el(inner, '<svg class="ov" viewBox="0 0 1920 1080">' +
+        CH.map((c, i) => `<path class="leader" pathLength="1" d="M${MX(MEET[i]).toFixed(1)} 414L${cx(i) + 130} 460"/>`).join("") + "</svg>");
+      this.leaders = [...ov.querySelectorAll(".leader")];
+      // Half the sessions, spread out: the same retention.
+      this.rl = [
+        el(inner, '<div class="rowl abs v" style="left:120px;top:672px"><b>14日おき</b>・26回</div>'),
+        el(inner, '<div class="rowl abs v" style="left:120px;top:772px"><b>56日おき</b>・13回</div>'),
+      ];
+      this.r1 = Array.from({ length: 26 }, (_, i) => ({ el: el(inner, '<i class="sdot"></i>'), x: 400 + i * 14 * PXD, y: 693, day: i * 14 }));
+      this.r2 = Array.from({ length: 13 }, (_, i) => ({ el: el(inner, '<i class="sdot again"></i>'), x: 400 + i * 56 * PXD, y: 793, day: i * 56 }));
+      this.same = el(inner, '<div class="same abs v" style="left:1540px;top:680px">同じくらい<br>残った</div>');
+      this.src = el(inner, '<p class="src abs v" style="left:120px;top:880px">外国語の単語を9年追った記録（4人）：Bahrick ほか 1993</p>');
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.line.style.transform = `scaleX(${eo(seg(t, 0.3, 1.7)).toFixed(4)})`;
+      const reach = (d) => 0.3 + 1.4 * Math.pow((MX(d) - 160) / 1600, 0.75);
+      this.dots.forEach((n, i) => pop(n, t, reach(MEET[i]), MX(MEET[i]) - 15, 383));
+      this.gaps.forEach((g, i) => vis(g, t, reach(MEET[i + 1]), { dx: 0, dy: 8 }));
+      this.chips.forEach((c, i) => {
+        const a = 1.0 + i * 0.4;
+        stroke(this.leaders[i], eo(seg(t, a, a + 0.3)));
+        vis(c, t, a + 0.2, { dx: 0, dy: 12 });
+      });
+      // Both rows run on one clock: a day is the same distance, so the wide row takes longer and has half the dots.
+      this.rl.forEach((r, i) => vis(r, t, 2.8 + i * 0.1));
+      const at = (day) => 2.9 + day / 320;
+      [...this.r1, ...this.r2].forEach((d) => pop(d.el, t, at(d.day), d.x, d.y));
+      vis(this.same, t, 5.1);
+      vis(this.src, t, 5.2);
+    },
+  });
+
+  scene("compare", {
+    name: "比べると",
+    stops: [
+      [2.3, "並べてみます。赤ちゃん、よくある外国語の勉強、例文のシャワー。入り口、かたちのつかみ方、くり返し方。"],
+      [3.0, "例文のシャワーは、赤ちゃんの順番をそのまま使って、足りない時間を、まとめて浴びることと、見比べる力で補います。"],
+    ],
+    init(inner) {
+      this.h = head(inner, "比べると", "3つを並べると");
+      const CX = [560, 1000, 1480];
+      this.hl = el(inner, '<div class="colhl abs" style="left:1290px;top:252px;width:380px;height:660px"></div>');
+      this.heads = ["赤ちゃん", "よくある勉強", "例文のシャワー"].map((h, i) => el(inner, `<div class="mhead abs v${i === 2 ? " me" : ""}" style="left:${CX[i] - 180}px;top:270px;width:360px">${h}</div>`));
+      const R = [
+        ["入り口", [["listen", "聞く"], ["book", "規則の説明"], ["rain", "浴びる"]]],
+        ["かたち", [["bulb", "自分で見つける"], ["list", "教わって覚える"], ["find", "探して答え合わせ"]]],
+        ["くり返し", [["again", "毎日"], ["cram", "試験前にまとめて"], ["again", "日をあけて"]]],
+      ];
+      this.rows = R.map((r, i) => {
+        const y = 330 + i * 190;
+        const parts = [el(inner, `<div class="msep abs" style="left:120px;top:${y}px;width:1680px"></div>`), el(inner, `<div class="mrow abs" style="left:120px;top:${y + 66}px">${r[0]}</div>`)];
+        r[1].forEach((c, j) => parts.push(el(inner, `<div class="mcell abs${j === 1 ? " dull" : j === 2 ? " me" : ""}" style="left:${CX[j] - 180}px;top:${y + 26}px;width:360px">${icon(c[0], 72)}<span>${c[1]}</span></div>`)));
+        parts.forEach((p) => p.classList.add("v"));
+        return parts;
+      });
+    },
+    render(t) {
+      headVis(this.h, t);
+      this.heads.forEach((h, i) => vis(h, t, 0.3 + i * 0.1, { dx: 0, dy: 10 }));
+      this.rows.forEach((r, i) => r.forEach((p) => vis(p, t, 0.6 + i * 0.4, { dx: 0, dy: 12 })));
+      this.hl.style.opacity = eo(seg(t, 2.4, 2.9)).toFixed(3);
+    },
+  });
+
+  scene("end", {
+    name: "まとめ",
+    stops: [[2.2, "覚えようとしなくていい。浴びて、気づいて、言ってみて、忘れても、また出会う。赤ちゃんのしくみを、大人の時間で。ありがとうございました。"]],
+    init(box) {
+      this.rain = rainField(box, 11, 1260);
+      this.flow = el(box, '<p class="flowline abs v" style="left:120px;top:300px">浴びる<i>→</i>気づく<i>→</i>言ってみる<i>→</i>また出会う</p>');
+      const big = el(box, '<h2 class="closing abs" style="left:112px;top:392px"><span class="v">赤ちゃんのしくみを、</span><br><span class="v">大人の時間で。</span></h2>');
+      this.lines = [...big.querySelectorAll("span")];
+      this.note = el(box, '<p class="flowline abs v" style="left:120px;top:720px;color:var(--ink-2);font-weight:500">覚えなくていい。忘れても、また出会う。</p>');
+    },
+    render(t) {
+      this.rain.canvas.style.opacity = eo(seg(t, 0, 1.2)).toFixed(3);
+      vis(this.flow, t, 0.2);
+      this.lines.forEach((l, i) => fall(l, t, 0.55 + i * 0.35));
+      vis(this.note, t, 1.6);
+    },
+    idle(now) { this.rain.draw(now); },
+  });
+
+  // ---- Load: build every scene, wait for the faces, then measure ---------------------------------
+  const loading = document.getElementById("loading");
+  const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
+  const scenes = SCENES.map((def) => {
+    const box = document.createElement("div");
+    box.className = "scene";
+    const inner = document.createElement("div");
+    inner.className = "inner";
+    box.appendChild(inner);
+    stage.insertBefore(box, ui);
+    const stops = def.stops.map(([at, note]) => ({ at, note }));
+    def.out = stops[stops.length - 1].at;
+    def.init(inner, box);
+    return { def, box, inner, stops, out: def.out, dur: def.out + 0.5, name: def.name };
+  });
+  stage.querySelectorAll(".t-ko").forEach((n) => (n.lang = "ko"));
+  stage.querySelectorAll(".t-en").forEach((n) => (n.lang = "en"));
+  void stage.offsetHeight;
+  await frame();
+  await frame();
+  await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 4000))]);
+  for (const s of scenes) {
+    if (s.def.measure) s.def.measure();
+    s.def.render(0);
+    s.box.style.display = "none";
+    s.box.setAttribute("aria-hidden", "true");
+  }
+  loading.remove();
+
+  // ---- Playback: each press plays on to the next stop ------------------------------------------------
+  const N = scenes.length;
+  const steps = [];
+  scenes.forEach((s, i) => s.stops.forEach((p, k) => steps.push({ i, k, at: p.at, note: p.note })));
+  const S = steps.length;
+  let cur = 0, shown = -1, queue = [], segStart = 0, tickOn = false;
+  const tickEl = document.getElementById("tick");
+  function show(i) {
+    if (shown === i) return;
+    scenes.forEach((s, k) => { s.box.style.display = k === i ? "" : "none"; s.box.setAttribute("aria-hidden", k === i ? "false" : "true"); });
+    shown = i;
+  }
+  // A slide's parts in .inner leave together, fading to the left, before the cut.
+  function draw(i, t) {
+    show(i);
+    const s = scenes[i];
+    s.def.render(t);
+    const q = eio(seg(t, s.out, s.out + 0.45));
+    s.inner.style.opacity = (1 - q).toFixed(3);
+    s.inner.style.transform = q > 0 ? `translateX(${(-34 * q).toFixed(1)}px)` : "";
+  }
+  // One loop for the deck: it plays the queue and lets the shown slide keep its rain falling and its dots and caret
+  // blinking while the deck waits. While playing, an all but transparent layer changes every frame so the whole
+  // screen is redrawn (a still part followed by a small change made some GPUs stall).
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (queue.length) {
+      if (!segStart) segStart = now;
+      const [i, a, b] = queue[0];
+      const t = a + (now - segStart) / 1000;
+      if (t >= b) { draw(i, b); queue.shift(); segStart = now; }
+      else draw(i, t);
+      tickOn = !tickOn;
+      tickEl.style.opacity = tickOn ? "0.0011" : "0.001";
+    }
+    const s = scenes[shown];
+    if (s && s.def.idle) s.def.idle(now);
+  }
+  function play(run) { queue = run; segStart = 0; }
+  function finish() {
+    if (!queue.length) return;
+    const [i, , b] = queue[queue.length - 1];
+    queue = [];
+    draw(i, b);
+  }
+  function go(k) {
+    k = Math.max(0, Math.min(S - 1, k));
+    queue = [];
+    cur = k;
+    draw(steps[k].i, steps[k].at);
+    chrome();
+  }
+  function next() {
+    if (queue.length) { finish(); return; }
+    if (cur >= S - 1) return;
+    hideHint();
+    if (RM) { go(cur + 1); return; }
+    const a = steps[cur], b = steps[cur + 1];
+    if (a.i === b.i) play([[a.i, a.at, b.at]]);
+    else play([[a.i, a.at, scenes[a.i].dur], [b.i, 0, b.at]]);
+    cur += 1;
+    chrome();
+  }
+  function back() { finish(); go(cur - 1); }
+  function chrome() {
+    document.getElementById("progFill").style.transform = `scaleX(${S > 1 ? cur / (S - 1) : 1})`;
+    document.getElementById("pageNo").textContent = `${steps[cur].i + 1} / ${N}`;
+    renderNotes();
+  }
+  const hint = document.getElementById("hint");
+  hint.textContent = matchMedia("(pointer: coarse)").matches ? "タップで次へ　左端で戻る" : "→ / クリックで次へ　F 全画面　N 発表メモ";
+  function hideHint() { hint.style.opacity = 0; }
+  setTimeout(hideHint, 9000);
+
+  addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "Enter" || k === "ArrowDown") { e.preventDefault(); next(); }
+    else if (k === "ArrowLeft" || k === "PageUp" || k === "Backspace" || k === "ArrowUp") { e.preventDefault(); back(); }
+    else if (k === "Home") { go(0); if (!RM) play([[0, 0, steps[0].at]]); }
+    else if (k === "End") go(S - 1);
+    else if (k === "f" || k === "F") { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else document.documentElement.requestFullscreen().catch(() => {}); }
+    else if (k === "n" || k === "N") openNotes();
+  });
+  vp.addEventListener("click", (e) => { if (e.target.closest("#notesBar")) return; if (e.clientX < innerWidth * 0.2) back(); else next(); });
+
+  // ---- Talk track: a second window, or a strip under the slide where windows cannot open -----------
+  let notesWin = null, startedAt = 0;
+  const bar = document.getElementById("notesBar");
+  function openNotes() {
+    let w = null;
+    try { w = window.open("", "shower-notes", "width=640,height=760"); } catch (err) { w = null; }
+    if (!w) { bar.hidden = !bar.hidden; renderNotes(); return; }
+    notesWin = w;
+    const d = w.document;
+    d.open();
+    d.write(`<!doctype html><html lang="ja"><meta charset="utf-8"><title>発表メモ</title>
+<style>body{margin:0;padding:28px 32px;font-family:"IBM Plex Sans JP","Hiragino Sans","Yu Gothic",sans-serif;color:#172033;background:#fcfbf8}
+#p{font-size:15px;color:#5c6578;font-weight:700}#n{font-size:26px;line-height:1.7;margin-top:10px;font-weight:500}
+#x{font-size:16px;line-height:1.7;color:#5c6578;margin-top:24px;border-top:1px solid #e4e7ec;padding-top:14px}
+#tm{position:fixed;right:28px;top:24px;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.k{position:fixed;left:32px;bottom:20px;font-size:13px;color:#8c94a5}</style>
+<div id="p"></div><div id="tm">0:00</div><div id="n"></div><div id="x"></div><div class="k">← → でこちらからも進めます</div>`);
+    d.close();
+    d.addEventListener("keydown", (e) => {
+      if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); next(); }
+      if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); back(); }
+    });
+    renderNotes();
+  }
+  function renderNotes() {
+    const st = steps[cur], sc = scenes[st.i];
+    const where = `${st.i + 1} / ${N}　${sc.name}` + (sc.stops.length > 1 ? `（${st.k + 1}/${sc.stops.length}）` : "");
+    if (cur > 0 && !startedAt) startedAt = Date.now();
+    if (!bar.hidden) {
+      bar.textContent = "";
+      const b = document.createElement("b");
+      b.textContent = where;
+      bar.append(b, st.note);
+    }
+    if (!notesWin || notesWin.closed) return;
+    const d = notesWin.document;
+    if (!d.getElementById("n")) return;
+    d.getElementById("p").textContent = where;
+    d.getElementById("n").textContent = st.note;
+    d.getElementById("x").textContent = cur + 1 < S ? `次：${steps[cur + 1].note}` : "おわり";
+  }
+  setInterval(() => {
+    if (!notesWin || notesWin.closed || !startedAt) return;
+    const s = Math.floor((Date.now() - startedAt) / 1000);
+    const n = notesWin.document.getElementById("tm");
+    if (n) n.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }, 500);
+
+  // For checks: draw(i, t) shows scene i at its second t; go(k) shows stop k.
+  window.__deck = {
+    next, go, draw, get cur() { return cur; }, get playing() { return queue.length > 0; },
+    scenes: scenes.map((s) => ({ id: s.def.id, dur: s.dur, stops: s.stops.map((p) => p.at) })), steps: steps.map((p) => ({ i: p.i, at: p.at })),
+  };
+  chrome();
+  requestAnimationFrame(loop);
+  if (RM) go(0);
+  else play([[0, 0, steps[0].at]]);
+})().catch((e) => {
+  const l = document.getElementById("loading");
+  if (l) l.textContent = "読み込めませんでした: " + e.message;
+  console.error(e);
+});
+</script>
+</body>
+</html>
