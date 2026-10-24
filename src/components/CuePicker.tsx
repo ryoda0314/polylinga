@@ -5,7 +5,8 @@ import styles from "./CuePicker.module.css";
 
 /**
  * Choose when to bathe in the rain: one of a few everyday moments, the learner's own (〜したら), or, in settings, none.
- * Inside a form, `name` sends the choice with it.
+ * Inside a form, `name` sends the choice with it. `typed` marks a change made by typing their own (or opening it to),
+ * which settings saves once the typing pauses rather than at each key.
  */
 export function CuePicker({
   value,
@@ -15,7 +16,7 @@ export function CuePicker({
   name,
 }: {
   value: string | null;
-  onChange: (value: string | null) => void;
+  onChange: (value: string | null, typed: boolean) => void;
   options: readonly string[];
   labels: { own: string; ownLabel: string; ownPlaceholder: string; none?: string };
   name?: string;
@@ -35,7 +36,7 @@ export function CuePicker({
             aria-pressed={!own && value === option}
             onClick={() => {
               setOwn(false);
-              onChange(option);
+              onChange(option, false);
             }}
           >
             {option}
@@ -47,7 +48,7 @@ export function CuePicker({
           aria-pressed={own}
           onClick={() => {
             setOwn(true);
-            onChange(ownText.trim() || null);
+            onChange(ownText.trim() || null, true);
           }}
         >
           {labels.own}
@@ -59,7 +60,7 @@ export function CuePicker({
             aria-pressed={!own && value === null}
             onClick={() => {
               setOwn(false);
-              onChange(null);
+              onChange(null, false);
             }}
           >
             {labels.none}
@@ -77,7 +78,7 @@ export function CuePicker({
             className={styles.input}
             onChange={(e) => {
               setOwnText(e.target.value);
-              onChange(e.target.value.trim() || null);
+              onChange(e.target.value.trim() || null, true);
             }}
           />
         </label>

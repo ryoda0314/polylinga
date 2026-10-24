@@ -29,6 +29,7 @@ export default async function SettingsPage() {
           settings={settings}
           targets={LAUNCH_TARGETS.map((l) => ({ value: l, label: `${t.start.targets[l]}（${LANG_NATIVE_NAME[l]}）` }))}
           labels={{
+            autosave: t.me.autosave,
             native: t.me.native,
             nativeFixed: t.me.nativeFixed,
             nativeNote: t.me.nativeNote,
@@ -48,8 +49,9 @@ export default async function SettingsPage() {
             share: t.me.share,
             shareLabel: t.me.shareLabel,
             shareNote: t.me.shareNote,
-            save: t.me.save,
             saving: t.me.saving,
+            saved: t.me.saved,
+            saveFailed: t.me.saveFailed,
           }}
         />
 
@@ -61,7 +63,13 @@ export default async function SettingsPage() {
           <h2 className="label">{t.me.account}</h2>
           <UsernameForm
             current={user.username ?? ""}
-            labels={{ label: t.name.label, limit: t.name.limit(USERNAME_MAX), change: t.name.change, saving: t.name.saving }}
+            labels={{
+              label: t.name.label,
+              limit: t.name.limit(USERNAME_MAX),
+              saving: t.me.saving,
+              saved: t.me.saved,
+              saveFailed: t.me.saveFailed,
+            }}
           />
           <p className={styles.rowSub} style={{ margin: 0, overflowWrap: "anywhere" }}>
             {user.email}

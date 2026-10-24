@@ -113,6 +113,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 ## Conventions
 
 - UI copy goes in `src/lib/i18n/ja.ts`, written plainly from the learner's side. Client components get strings as props.
+- Settings save themselves, with no save button to forget (`SettingsForm`, `UsernameForm`): a pick at once, typing once
+  it pauses (`TYPING_PAUSE_MS`) or when the field or page is left, and how it went under the setting that changed.
 - Colors come from the tokens in `src/app/globals.css`, taken from the app icon (`src/app/icon.png`, `public/icons/`):
   the accent is `var(--accent)` / `var(--tint)` and follows `data-accent` (rain, ink, hydrangea, dusk); `var(--again)` marks a
   pattern or memo word coming back. No gradients inside the app; the icon is the one exception. The wordmark ことのあめ

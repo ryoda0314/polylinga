@@ -7,7 +7,7 @@ import { correctSentence, explainSentence, type CorrectionResult, type Explained
 import { requireUser, saveUsername } from "@/lib/auth";
 import { approvedPatterns, searchCorpus } from "@/lib/corpus";
 import { getDict } from "@/lib/i18n";
-import { isAccent, isLang, type Lang } from "@/lib/langs";
+import { isAccent, isLang, type Accent, type Lang } from "@/lib/langs";
 import { consume, LIMITS, refund } from "@/lib/metering";
 import { LAUNCH_NATIVE, LAUNCH_TARGETS, requireSettings } from "@/lib/settings";
 import { heartShared, pickMinnaCluster, recordMinna, reportShared, shareCorrection } from "@/lib/minna";
@@ -426,12 +426,15 @@ export async function correctSaying(sayingId: string, _prev: FormState, formData
 
 export type SettingsState = { message: string | null; error: boolean };
 
-export async function saveSettings(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+/** Everything on the settings page, sent whole each time one of them changes (SettingsForm saves as they change). */
+export type SettingsInput = { targetLang: Lang; accent: Accent; speechRate: number; rainCue: string | null; shareRain: boolean };
+
+export async function saveSettings(input: SettingsInput): Promise<SettingsState> {
   const { supabase, user } = await requireUser();
   const t = getDict(LAUNCH_NATIVE);
-  const target = formData.get("target_lang");
-  const accent = formData.get("accent");
-  const rate = Number(formData.get("speech_rate"));
+  const target = input?.targetLang;
+  const accent = input?.accent;
+  const rate = Number(input?.speechRate);
   if (!isLang(target) || !LAUNCH_TARGETS.includes(target) || !isAccent(accent)) {
     return { message: t.me.invalid, error: true };
   }
@@ -442,8 +445,8 @@ export async function saveSettings(_prev: SettingsState, formData: FormData): Pr
     target_lang: target,
     accent,
     speech_rate: [0.75, 1, 1.25].includes(rate) ? rate : 1,
-    share_rain: formData.get("share_rain") === "on",
-    rain_cue: cleanCue(formData.get("rain_cue")),
+    share_rain: input.shareRain === true,
+    rain_cue: cleanCue(input.rainCue),
     rain_cue_asked: true,
     updated_at: new Date().toISOString(),
   });
@@ -453,13 +456,13 @@ export async function saveSettings(_prev: SettingsState, formData: FormData): Pr
   return { message: t.me.saved, error: false };
 }
 
-/** ユーザー名, changed in settings (first chosen on /name). */
-export async function renameAccount(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+/** ユーザー名, changed in settings (first chosen on /name); saved as it is typed, like the rest of the page. */
+export async function renameAccount(raw: string): Promise<SettingsState> {
   const t = getDict(LAUNCH_NATIVE);
-  const name = cleanUsername(formData.get("username"));
+  const name = cleanUsername(raw);
   if (!name) return { message: t.name.invalid(USERNAME_MAX), error: true };
-  if (!(await saveUsername(name))) return { message: t.name.failed, error: true };
-  return { message: t.name.saved, error: false };
+  if (!(await saveUsername(name))) return { message: t.me.saveFailed, error: true };
+  return { message: t.me.saved, error: false };
 }
 
 export async function signOut() {
