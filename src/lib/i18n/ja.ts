@@ -25,6 +25,19 @@ export const ja = {
     submit: "はじめる",
     choose: "学ぶ言葉を選んでください。",
   },
+  // The account's name, asked once right after it is made (/name) and changed in settings.
+  name: {
+    title: "ユーザー名を決める",
+    lead: "アカウントの名前です。ニックネームでかまいません。ことのあめでは、ほかの人には見えません。あとから設定で変えられます。",
+    label: "ユーザー名",
+    limit: (max: number) => `${max}文字まで`,
+    submit: "決める",
+    change: "変える",
+    saving: "保存しています…",
+    saved: "変えました。",
+    invalid: (max: number) => `1〜${max}文字で入れてください。`,
+    failed: "保存できませんでした。もう一度お試しください。",
+  },
   shower: {
     title: "浴びる",
     lead: "聞きながら見比べて、共通しているところを探してみてください。答え合わせは最後に。",

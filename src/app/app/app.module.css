@@ -134,7 +134,7 @@
 
 /* Settings */
 .field { display: flex; flex-direction: column; gap: 8px; }
-.select {
+.select, .textInput {
   min-height: 52px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: var(--radius);
   background: var(--paper); font-size: 16px;
 }

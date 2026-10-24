@@ -4,9 +4,11 @@ import { requireUser } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { LANG_NATIVE_NAME } from "@/lib/langs";
 import { LAUNCH_TARGETS, requireSettings } from "@/lib/settings";
+import { USERNAME_MAX } from "@/lib/username";
 import { signOut } from "../../actions";
 import styles from "../../app.module.css";
 import { SettingsForm } from "../SettingsForm";
+import { UsernameForm } from "../UsernameForm";
 
 export const metadata = { title: "設定" };
 
@@ -57,6 +59,10 @@ export default async function SettingsPage() {
 
         <section className={styles.stackSm} style={{ borderTop: "1px solid var(--line)", paddingTop: 24 }}>
           <h2 className="label">{t.me.account}</h2>
+          <UsernameForm
+            current={user.username ?? ""}
+            labels={{ label: t.name.label, limit: t.name.limit(USERNAME_MAX), change: t.name.change, saving: t.name.saving }}
+          />
           <p className={styles.rowSub} style={{ margin: 0, overflowWrap: "anywhere" }}>
             {user.email}
           </p>

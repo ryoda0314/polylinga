@@ -39,6 +39,10 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   Supabase takes its tokens only once that ID is in the project's Google provider (Client IDs, comma-separated), after the
   old app's: the redirect sign-in uses the first one. Otherwise every Google sign-in fails ("Unacceptable audience").
   `/login?next=` goes on to `next` (same-site only) after logging in, Google, or a new account's mail.
+- ユーザー名 (`src/lib/username.ts`): the account's name, in the user's metadata as `username` like the old app's, so the
+  session token carries it and the sister apps can read it. Not unique, not a login, never shown to other learners. An
+  account without one is sent to `/name` by the proxy before any page (`/name?next=` goes on after, so つなぐ and `/start`
+  still follow); `saveUsername` renews the session so the token has it at once. Changed in settings.
 - つなぐ for the sister apps (`/connect`, `src/lib/sisters.ts`): ことのは, ことのおと, ことのめ and ことのえだ send their learner
   to `/connect?app=&back=&state=`; signed out, they log in or sign up first and come back (`/login?next=`); signed in,
   one press makes a magic-link token (`generateLink`, never mailed) and sends it back to the sister's `/login` in the

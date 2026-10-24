@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { correctSentence, explainSentence, type CorrectionResult, type ExplainedPart } from "@/lib/ai";
-import { requireUser } from "@/lib/auth";
+import { requireUser, saveUsername } from "@/lib/auth";
 import { approvedPatterns, searchCorpus } from "@/lib/corpus";
 import { getDict } from "@/lib/i18n";
 import { isAccent, isLang, type Lang } from "@/lib/langs";
@@ -15,6 +15,7 @@ import { withdrawShared } from "@/lib/me";
 import { findMemoHits, pickCluster, recordCluster, sentencesWith, type ShowerCluster } from "@/lib/shower";
 import { createAdminClient } from "@/lib/supabase/server";
 import { ensureClip } from "@/lib/tts";
+import { cleanUsername, USERNAME_MAX } from "@/lib/username";
 
 const MAX_TEXT = 200;
 
@@ -450,6 +451,15 @@ export async function saveSettings(_prev: SettingsState, formData: FormData): Pr
 
   revalidatePath("/app", "layout");
   return { message: t.me.saved, error: false };
+}
+
+/** ユーザー名, changed in settings (first chosen on /name). */
+export async function renameAccount(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const t = getDict(LAUNCH_NATIVE);
+  const name = cleanUsername(formData.get("username"));
+  if (!name) return { message: t.name.invalid(USERNAME_MAX), error: true };
+  if (!(await saveUsername(name))) return { message: t.name.failed, error: true };
+  return { message: t.name.saved, error: false };
 }
 
 export async function signOut() {
