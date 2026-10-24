@@ -36,6 +36,14 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   unconfirmed until then) and send our mail through Resend (`src/lib/email.ts`), straight to `/auth/confirm`; counted as
   `emails` (5 per address, 80 a day). Google is our own OAuth client via Google Identity Services and
   `signInWithIdToken` (`GoogleButton`), falling back to the shared redirect sign-in until `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set.
+  Supabase takes its tokens only once that ID is in the project's Google provider (Client IDs, comma-separated), after the
+  old app's: the redirect sign-in uses the first one. Otherwise every Google sign-in fails ("Unacceptable audience").
+  `/login?next=` goes on to `next` (same-site only) after logging in, Google, or a new account's mail.
+- つなぐ for the sister apps (`/connect`, `src/lib/sisters.ts`): ことのは, ことのおと, ことのめ and ことのえだ send their learner
+  to `/connect?app=&back=&state=`; signed out, they log in or sign up first and come back (`/login?next=`); signed in,
+  one press makes a magic-link token (`generateLink`, never mailed) and sends it back to the sister's `/login` in the
+  URL fragment with the sister's state. Only to the sisters listed there, at their public addresses or localhost (a
+  token sent there signs the learner in). ことのね keeps its record on the device and has no account yet.
 - `src/lib/shower.ts` (+ pure helpers in `shower-core.ts`): picks the next cluster (patterns due to return first,
   then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings. A pattern is due
   after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same

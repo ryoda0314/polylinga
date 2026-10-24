@@ -30,7 +30,8 @@ function mailError(result: Exclude<MailResult, { ok: true }>): string {
   }
 }
 
-export function LoginForm() {
+/** `next`: where to go once signed in (and where a new account's mail leads), when the link said; else the usual places. */
+export function LoginForm({ next }: { next?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -73,13 +74,13 @@ export function LoginForm() {
         );
         return;
       }
-      router.replace("/app");
+      router.replace(next ?? "/app");
       router.refresh();
       return;
     }
 
     // ことのあめ's own confirmation mail (actions.ts); the account cannot log in until its link is pressed.
-    const result = await register(email, password);
+    const result = await register(email, password, next);
     setBusy(false);
     if (result.ok) setNotice(sentNotice(email));
     else setError(mailError(result));
@@ -87,7 +88,7 @@ export function LoginForm() {
 
   async function sendAgain() {
     setBusy(true);
-    const result = await resendConfirmation(email);
+    const result = await resendConfirmation(email, next);
     setBusy(false);
     if (result.ok) {
       setUnconfirmed(false);
@@ -172,7 +173,7 @@ export function LoginForm() {
       )}
 
       <div className={styles.or}>または</div>
-      <GoogleButton onError={setError} />
+      <GoogleButton onError={setError} next={next} />
     </div>
   );
 }

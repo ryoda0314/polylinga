@@ -33,7 +33,7 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 /** Google で続ける. Without our own client ID yet, the shared project's Google sign-in (a redirect) is used instead. */
-export function GoogleButton({ onError }: { onError: (message: string) => void }) {
+export function GoogleButton({ onError, next }: { onError: (message: string) => void; next?: string }) {
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
@@ -60,7 +60,7 @@ export function GoogleButton({ onError }: { onError: (message: string) => void }
             onError(failed);
             return;
           }
-          router.replace("/app");
+          router.replace(next ?? "/app");
           router.refresh();
         },
       });
@@ -79,7 +79,7 @@ export function GoogleButton({ onError }: { onError: (message: string) => void }
     };
     // onError is a fresh function each render; the button only needs setting up once the script is there.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, router]);
+  }, [ready, router, next]);
 
   async function redirectSignIn() {
     const { error } = await createClient().auth.signInWithOAuth({

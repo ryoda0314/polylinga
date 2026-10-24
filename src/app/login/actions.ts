@@ -5,6 +5,7 @@ import { sendLinkMail } from "@/lib/email";
 import { getDict } from "@/lib/i18n";
 import { consume, refund } from "@/lib/metering";
 import { LAUNCH_NATIVE } from "@/lib/settings";
+import { safeNext } from "@/lib/safe-next";
 import { createAdminClient } from "@/lib/supabase/server";
 
 // Signing up and a forgotten password, with ことのあめ's own emails. The shared Supabase project confirms sign-ups at once
@@ -50,8 +51,14 @@ async function mail(userId: string, to: string, kind: "confirm" | "reset", url: 
   return { ok: true };
 }
 
-/** 新しく登録: the account is made unconfirmed (it cannot log in yet) and the mail's link confirms it and signs them in. */
-export async function register(email: string, password: string): Promise<MailResult> {
+/** Where a confirmation mail's link leads: where the sign-up was headed (a sister app's つなぐ), else the first steps. */
+const afterConfirm = (next?: string) => (next ? safeNext(next, "/start") : "/start");
+
+/**
+ * 新しく登録: the account is made unconfirmed (it cannot log in yet) and the mail's link confirms it and signs them in,
+ * then goes on to `next` when the sign-up began somewhere (a sister app's つなぐ).
+ */
+export async function register(email: string, password: string, next?: string): Promise<MailResult> {
   const address = cleanEmail(email);
   if (!address) return { ok: false, reason: "invalid" };
   if (typeof password !== "string" || password.length < MIN_PASSWORD || password.length > 72) return { ok: false, reason: "weak" };
@@ -62,16 +69,16 @@ export async function register(email: string, password: string): Promise<MailRes
     console.error("[register]", error?.code, error?.message);
     return { ok: false, reason: "failed" };
   }
-  return mail(data.user.id, address, "confirm", await confirmUrl(data.properties.hashed_token, "signup", "/start"));
+  return mail(data.user.id, address, "confirm", await confirmUrl(data.properties.hashed_token, "signup", afterConfirm(next)));
 }
 
 /** The confirmation mail again, for someone who tried to log in before confirming. Says nothing about other addresses. */
-export async function resendConfirmation(email: string): Promise<MailResult> {
+export async function resendConfirmation(email: string, next?: string): Promise<MailResult> {
   const address = cleanEmail(email);
   if (!address) return { ok: false, reason: "invalid" };
   const { data, error } = await createAdminClient().auth.admin.generateLink({ type: "magiclink", email: address });
   if (error || !data.user || data.user.email_confirmed_at) return { ok: true };
-  return mail(data.user.id, address, "confirm", await confirmUrl(data.properties.hashed_token, "magiclink", "/start"));
+  return mail(data.user.id, address, "confirm", await confirmUrl(data.properties.hashed_token, "magiclink", afterConfirm(next)));
 }
 
 /** パスワードを忘れた: whether the address is registered is never revealed. */
