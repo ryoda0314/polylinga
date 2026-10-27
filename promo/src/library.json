@@ -1,0 +1,256 @@
+{
+ "label": "誘う",
+ "rain": [
+  {
+   "key": "rain1",
+   "lang": "ko",
+   "text": "내일 카페 갈래?",
+   "gloss": "明日カフェ行かない？",
+   "mark": [
+    6,
+    8
+   ],
+   "glossMark": [
+    7,
+    9
+   ],
+   "reading": null,
+   "audio": "app/rain1.wav"
+  },
+  {
+   "key": "rain2",
+   "lang": "ko",
+   "text": "주말에 영화 볼래?",
+   "gloss": "週末、映画見ない？",
+   "mark": [
+    7,
+    9
+   ],
+   "glossMark": [
+    6,
+    8
+   ],
+   "reading": null,
+   "audio": "app/rain2.wav"
+  },
+  {
+   "key": "rain3",
+   "lang": "ko",
+   "text": "같이 밥 먹을래?",
+   "gloss": "一緒にご飯食べない？",
+   "mark": [
+    5,
+    8
+   ],
+   "glossMark": [
+    7,
+    9
+   ],
+   "reading": null,
+   "audio": "app/rain3.wav"
+  },
+  {
+   "key": "rain4",
+   "lang": "ko",
+   "text": "오늘 노래방 갈래?",
+   "gloss": "今日カラオケ行かない？",
+   "mark": [
+    7,
+    9
+   ],
+   "glossMark": [
+    8,
+    10
+   ],
+   "reading": null,
+   "audio": "app/rain4.wav"
+  }
+ ],
+ "again": [
+  {
+   "key": "again1",
+   "lang": "ko",
+   "text": "주말에 바다 갈래?",
+   "gloss": "週末、海行かない？",
+   "mark": [
+    7,
+    9
+   ],
+   "glossMark": [
+    6,
+    8
+   ],
+   "reading": null,
+   "audio": "app/again1.wav"
+  },
+  {
+   "key": "again2",
+   "lang": "ko",
+   "text": "오늘 밤 라멘 먹을래?",
+   "gloss": "今夜ラーメン食べない？",
+   "mark": [
+    8,
+    11
+   ],
+   "glossMark": [
+    8,
+    10
+   ],
+   "reading": null,
+   "audio": "app/again2.wav"
+  },
+  {
+   "key": "again3",
+   "lang": "ko",
+   "text": "불꽃놀이 보러 갈래?",
+   "gloss": "花火見に行かない？",
+   "mark": [
+    8,
+    10
+   ],
+   "glossMark": [
+    6,
+    8
+   ],
+   "reading": null,
+   "audio": "app/again3.wav"
+  },
+  {
+   "key": "again4",
+   "lang": "ko",
+   "text": "이따가 같이 산책할래?",
+   "gloss": "あとで一緒に散歩しない？",
+   "mark": [
+    9,
+    11
+   ],
+   "glossMark": [
+    9,
+    11
+   ],
+   "reading": null,
+   "audio": "app/again4.wav"
+  }
+ ],
+ "memo": "주말",
+ "karaoke": {
+  "ko": {
+   "key": "karaoke-ko",
+   "lang": "ko",
+   "text": "오늘 노래방 갈래?",
+   "gloss": "今日カラオケ行かない？",
+   "mark": [
+    7,
+    9
+   ],
+   "glossMark": [
+    8,
+    10
+   ],
+   "reading": null,
+   "audio": "app/karaoke-ko.wav"
+  },
+  "en": {
+   "key": "karaoke-en",
+   "lang": "en",
+   "text": "Wanna go to karaoke today?",
+   "gloss": "今日カラオケ行かない？",
+   "mark": [
+    0,
+    5
+   ],
+   "glossMark": [
+    8,
+    10
+   ],
+   "reading": null,
+   "audio": "app/karaoke-en.wav"
+  },
+  "zh": {
+   "key": "karaoke-zh",
+   "lang": "zh",
+   "text": "今天要不要去唱歌？",
+   "gloss": "今日カラオケ行かない？",
+   "mark": [
+    2,
+    5
+   ],
+   "glossMark": [
+    8,
+    10
+   ],
+   "reading": [
+    "jīn",
+    "tiān",
+    "yào",
+    "bu",
+    "yào",
+    "qù",
+    "chàng",
+    "gē",
+    ""
+   ],
+   "audio": "app/karaoke-zh.wav"
+  }
+ },
+ "say": {
+  "attempt": "주말에 영화 보러 가을래?",
+  "corrected": "주말에 영화 보러 갈래?",
+  "meaning": "週末、映画見に行かない？",
+  "explanation": "「가다」には「을래」ではなく「ㄹ래」が付いて、「갈래」になります。",
+  "parts": [
+   {
+    "start": 0,
+    "end": 3,
+    "meaning": "週末に",
+    "gloss": [
+     0,
+     2
+    ]
+   },
+   {
+    "start": 4,
+    "end": 6,
+    "meaning": "映画",
+    "gloss": [
+     3,
+     5
+    ]
+   },
+   {
+    "start": 7,
+    "end": 9,
+    "meaning": "見に",
+    "gloss": [
+     5,
+     7
+    ]
+   },
+   {
+    "start": 10,
+    "end": 12,
+    "meaning": "行かない？（誘い）",
+    "gloss": [
+     7,
+     12
+    ]
+   }
+  ],
+  "removed": [
+   {
+    "start": 10,
+    "end": 12
+   }
+  ],
+  "added": [
+   {
+    "start": 10,
+    "end": 11
+   }
+  ],
+  "mark": [
+   10,
+   12
+  ]
+ }
+}

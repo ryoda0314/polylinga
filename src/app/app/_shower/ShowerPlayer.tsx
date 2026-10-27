@@ -359,14 +359,22 @@ export function ShowerPlayer({
               {t.shower.reveal}
             </button>
           )}
+          {/* 言ってみる is what the rain is for, so it is the one filled button; 次の雨 stays a quiet way on. */}
           {trying ? (
-            <TryForm patternId={cluster.patternId} native={native} target={target} sentences={cluster.sentences} revealed={revealed} />
+            <TryForm
+              patternId={cluster.patternId}
+              native={native}
+              target={target}
+              sentences={cluster.sentences}
+              revealed={revealed}
+              focus
+            />
           ) : (
-            <button type="button" className="btn-quiet" onClick={() => setTrying(true)}>
+            <button type="button" className="btn" onClick={() => setTrying(true)}>
               {t.shower.tryIt}
             </button>
           )}
-          <button type="button" className="btn" onClick={goNext} disabled={pending}>
+          <button type="button" className="btn-quiet" onClick={goNext} disabled={pending}>
             {pending ? t.shower.loading : t.shower.nextCluster}
           </button>
           {offline ? (

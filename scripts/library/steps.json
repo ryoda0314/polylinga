@@ -1,0 +1,46 @@
+{
+  "note": "The order new ways of saying come in, per language learned, for someone new to it (scripts/apply-steps.mjs stores it as pl_patterns.step). first: the opening rains, in this order (step 1, 2, ...). basic: everyday ways of saying next, in this order (step 100, 101, ...). later: nuance, last (step 900). Any function not listed comes between basic and later (step 500), by its position.",
+  "ko": {
+    "first": ["opinion", "where", "is-there", "want", "lets", "what", "not-do", "dont", "doing-now", "how-was", "price", "did-past", "invite", "also", "at-place"],
+    "basic": [
+      "cheer-on", "congrats", "too", "very", "a-little", "often", "always", "again", "only", "with-someone", "who",
+      "when-q", "why", "how-to", "which", "how-many", "how-long", "what-mean", "how-say", "do-you-know", "need", "like",
+      "most", "same", "different", "by-means", "meet-at", "arrived", "didnt", "not-yet", "already", "just-did",
+      "finished", "first-time", "forgot", "will-do", "waiting", "was-doing", "keep", "complain", "not-very", "cant",
+      "can", "request", "careful", "hurry", "confirm", "agree", "remember", "promise"
+    ],
+    "later": [
+      "looks", "think", "advice", "wish", "almost", "realize", "heard", "become", "want-you-to", "used-to", "disagree",
+      "worried", "wish-well", "since", "as-soon-as", "even-if", "might", "must-be", "supposed-to", "dont-know",
+      "ended-up", "in-advance", "let-me", "got-done-to", "even-though", "no-wonder"
+    ]
+  },
+  "zh": {
+    "first": ["opinion", "where", "want", "lets", "what", "price", "invite", "dont", "like", "doing-now", "is-there", "also", "can", "did-past"],
+    "basic": [
+      "request", "didnt", "too", "very", "a-little", "not-very", "often", "always", "again", "only", "not-do", "who", "which",
+      "how-to", "when-q", "why", "how-many", "how-long", "at-place", "arrived", "cheer-on", "congrats", "thank",
+      "apologize", "will-do", "was-doing", "must", "no-need", "plan", "already", "just-did", "not-yet", "experience",
+      "need", "forgot", "what-mean", "how-say", "do-you-know", "remember", "first-time", "meet-at", "waiting",
+      "with-someone", "by-means", "same", "different", "most", "good-at", "try", "hurry", "careful", "permission",
+      "agree", "offer", "did-for-me", "do-for-you", "let-me", "think", "keep", "confirm", "heard", "so", "decide",
+      "used-to", "disagree", "glad", "too-bad", "worried", "wish-well", "complain", "might", "must-be", "by-the-way",
+      "actually", "advice", "looks"
+    ],
+    "later": ["since", "even-if", "supposed-to", "because-of", "start-doing", "got-done-to", "even-though", "no-wonder"]
+  },
+  "en": {
+    "first": ["want", "lets", "where", "how-was", "dont", "can", "doing-now", "like", "invite", "what", "did-past", "not-do", "is-there", "price", "opinion"],
+    "basic": [
+      "request", "plan", "will-do", "didnt", "cant", "too", "very", "a-little", "not-very", "often", "always", "again",
+      "also", "only", "who", "which", "when-q", "why", "how-to", "how-many", "how-long", "at-place", "heading",
+      "arrived", "cheer-on", "congrats", "thank", "apologize", "need", "forgot", "what-mean", "how-say", "do-you-know",
+      "remember", "meet-at", "running-late", "waiting", "with-someone", "by-means", "same", "different", "most",
+      "good-at", "try", "hurry", "careful", "agree", "offer", "let-me", "must", "no-need", "permission", "experience",
+      "already", "just-did", "not-yet", "was-doing", "keep", "used-to", "first-time", "finished", "think", "heard",
+      "so", "decide", "glad", "too-bad", "by-the-way", "actually", "confirm", "advice", "how-about", "might", "sounds",
+      "promise"
+    ],
+    "later": ["since", "even-if", "supposed-to", "even-though", "no-wonder", "got-done-to"]
+  }
+}

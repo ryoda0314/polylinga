@@ -8,7 +8,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 ## Stack
 
 - Next.js 16 (App Router, Turbopack, `src/proxy.ts` instead of middleware), React 19, plain CSS modules.
-- Supabase: shares the project with the old poly-lang app. Everything new is prefixed `pl_`; never touch the old tables
+- Supabase: shares the project with the old poly-lang app. Everything new is prefixed `pl_`; `kn_` tables (`kn_days`,
+  `kn_ping`, `kn_stats`) belong to the sister app ことのね (its usage counts; schema in that repo's `supabase/usage.sql`). Never touch the old tables
   or the old `tts-audio` bucket (the old app's cron empties it). Schema: `supabase/migrations/`.
 - AI (`src/lib/ai.ts`): OpenAI `gpt-5.2` for corrections (one call per attempt, also returns which library patterns the
   corrected sentence uses) and `text-embedding-3-small` for finding close example sentences. The one other runtime call
@@ -52,6 +53,11 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings. A pattern is due
   after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same
   sitting. A cluster counts as bathed in once all of it has fallen (`recordFinished`), not only on 次の雨.
+  A gentle start (a tester's first day of Korean began with -ㄹ래 and 하러 갈래, two patterns stacked): new patterns come
+  in an order for someone new to each language (`pl_patterns.step` from `scripts/library/steps.json`: fixed phrases
+  after a noun, then endings that attach without change, before (으)/아·어 forms and clauses), and a pattern's unseen
+  sentences rain plainest first (`pl_sentence_patterns.extra`, what else a beginner would not know yet, judged by hand
+  for each language's opening patterns; unjudged ones count as one), then shortest (`rainOrder`).
 - Habit, without streaks (habits form from a cue repeated, and a missed day barely slows that): after the first rain the
   learner is asked once when they will bathe (`pl_settings.rain_cue`, e.g. 電車に乗ったら; `CuePrompt`, settings), and the
   rain shows 「〜、ひと雨。」. The first rain of a day ends with "enough for today", and coming back after 3+ days away is
@@ -66,7 +72,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   settings can open it again. Five steps, each started by the learner's tap and drawn with the app's own screens: the
   rain falls, they press what looks shared and it lights, a sample attempt is corrected and explained word by word (a
   hand-written sample per language, no AI call), three days pass and the way of saying returns with a memo word, and
-  they choose when to bathe (saved as the real `rain_cue`). Library sentences of 誘う in the language learned (`PICKS`).
+  they choose when to bathe (saved as the real `rain_cue`). Library sentences of 〜したい in the language learned
+  (`PICKS`, all judged plain): the easiest way of saying to notice on a first day (it was 誘う, which a beginner found hard).
 - `src/lib/minna.ts`: みんなの雨 (`/app?rain=minna`). Learners who switch sharing on (`pl_settings.share_rain`) send
   corrected sentences the correction judged `shareable` into `pl_shared`, one row per pattern used, lit at the pattern's
   usual library part. Clusters by pattern from other learners (4 or more), never showing who wrote them: these tables have
@@ -109,6 +116,10 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   approved sentences on Flash (`--redo-fast` also remakes rushed clips; Vertex quota is per minute, the script waits).
 - `node --env-file=.env.local scripts/prepare-pinyin.mjs` → check `scripts/library/work/pinyin/batch-*.json` by hand
   (corrections in `batch-*.out.json`) → `scripts/apply-pinyin.mjs [--dry-run]`: store checked pinyin for new sentences.
+- `node --env-file=.env.local scripts/apply-steps.mjs [--dry-run]`: store the beginner order of `scripts/library/steps.json`.
+- `node --env-file=.env.local scripts/prepare-plain.mjs [--langs=ko,zh,en] [function ids]` → judge
+  `scripts/library/work/plain/<lang>.json` by hand (`<lang>.out.json`) → `scripts/apply-plain.mjs [langs] [--dry-run]`:
+  how plain each sentence is (default: each language's opening patterns); it lists patterns with too few plain ones.
 
 ## Conventions
 

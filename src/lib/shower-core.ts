@@ -27,6 +27,40 @@ export function isDue(e: { next_at: string | null; return_after: number | null }
   return Boolean(e.next_at) && new Date(e.next_at!).getTime() <= now;
 }
 
+/** How long a sentence reads, to put shorter ones first: its words, or its characters in Chinese and Japanese. */
+export function sentenceLength(text: string, lang: string): number {
+  const bare = text.replace(/[\p{P}\p{S}]/gu, " ").trim();
+  if (lang === "zh" || lang === "ja") return Array.from(bare.replace(/\s+/g, "")).length;
+  return bare.split(/\s+/).filter(Boolean).length;
+}
+
+export type RainCandidate = {
+  /** What else in the sentence a beginner would not know yet besides its way of saying (0 = plain); null = not judged. */
+  extra: number | null;
+  length: number;
+  /** When the learner last saw it, or null if never. */
+  lastSeen: number | null;
+};
+
+/**
+ * The order a way of saying's sentences rain in. Ones the learner has not seen come first: the plainest (an unjudged
+ * one counts as carrying one other thing), then the shorter, then by chance. Seen ones follow, longest ago first. So a
+ * way of saying is met first in its plainest sentences, and richer ones come as it returns.
+ */
+export function rainOrder<T extends RainCandidate>(candidates: T[], random: () => number = Math.random): T[] {
+  return candidates
+    .map((c) => ({ c, chance: random() }))
+    .sort((a, b) => {
+      if (a.c.lastSeen !== null || b.c.lastSeen !== null) {
+        if (a.c.lastSeen === null) return -1;
+        if (b.c.lastSeen === null) return 1;
+        return a.c.lastSeen - b.c.lastSeen;
+      }
+      return (a.c.extra ?? 1) - (b.c.extra ?? 1) || a.c.length - b.c.length || a.chance - b.chance;
+    })
+    .map(({ c }) => c);
+}
+
 /** Every place one of the memo words occurs in the text (case-insensitive for Latin script). */
 export function findMemoHits(text: string, words: string[]): Span[] {
   const hay = text.toLowerCase();

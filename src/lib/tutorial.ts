@@ -7,9 +7,10 @@ import type { Lang } from "@/lib/langs";
 import { readingFor } from "@/lib/reading";
 
 // The hands-on tutorial (/tutorial) walks a new learner once through the loop with real library sentences of one way of
-// saying (誘う): bathe in four, notice the shared part, see a sentence of their own corrected and explained word by word,
-// meet the way of saying again days later, and choose when to bathe. The "said" sentence is a sample attempt written for
-// the tutorial (no AI is called), with the kind of slip learners of that language make.
+// saying (〜したい: 가고 싶어／먹고 싶어, the easiest to notice on a first day, with nothing else in the sentences): bathe
+// in four, notice the shared part, see a sentence of their own corrected and explained word by word, meet the way of
+// saying again days later, and choose when to bathe. The "said" sentence is a sample attempt written for the tutorial
+// (no AI is called), with the kind of slip learners of that language make.
 
 export type TutorialSentence = {
   id: string;
@@ -50,43 +51,44 @@ type Pick = {
   say: { attempt: string; corrected: string; meaning: string; explanation: string; parts: [string, string, string][] };
 };
 
-// Library sentences of 誘う in each language learned (pl_sentences), and the sample attempt. parts: [word, its meaning
-// here, its counterpart in the translation].
+// Library sentences of 〜したい in each language learned (pl_sentences), all of them judged plain (nothing else a
+// beginner would not know yet), and the sample attempt. The memo word is in one sentence of each rain. parts: [word,
+// its meaning here, its counterpart in the translation].
 const PICKS: Partial<Record<Lang, Pick>> = {
   zh: {
-    rain: ["周末要不要看电影？", "明天要不要去咖啡厅？", "今晚要不要吃拉面？", "今天要不要去唱歌？"],
-    again: ["周末要不要去海边？", "要不要去看烟花？"],
-    memo: "周末",
+    rain: ["我想去韩国。", "我想吃草莓。", "我今晚想打游戏。", "我想喝冰咖啡。"],
+    again: ["我今晚想看那部电影。", "我想学吉他。"],
+    memo: "今晚",
     say: {
-      attempt: "周末要不要看去电影？",
-      corrected: "周末要不要去看电影？",
-      meaning: "週末、映画見に行かない？",
-      explanation: "「去」（行く）を「看」（見る）の前に置くと、「見に行く」になります。",
-      parts: [["周末", "週末", "週末"], ["要不要", "〜しない？（誘い）", "ない？"], ["去", "行く", "行か"], ["看", "見る", "見に"], ["电影", "映画", "映画"]],
+      attempt: "我周末想电影看。",
+      corrected: "我周末想看电影。",
+      meaning: "週末、映画見たい。",
+      explanation: "中国語では「看」（見る）が先で、「电影」（映画）はそのあとに来ます。",
+      parts: [["周末", "週末", "週末"], ["想", "〜したい", "たい"], ["看", "見る", "見"], ["电影", "映画", "映画"]],
     },
   },
   ko: {
-    rain: ["내일 카페 갈래?", "주말에 영화 볼래?", "같이 밥 먹을래?", "오늘 노래방 갈래?"],
-    again: ["주말에 바다 갈래?", "불꽃놀이 보러 갈래?"],
-    memo: "주말",
+    rain: ["한국에 가고 싶어.", "딸기 먹고 싶어.", "오늘은 일찍 자고 싶어.", "아이스커피 마시고 싶어."],
+    again: ["오늘 밤엔 게임하고 싶어.", "새 신발 사고 싶어."],
+    memo: "오늘",
     say: {
-      attempt: "주말에 영화 보러 가을래?",
-      corrected: "주말에 영화 보러 갈래?",
-      meaning: "週末、映画見に行かない？",
-      explanation: "「가다」には「을래」ではなく「ㄹ래」が付いて、「갈래」になります。",
-      parts: [["주말에", "週末に", "週末"], ["영화", "映画", "映画"], ["보러", "見に", "見に"], ["갈래", "行かない？（誘い）", "行かない？"]],
+      attempt: "주말에 영화 봐고 싶어.",
+      corrected: "주말에 영화 보고 싶어.",
+      meaning: "週末、映画見たい。",
+      explanation: "「보다」の「다」を取った「보」に「고 싶어」を付けて、「보고 싶어」になります。",
+      parts: [["주말에", "週末に", "週末"], ["영화", "映画", "映画"], ["보고 싶어", "見たい", "見たい"]],
     },
   },
   en: {
-    rain: ["Wanna grab ramen tonight?", "Wanna go to a café tomorrow?", "Wanna go to karaoke today?", "Wanna go see the fireworks?"],
-    again: ["Wanna go to the beach this weekend?", "Wanna play games together tonight?"],
+    rain: ["I want to go to Korea.", "I want to eat strawberries.", "I want to play games tonight.", "I want to buy new shoes."],
+    again: ["I want to watch that movie tonight.", "I want to learn the guitar."],
     memo: "tonight",
     say: {
-      attempt: "Wanna see movie this weekend?",
-      corrected: "Wanna see a movie this weekend?",
-      meaning: "週末、映画見に行かない？",
+      attempt: "I want to see movie this weekend.",
+      corrected: "I want to see a movie this weekend.",
+      meaning: "週末、映画見たい。",
       explanation: "「movie」の前に「a」を付けます。",
-      parts: [["Wanna", "〜しない？（誘い）", "ない？"], ["see", "見る", "見に"], ["a movie", "映画", "映画"], ["this weekend", "今週末", "週末"]],
+      parts: [["I want to", "〜したい", "たい"], ["see", "見る", "見"], ["a movie", "映画", "映画"], ["this weekend", "今週末", "週末"]],
     },
   },
 };
@@ -106,7 +108,7 @@ export async function tutorialData(target: Lang, native: Lang): Promise<Tutorial
     functionLabels(),
     supabase.from("pl_sentences").select(`id, ${target}`).in(target, [...pick.rain, ...pick.again]),
   ]);
-  const pattern = patterns.find((p) => p.functionId === "invite");
+  const pattern = patterns.find((p) => p.functionId === "want");
   if (!pattern) return null;
   const idOf = new Map((rows ?? []).map((r) => [String((r as Record<string, unknown>)[target]), String(r.id)]));
   const ids = [...pick.rain, ...pick.again].map((text) => idOf.get(text)).filter((id): id is string => Boolean(id));

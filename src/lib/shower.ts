@@ -4,7 +4,7 @@ import { sentenceAudio, type Audio } from "@/lib/corpus";
 import type { Range } from "@/lib/diff";
 import type { Lang } from "@/lib/langs";
 import { readingFor } from "@/lib/reading";
-import { findMemoHits, isDue, nextReturn, returnAfterRain } from "@/lib/shower-core";
+import { findMemoHits, isDue, nextReturn, rainOrder, returnAfterRain, sentenceLength } from "@/lib/shower-core";
 
 export { findMemoHits };
 
@@ -57,7 +57,7 @@ export async function pickCluster(
 ): Promise<ShowerCluster | null> {
   const { supabase } = await getSession();
   const [{ data: patterns }, { data: functions }, { data: counts }, { data: exposures }] = await Promise.all([
-    supabase.from("pl_patterns").select("id, function_id").eq("lang", target),
+    supabase.from("pl_patterns").select("id, function_id, step").eq("lang", target),
     supabase.from("pl_functions").select("id, position, label"),
     supabase.rpc("pl_pattern_counts", { target }),
     supabase.from("pl_exposures").select("pattern_id, times, last_at, next_at, return_after").eq("user_id", userId),
@@ -81,11 +81,14 @@ export async function pickCluster(
         new Date(ea.next_at ?? 0).getTime() - new Date(eb.next_at ?? 0).getTime()
       );
     });
+  // New ones in the order that suits someone new to the language (steps.json), then by the functions' own order.
   const fresh = usable
     .filter((p) => !exposure.has(p.id))
     .sort(
       (a, b) =>
-        (position.get(a.function_id) ?? 999) - (position.get(b.function_id) ?? 999) || a.id.localeCompare(b.id),
+        (a.step ?? 500) - (b.step ?? 500) ||
+        (position.get(a.function_id) ?? 999) - (position.get(b.function_id) ?? 999) ||
+        a.id.localeCompare(b.id),
     );
   const soonest = [...usable].sort(
     (a, b) =>
@@ -93,12 +96,13 @@ export async function pickCluster(
   );
   const pattern = due[0] ?? fresh[0] ?? soonest[0];
 
-  // Sentences of this pattern the learner has not seen come first, then the ones seen longest ago. Both lists are
-  // asked for at once: the seen ones are found through the sentence's own marks.
+  // Sentences of this pattern the learner has not seen come first, the plainest and shortest of them first, then the
+  // ones seen longest ago (rainOrder). Both lists are asked for at once: the seen ones are found through the
+  // sentence's own marks.
   const [{ data: markRows }, { data: seenRows }] = await Promise.all([
     supabase
       .from("pl_sentence_patterns")
-      .select("sentence_id, start_index, end_index")
+      .select(`sentence_id, start_index, end_index, extra, pl_sentences!inner(${target})`)
       .eq("pattern_id", pattern.id)
       .eq("lang", target),
     supabase
@@ -107,15 +111,18 @@ export async function pickCluster(
       .eq("user_id", userId)
       .eq("pl_sentences.pl_sentence_patterns.pattern_id", pattern.id),
   ]);
-  const candidates = (markRows ?? []).map((m) => ({
-    sentenceId: m.sentence_id as string,
-    mark: { start: m.start_index as number, end: m.end_index as number },
-  }));
   const lastSeen = new Map((seenRows ?? []).map((s) => [s.sentence_id, new Date(s.last_at).getTime()]));
-  const chosen = [...candidates]
-    .map((c) => ({ ...c, order: lastSeen.get(c.sentenceId) ?? -Math.random() }))
-    .sort((a, b) => a.order - b.order)
-    .slice(0, CLUSTER_SIZE);
+  const candidates = (markRows ?? []).map((m) => {
+    const sentence = m.pl_sentences as unknown as Record<string, string> | null;
+    return {
+      sentenceId: m.sentence_id as string,
+      mark: { start: m.start_index as number, end: m.end_index as number },
+      extra: (m.extra as number | null) ?? null,
+      length: sentenceLength(sentence?.[target] ?? "", target),
+      lastSeen: lastSeen.get(m.sentence_id as string) ?? null,
+    };
+  });
+  const chosen = rainOrder(candidates).slice(0, CLUSTER_SIZE);
 
   const chosenIds = chosen.map((c) => c.sentenceId);
   const [{ data: rows }, { data: glossRows }, words] = await Promise.all([

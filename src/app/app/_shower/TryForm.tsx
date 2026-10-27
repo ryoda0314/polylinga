@@ -20,6 +20,7 @@ export function TryForm({
   target,
   sentences,
   revealed,
+  focus = false,
   labels,
 }: {
   patternId: string;
@@ -27,6 +28,8 @@ export function TryForm({
   target: Lang;
   sentences: ShowerSentence[];
   revealed: boolean;
+  /** Opened by a press (これで言ってみる): the field takes the cursor at once, one tap fewer before writing. */
+  focus?: boolean;
   /** Wording for use outside the shower (自分), where the sentences were not "just now". */
   labels?: { ref: string; write: string };
 }) {
@@ -72,6 +75,7 @@ export function TryForm({
         required
         maxLength={200}
         className={`${styles.textarea} ${langClass(target)}`}
+        autoFocus={focus}
         onFocus={keepRainInView}
         value={draft.value}
         onChange={(e) => draft.change(e.target.value)}

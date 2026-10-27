@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { findMemoHits, isDue, nextReturn, returnAfterRain, wordStage } from "../src/lib/shower-core.ts";
+import { findMemoHits, isDue, nextReturn, rainOrder, returnAfterRain, sentenceLength, wordStage } from "../src/lib/shower-core.ts";
 
 const DAY = 86_400_000;
 const now = new Date("2026-10-09T00:00:00Z");
@@ -44,4 +44,42 @@ test("due when enough rains have fallen or its day has come, whichever first", (
   assert.equal(isDue({ next_at: later, return_after: 5 }, 5, now.getTime()), true);
   assert.equal(isDue({ next_at: earlier, return_after: 50 }, 4, now.getTime()), true);
   assert.equal(isDue({ next_at: later, return_after: null }, 999, now.getTime()), false);
+});
+
+test("a sentence's length is its words, or its characters in Chinese", () => {
+  assert.equal(sentenceLength("내일 카페 갈래?", "ko"), 3);
+  assert.equal(sentenceLength("Wanna grab ramen tonight?", "en"), 4);
+  assert.equal(sentenceLength("明天要不要去咖啡厅？", "zh"), 9);
+  assert.equal(sentenceLength("캠핑장에 있어. 신호가 약해", "ko"), 4);
+});
+
+test("unseen sentences rain first, the plainest and shortest of them first", () => {
+  const s = (id, extra, length, lastSeen = null) => ({ id, extra, length, lastSeen });
+  const order = rainOrder(
+    [s("seen-long-ago", 0, 2, 100), s("two-more", 2, 3), s("plain-long", 0, 5), s("one-more", 1, 2), s("plain", 0, 3), s("seen", 0, 2, 200)],
+    () => 0,
+  );
+  assert.deepEqual(
+    order.map((c) => c.id),
+    ["plain", "plain-long", "one-more", "two-more", "seen-long-ago", "seen"],
+  );
+});
+
+test("an unjudged sentence counts as carrying one other thing", () => {
+  const order = rainOrder(
+    [
+      { id: "two", extra: 2, length: 2, lastSeen: null },
+      { id: "unjudged", extra: null, length: 9, lastSeen: null },
+      { id: "plain", extra: 0, length: 9, lastSeen: null },
+    ],
+    () => 0,
+  );
+  assert.deepEqual(order.map((c) => c.id), ["plain", "unjudged", "two"]);
+});
+
+test("sentences alike in every way rain in a different order by chance", () => {
+  const alike = ["a", "b", "c"].map((id) => ({ id, extra: 0, length: 3, lastSeen: null }));
+  const draws = [0.9, 0.1, 0.5];
+  let i = 0;
+  assert.deepEqual(rainOrder(alike, () => draws[i++]).map((c) => c.id), ["b", "c", "a"]);
 });

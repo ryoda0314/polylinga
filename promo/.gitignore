@@ -1,0 +1,6 @@
+node_modules/
+out/
+# Copied or downloaded by `npm run assets`, made by `npm run music`.
+public/app/
+public/fonts/
+public/sound/
