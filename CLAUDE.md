@@ -8,8 +8,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 ## Stack
 
 - Next.js 16 (App Router, Turbopack, `src/proxy.ts` instead of middleware), React 19, plain CSS modules.
-- Supabase: shares the project with the old poly-lang app. Everything new is prefixed `pl_`; `kn_` tables (`kn_days`,
-  `kn_ping`, `kn_stats`) belong to the sister app ことのね (its usage counts; schema in that repo's `supabase/usage.sql`). Never touch the old tables
+- Supabase: shares the project with the old poly-lang app. Everything new is prefixed `pl_`; `kn_` objects (`kn_days`,
+  `kn_hours`, `kn_ping`, `kn_hourly`, `kn_stats`, `kn_summary`) belong to the sister app ことのね (its usage counts; schema in that repo's `supabase/usage.sql`). Never touch the old tables
   or the old `tts-audio` bucket (the old app's cron empties it). Schema: `supabase/migrations/`.
 - AI (`src/lib/ai.ts`): OpenAI `gpt-5.2` for corrections (one call per attempt, also returns which library patterns the
   corrected sentence uses) and `text-embedding-3-small` for finding close example sentences. The one other runtime call
@@ -54,8 +54,9 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same
   sitting. A cluster counts as bathed in once all of it has fallen (`recordFinished`), not only on 次の雨.
   A gentle start (a tester's first day of Korean began with -ㄹ래 and 하러 갈래, two patterns stacked): new patterns come
-  in an order for someone new to each language (`pl_patterns.step` from `scripts/library/steps.json`: fixed phrases
-  after a noun, then endings that attach without change, before (으)/아·어 forms and clauses), and a pattern's unseen
+  in an order for someone new to each language (`pl_patterns.step` from `scripts/library/steps.json`: in Korean and
+  Chinese first the everyday verbs in their plain form, one per rain with only the noun changing (eat … sleep: 밥 먹어,
+  빵 먹어), then saying things about oneself, then fixed phrases after a noun, before (으)/아·어 forms and clauses), and a pattern's unseen
   sentences rain plainest first (`pl_sentence_patterns.extra`, what else a beginner would not know yet, judged by hand
   for each language's opening patterns; unjudged ones count as one), then shortest (`rainOrder`).
 - Habit, without streaks (habits form from a cue repeated, and a missed day barely slows that): after the first rain the
