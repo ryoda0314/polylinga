@@ -36,37 +36,46 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
       : { data: null },
   ]);
 
-  return (
+  // On a wide screen the name and the language pair are in the column on the left.
+  const top = (
+    <header className={`${styles.topbar} ${styles.mobileOnly}`}>
+      <Logo size="sm" href="/" />
+      <Link href="/app/me" className={styles.pair}>
+        <span className={langClass(settings.nativeLang)}>{LANG_NATIVE_NAME[settings.nativeLang]}</span>
+        <Icon name="arrow" size={16} />
+        <span className={langClass(settings.targetLang)}>{LANG_NATIVE_NAME[settings.targetLang]}</span>
+      </Link>
+    </header>
+  );
+  const head = (
     <>
-      {/* On a wide screen the name and the language pair are in the column on the left. */}
-      <header className={`${styles.topbar} ${styles.mobileOnly}`}>
-        <Logo size="sm" href="/" />
-        <Link href="/app/me" className={styles.pair}>
-          <span className={langClass(settings.nativeLang)}>{LANG_NATIVE_NAME[settings.nativeLang]}</span>
+      <h1 className="sr-only">{t.shower.title}</h1>
+      {settings.tutorialSeen ? null : (
+        <Link href="/tutorial" className={showerStyles.tour}>
+          {t.tutorial.first}
           <Icon name="arrow" size={16} />
-          <span className={langClass(settings.targetLang)}>{LANG_NATIVE_NAME[settings.targetLang]}</span>
         </Link>
-      </header>
-      <div className={styles.body}>
-        <h1 className="sr-only">{t.shower.title}</h1>
-        {settings.tutorialSeen ? null : (
-          <Link href="/tutorial" className={showerStyles.tour}>
-            {t.tutorial.first}
-            <Icon name="arrow" size={16} />
-          </Link>
-        )}
-        <nav className={showerStyles.sources} aria-label={t.shower.sourceLabel}>
-          <Link href="/app" className={showerStyles.source} aria-current={source === "library" ? "page" : undefined}>
-            {t.shower.sourceLibrary}
-          </Link>
-          <Link href="/app?rain=minna" className={showerStyles.source} aria-current={source === "minna" ? "page" : undefined}>
-            {t.shower.sourceMinna}
-          </Link>
-          <Link href="/app?rain=words" className={showerStyles.source} aria-current={source === "words" ? "page" : undefined}>
-            {t.shower.sourceWords}
-          </Link>
-        </nav>
-        {source === "words" ? (
+      )}
+      <nav className={showerStyles.sources} aria-label={t.shower.sourceLabel}>
+        <Link href="/app" className={showerStyles.source} aria-current={source === "library" ? "page" : undefined}>
+          {t.shower.sourceLibrary}
+        </Link>
+        <Link href="/app?rain=minna" className={showerStyles.source} aria-current={source === "minna" ? "page" : undefined}>
+          {t.shower.sourceMinna}
+        </Link>
+        <Link href="/app?rain=words" className={showerStyles.source} aria-current={source === "words" ? "page" : undefined}>
+          {t.shower.sourceWords}
+        </Link>
+      </nav>
+    </>
+  );
+
+  if (source === "words") {
+    return (
+      <>
+        {top}
+        <div className={styles.body}>
+          {head}
           <WordRain
             words={(memo ?? []).map((w) => ({
               id: String(w.id),
@@ -78,25 +87,29 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
             target={settings.targetLang}
             rate={settings.speechRate}
           />
-        ) : (
-        <ShowerPlayer
-          key={source}
-          initial={first}
-          source={source}
-          reached={reached}
-          sharing={settings.shareRain}
-          habit={{
-            cue: settings.rainCue,
-            ask: !settings.rainCueAsked && !settings.rainCue,
-            firstToday: !sofar.today,
-            back: sofar.back,
-          }}
-          native={settings.nativeLang}
-          target={settings.targetLang}
-          rate={settings.speechRate}
-        />
-        )}
-      </div>
-    </>
+        </div>
+      </>
+    );
+  }
+  // The rain draws the page around it (top, head) itself: これで言ってみる turns the whole page into its own.
+  return (
+    <ShowerPlayer
+      key={source}
+      top={top}
+      head={head}
+      initial={first}
+      source={source}
+      reached={reached}
+      sharing={settings.shareRain}
+      habit={{
+        cue: settings.rainCue,
+        ask: !settings.rainCueAsked && !settings.rainCue,
+        firstToday: !sofar.today,
+        back: sofar.back,
+      }}
+      native={settings.nativeLang}
+      target={settings.targetLang}
+      rate={settings.speechRate}
+    />
   );
 }

@@ -5,15 +5,10 @@ import { createPortal } from "react-dom";
 import { Icon } from "@/components/Icon";
 import { getDict } from "@/lib/i18n";
 import type { Lang } from "@/lib/langs";
-import { WordSheet, type SheetSentence } from "../../_shower/WordSheet";
+import { sheetRoot, WordSheet, type SheetSentence } from "../../_shower/WordSheet";
 import styles from "../../app.module.css";
 
 type Props = { sentence: SheetSentence; native: Lang; target: Lang; rate: number };
-
-// Inside the app shell, so the sheet keeps the learner's accent (data-accent), but outside the sentence.
-function sheetRoot(): Element {
-  return document.querySelector("[data-accent]") ?? document.body;
-}
 
 /**
  * A sentence on a correction page that opens the word sheet when tapped, as sentences do in the rain.

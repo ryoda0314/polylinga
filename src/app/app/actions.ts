@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { after } from "next/server";
 import { correctSentence, explainSentence, type CorrectionResult, type ExplainedPart } from "@/lib/ai";
 import { requireUser, saveUsername } from "@/lib/auth";
@@ -304,8 +304,23 @@ export async function startSaying(_prev: FormState, formData: FormData): Promise
   redirect(`/app/s/${data.id}`);
 }
 
-/** "これで言ってみる" from the shower: write a sentence with the pattern just bathed in, and get it corrected. */
-export async function tryPattern(patternId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+/** The sentences a pattern is tried with: a rain's (the library's, or other learners' in みんなの雨), or those 自分 shows. */
+export type TryMaterial = { source: "library" | "minna"; ids: string[] };
+
+/** A rain's worth of sentences. */
+const MATERIAL_SIZE = 4;
+
+/**
+ * Write a sentence with a pattern and get it corrected. The sentences it was written with are kept with the saying
+ * (`matches`: library sentences by `sentence_id`, other learners' by `shared_id`), so its page shows them beside every
+ * correction.
+ */
+async function sayWithPattern(
+  patternId: string,
+  material: TryMaterial,
+  formData: FormData,
+  history: (typeof RedirectType)[keyof typeof RedirectType],
+): Promise<FormState> {
   const settings = await requireSettings();
   const t = getDict(settings.nativeLang);
   const text = cleanText(formData.get("text"));
@@ -316,6 +331,9 @@ export async function tryPattern(patternId: string, _prev: FormState, formData: 
   const { data: pattern } = await supabase.from("pl_patterns").select("id").eq("id", patternId).maybeSingle();
   if (!pattern) return { error: t.saying.failed };
 
+  const ids = (Array.isArray(material?.ids) ? material.ids : [])
+    .filter((id): id is string => typeof id === "string" && UUID.test(id))
+    .slice(0, MATERIAL_SIZE);
   const { data: saying, error } = await supabase
     .from("pl_sayings")
     .insert({
@@ -324,6 +342,7 @@ export async function tryPattern(patternId: string, _prev: FormState, formData: 
       target_lang: settings.targetLang,
       intent: null,
       pattern_id: pattern.id,
+      matches: ids.map((id) => (material?.source === "minna" ? { shared_id: id } : { sentence_id: id })),
     })
     .select("id, intent, native_lang, target_lang, pattern_id")
     .single();
@@ -334,7 +353,20 @@ export async function tryPattern(patternId: string, _prev: FormState, formData: 
     await supabase.from("pl_sayings").delete().eq("id", saying.id);
     return res;
   }
-  redirect(`/app/s/${saying.id}`);
+  redirect(`/app/s/${saying.id}`, history);
+}
+
+/**
+ * "これで言ってみる" after a rain. Its page is a step of the rain with no address of its own, so the page of what they
+ * said takes its place in the browser's history: back from there returns to the rain.
+ */
+export async function tryAfterRain(patternId: string, material: TryMaterial, _prev: FormState, formData: FormData): Promise<FormState> {
+  return sayWithPattern(patternId, material, formData, RedirectType.replace);
+}
+
+/** "このかたちで言ってみる" in 自分: back from what they said returns to the pattern's page. */
+export async function tryPattern(patternId: string, material: TryMaterial, _prev: FormState, formData: FormData): Promise<FormState> {
+  return sayWithPattern(patternId, material, formData, RedirectType.push);
 }
 
 /**

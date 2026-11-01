@@ -11,7 +11,9 @@ import { dayOf, loadPatternLook } from "@/lib/me";
 import { readingFor } from "@/lib/reading";
 import { requireSettings } from "@/lib/settings";
 import type { ShowerSentence } from "@/lib/shower";
+import { Material } from "../../../_shower/Material";
 import { TryForm } from "../../../_shower/TryForm";
+import { tryPattern } from "../../../actions";
 import styles from "../../../app.module.css";
 import { dayLabel, SaidPair } from "../../views";
 
@@ -59,7 +61,7 @@ export default async function PatternLookPage({ params, searchParams }: PageProp
         text: s.text,
         gloss: s.gloss,
         reading: readingFor(s.text, target),
-        audio: null,
+        audio: { src: audioUrl(s.text, target), fallback: `/api/tts?shared=${s.id}` },
         mark: s.mark,
         glossMark: null,
         seenBefore: true,
@@ -94,14 +96,17 @@ export default async function PatternLookPage({ params, searchParams }: PageProp
         {refs.length ? (
           <details className={styles.fold}>
             <summary>{t.me.lookTry}</summary>
-            <TryForm
-              patternId={look.id}
-              native={native}
-              target={target}
-              sentences={refs}
-              revealed
-              labels={{ ref: t.me.lookTryRef, write: t.me.lookTryLabel }}
-            />
+            <div className={styles.stack}>
+              <Material id="try-ref" label={t.me.lookTryRef} sentences={refs} lit native={native} target={target} rate={rate} />
+              <TryForm
+                action={tryPattern.bind(null, look.id, { source: look.seen.length ? "library" : "minna", ids: refs.map((s) => s.id) })}
+                patternId={look.id}
+                refId="try-ref"
+                native={native}
+                target={target}
+                label={t.me.lookTryLabel}
+              />
+            </div>
           </details>
         ) : null}
 

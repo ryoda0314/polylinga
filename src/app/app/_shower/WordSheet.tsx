@@ -36,6 +36,14 @@ function wordsOf(text: string, lang: Lang): { word: string; index: number }[] {
 export type SheetSentence = { id: string | null; text: string; reading: string[] | null };
 
 /**
+ * Where a sheet opened from inside a page goes: inside the app shell, so it keeps the learner's accent (data-accent),
+ * but outside the sentence (a sheet may not sit inside a <p>) and any sticky column.
+ */
+export function sheetRoot(): Element {
+  return document.querySelector("[data-accent]") ?? document.body;
+}
+
+/**
  * A word the learner noticed: see it in other sentences, and type it into the memo themselves
  * (the typing is the point, so the field is never filled in for them). Used in the rain and on a correction.
  */

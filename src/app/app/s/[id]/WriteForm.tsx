@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo } from "react";
+import { keepSentencesInView } from "@/components/keyboard";
 import { useDraft } from "@/components/local";
 import type { FormState } from "../../actions";
 import styles from "../../app.module.css";
@@ -24,10 +25,6 @@ export function WriteForm({
   const run = useMemo(() => wrap(action), [wrap, action]);
   const [state, formAction, pending] = useActionState<FormState, FormData>(run, { error: null });
 
-  // Once the keyboard is up, bring the example sentences above the field (if the page has them) into view with it.
-  function keepHintsInView() {
-    window.setTimeout(() => document.getElementById("write-ref")?.scrollIntoView({ block: "start", behavior: "smooth" }), 350);
-  }
 
   return (
     <form action={formAction} className={styles.stackSm}>
@@ -40,7 +37,7 @@ export function WriteForm({
         required
         maxLength={200}
         className={`${styles.textarea} ${targetClass}`}
-        onFocus={keepHintsInView}
+        onFocus={(e) => keepSentencesInView("write-ref", e.currentTarget)}
         value={draft.value}
         onChange={(e) => draft.change(e.target.value)}
       />

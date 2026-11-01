@@ -93,18 +93,25 @@
 /* A memo word fell again. */
 .memoNote { margin: 0; font-size: 13px; line-height: 1.7; color: var(--again); font-weight: 500; }
 
-.try { display: flex; flex-direction: column; gap: 8px; padding: 16px 0; border-top: 1px solid var(--line); }
-/* The rain, kept right above the field while typing: short, scrollable, so the field still fits above the keyboard. */
-.ref {
-  display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; margin-bottom: 4px;
-  background: var(--surface); border-radius: var(--radius); scroll-margin-top: 8px;
+.try { display: flex; flex-direction: column; gap: 8px; }
+/* 言ってみる: the sentences said with, beside the field and the correction (a wide screen) or right above them. A tap on
+   one opens the word sheet, as in the rain; a little smaller than the rain, so more of them fit above a keyboard. */
+.material { display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 8px; }
+.materialHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.materialWay { padding: 2px 10px; border-radius: 999px; background: var(--tint); color: var(--accent); font-size: 13px; font-weight: 600; }
+/* Its tap area reaches past the line, so the label beside it lines up with the field's label on a wide screen. */
+.revealLink {
+  all: unset; padding-block: 8px; margin-block: -8px; display: inline-flex; align-items: center; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--accent); text-decoration: underline; text-underline-offset: 3px;
 }
-.refTitle { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
-.refList { list-style: none; margin: 0; padding: 0; max-height: 26vh; overflow-y: auto; overscroll-behavior: contain; }
-.refList li { display: flex; flex-direction: column; padding: 6px 0; border-bottom: 1px solid var(--line); }
-.refList li:last-child { border-bottom: 0; }
-.refText { font-size: 17px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
-.refGloss { font-size: 12px; color: var(--muted); }
+.revealLink:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.materialList { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.materialItem { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.materialText {
+  all: unset; cursor: pointer; font-size: 20px; font-weight: 500; line-height: 1.7; color: var(--ink);
+  overflow-wrap: anywhere; border-radius: 6px;
+}
+.materialText:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .textarea {
   width: 100%; min-height: 96px; padding: 14px; resize: vertical;
   border: 1.5px solid var(--ink); border-radius: var(--radius); font-size: 18px; line-height: 1.6; background: var(--paper);
@@ -171,6 +178,7 @@
 /* From a tablet up: larger sentences, and sheets open as a dialog in the middle of the screen. */
 @media (min-width: 720px) {
   .sentence { font-size: 26px; }
+  .materialText { font-size: 22px; }
   .gloss { font-size: 15px; }
   .introSky { height: 240px; }
   .backdrop { align-items: center; padding: 32px; }

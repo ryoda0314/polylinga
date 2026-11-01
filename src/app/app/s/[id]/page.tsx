@@ -12,9 +12,12 @@ import { diffRanges } from "@/lib/diff";
 import { getDict, type Dict } from "@/lib/i18n";
 import { isLang, langClass, type Lang } from "@/lib/langs";
 import { LIMITS, usesLeft } from "@/lib/metering";
+import { sharedSentences } from "@/lib/minna";
 import { readingFor } from "@/lib/reading";
 import { requireSettings } from "@/lib/settings";
+import type { ShowerSentence } from "@/lib/shower";
 import { findMemoHits } from "@/lib/shower-core";
+import { Material } from "../../_shower/Material";
 import { correctSaying } from "../../actions";
 import styles from "../../app.module.css";
 import { DeleteSaying } from "./DeleteSaying";
@@ -27,6 +30,8 @@ export const metadata = { title: "言ってみる" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type CorrectionRow = { id: string; input: string; corrected: string; result: CorrectionResult; created_at: string };
+/** What a saying keeps of the sentences it came with: 書いてみる's hints, or the rain a way of saying was tried with. */
+type Match = { sentence_id?: unknown; shared_id?: unknown };
 
 export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const { id } = await params;
@@ -45,7 +50,9 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const target: Lang = saying.target_lang;
   const t = getDict(native);
 
-  const [{ data: correctionRows }, left, { data: memoRows }] = await Promise.all([
+  const patternId = typeof saying.pattern_id === "string" ? saying.pattern_id : null;
+  const matches = (Array.isArray(saying.matches) ? saying.matches : []) as Match[];
+  const [{ data: correctionRows }, left, { data: memoRows }, tried, way] = await Promise.all([
     supabase
       .from("pl_corrections")
       .select("id, input, corrected, result, created_at")
@@ -54,11 +61,14 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
     usesLeft(user.id, "corrections"),
     // Memo words show where they turn up here too: the same dotted violet as in the rain.
     supabase.from("pl_words").select("text").eq("user_id", user.id).eq("lang", target),
+    patternId ? triedWith(matches, patternId, target, native, user.id) : [],
+    patternId ? wayOf(patternId, target, native) : null,
   ]);
   const memo = (memoRows ?? []).map((w) => String(w.text));
+  const material = tried.map((s) => ({ ...s, memoHits: findMemoHits(s.text, memo) }));
   const corrections = (correctionRows ?? []) as CorrectionRow[];
   const latest = corrections[0];
-  const title = saying.intent ?? (saying.pattern_id ? t.write.fromShower : "");
+  const title = saying.intent ?? (patternId ? t.write.fromShower : "");
 
   const writeForm = (
     <WriteForm
@@ -77,14 +87,98 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
     />
   );
 
+  const header = (
+    <header className={styles.subbar}>
+      <Link href={patternId ? "/app" : "/app/write"} className={styles.iconLink} aria-label={t.common.back}>
+        <Icon name="back" size={22} />
+      </Link>
+      <h1 className={`${styles.subtitle} ${langClass(native)}`}>{title}</h1>
+    </header>
+  );
+  const rewrite = (
+    <details className={styles.fold}>
+      <summary>{t.saying.rewrite}</summary>
+      {writeForm}
+    </details>
+  );
+  const earlier =
+    corrections.length > 1 ? (
+      <details className={styles.fold}>
+        <summary>{t.saying.earlier}</summary>
+        {corrections.slice(1).map((c) => (
+          <div key={c.id} className={styles.earlier}>
+            <span className={`${styles.rowSub} ${langClass(target)}`}>{c.input}</span>
+            <span className={`${styles.rowMain} ${langClass(target)}`}>{c.corrected}</span>
+          </div>
+        ))}
+      </details>
+    ) : null;
+  const foot = (
+    <div className={`${styles.pageFoot} ${styles.full}`}>
+      <DeleteSaying
+        sayingId={saying.id}
+        labels={{
+          delete: t.saying.delete,
+          confirm: t.saying.deleteConfirm,
+          cancel: t.common.cancel,
+          note: t.saying.deleteNote,
+          deleting: t.saying.deleting,
+        }}
+      />
+    </div>
+  );
+
+  if (material.length) {
+    // Said with a rain's sentences: they stay where they were while it was written (on a wide screen on the left),
+    // beside the correction and another try. On a phone the correction comes first, then the sentences, right above
+    // もう一度書く. The way of saying the rain was about is lit in them, so it is not listed again below.
+    return (
+      <>
+        {header}
+        <div className={`${styles.bodyTight} ${styles.split}`}>
+          <div className={`${styles.col} ${styles.stick}`}>
+            <Material
+              id="write-ref"
+              label={t.saying.material}
+              sentences={material}
+              lit
+              way={way}
+              native={native}
+              target={target}
+              rate={settings.speechRate}
+            />
+          </div>
+          <div className={styles.col}>
+            {latest ? (
+              <>
+                <div className={styles.result}>
+                  <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+                </div>
+                {rewrite}
+                {earlier}
+                <PatternsView
+                  correction={latest}
+                  target={target}
+                  native={native}
+                  rate={settings.speechRate}
+                  t={t}
+                  memo={memo}
+                  skip={patternId}
+                />
+              </>
+            ) : (
+              writeForm
+            )}
+          </div>
+          {foot}
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <header className={styles.subbar}>
-        <Link href={saying.pattern_id ? "/app" : "/app/write"} className={styles.iconLink} aria-label={t.common.back}>
-          <Icon name="back" size={22} />
-        </Link>
-        <h1 className={`${styles.subtitle} ${langClass(native)}`}>{title}</h1>
-      </header>
+      {header}
 
       {/* With a correction, a wide screen shows it on the left and the same way of saying, rewriting and earlier
           attempts on the right. Before one, a single column: the hints sit right above the field. */}
@@ -96,28 +190,15 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
             </div>
             <div className={styles.col}>
             <PatternsView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
-            <details className={styles.fold}>
-              <summary>{t.saying.rewrite}</summary>
-              {writeForm}
-            </details>
-            {corrections.length > 1 ? (
-              <details className={styles.fold}>
-                <summary>{t.saying.earlier}</summary>
-                {corrections.slice(1).map((c) => (
-                  <div key={c.id} className={styles.earlier}>
-                    <span className={`${styles.rowSub} ${langClass(target)}`}>{c.input}</span>
-                    <span className={`${styles.rowMain} ${langClass(target)}`}>{c.corrected}</span>
-                  </div>
-                ))}
-              </details>
-            ) : null}
+            {rewrite}
+            {earlier}
             </div>
           </>
         ) : (
           <>
             <Hints
-              patternId={saying.pattern_id}
-              ids={((saying.matches ?? []) as { sentence_id: string }[]).map((m) => m.sentence_id)}
+              patternId={patternId}
+              ids={matches.flatMap((m) => (typeof m.sentence_id === "string" ? [m.sentence_id] : []))}
               target={target}
               native={native}
               rate={settings.speechRate}
@@ -127,21 +208,47 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
             {writeForm}
           </>
         )}
-        <div className={`${styles.pageFoot} ${styles.full}`}>
-          <DeleteSaying
-            sayingId={saying.id}
-            labels={{
-              delete: t.saying.delete,
-              confirm: t.saying.deleteConfirm,
-              cancel: t.common.cancel,
-              note: t.saying.deleteNote,
-              deleting: t.saying.deleting,
-            }}
-          />
-        </div>
+        {foot}
       </div>
     </>
   );
+}
+
+/**
+ * The sentences a way of saying was tried with (言ってみる after a rain, or in 自分), in the order they fell, lit at
+ * that way of saying. Sayings from before these were kept have none.
+ */
+async function triedWith(matches: Match[], patternId: string, target: Lang, native: Lang, userId: string): Promise<ShowerSentence[]> {
+  const ids = (key: keyof Match) => matches.flatMap((m) => (typeof m[key] === "string" ? [m[key] as string] : []));
+  const [library, shared] = await Promise.all([
+    loadSentences(ids("sentence_id"), target, native),
+    sharedSentences(ids("shared_id"), patternId, target, userId),
+  ]);
+  return [
+    ...library.map((s) => {
+      const mark = s.marks.find((m) => m.patternId === patternId) ?? s.marks[0];
+      const glossMark = s.glossMarks[0];
+      return {
+        id: s.id,
+        text: s.text,
+        gloss: s.gloss,
+        reading: s.reading,
+        audio: s.audio,
+        mark: mark ? { start: mark.start, end: mark.end } : null,
+        glossMark: glossMark ? { start: glossMark.start, end: glossMark.end } : null,
+        seenBefore: true,
+        memoHits: [],
+      };
+    }),
+    ...shared,
+  ];
+}
+
+/** What a way of saying does, in the learner's own words (誘う). */
+async function wayOf(patternId: string, target: Lang, native: Lang): Promise<string | null> {
+  const [patterns, labels] = await Promise.all([approvedPatterns(target), functionLabels()]);
+  const pattern = patterns.find((p) => p.id === patternId);
+  return pattern ? (labels.get(pattern.functionId)?.[native] ?? null) : null;
 }
 
 async function Hints({
@@ -345,6 +452,7 @@ async function PatternsView({
   rate,
   t,
   memo,
+  skip = null,
 }: {
   correction: CorrectionRow;
   target: Lang;
@@ -352,8 +460,10 @@ async function PatternsView({
   rate: number;
   t: Dict;
   memo: string[];
+  /** A way of saying the page shows elsewhere (lit in the sentences it was tried with). */
+  skip?: string | null;
 }) {
-  const found = correction.result.patterns ?? [];
+  const found = (correction.result.patterns ?? []).filter((f) => f.id !== skip);
   if (found.length === 0) return null;
   const [patterns, labels, examples] = await Promise.all([
     approvedPatterns(target),

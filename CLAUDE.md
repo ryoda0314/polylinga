@@ -69,6 +69,13 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   words fall one at a time with what they wrote beside them, in a new order each round, until they stop it; read aloud by
   the browser's voice if they want, speed kept on the device, the screen kept awake while it runs. Nothing is asked or
   counted, and it does not count as meeting a word (that stays the sentence rain's job).
+- 言ってみる after a rain (`_shower/TryPage.tsx`): a page of its own with no route. ShowerPlayer swaps the whole page and
+  pushes a history entry, so back returns to the rain as it was left. The rain's sentences (`Material`: play, tap for
+  the word sheet) sit beside the field, or above it on a phone. `tryAfterRain` keeps them with the saying in
+  `pl_sayings.matches` (`sentence_id`, or `shared_id` for みんなの雨), and the correction page shows them beside every
+  correction. On a phone they come after the correction, right above もう一度書く. The rain's way of saying is lit there
+  and not listed again under 同じかたちの文. The correction takes the 言ってみる entry's place in the history; 自分's
+  このかたちで言ってみる (`tryPattern`) pushes instead.
 - `src/app/tutorial/` + `src/lib/tutorial.ts`: the hands-on tutorial (`/tutorial`, outside the app shell). A new learner
   lands there after `/start`; until `pl_settings.tutorial_seen_at` is set (finished or skipped) 浴びる offers it, and
   settings can open it again. Five steps, each started by the learner's tap and drawn with the app's own screens: the

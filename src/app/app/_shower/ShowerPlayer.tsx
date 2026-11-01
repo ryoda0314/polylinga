@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { playToEnd, prefetchAudio, stopAudio } from "@/components/audio";
 import { Icon } from "@/components/Icon";
 import { usePref } from "@/components/local";
@@ -12,12 +12,20 @@ import { langClass, type Lang } from "@/lib/langs";
 import type { ShowerCluster, ShowerSentence } from "@/lib/shower";
 import Link from "next/link";
 import { heartMinna, markReachedSeen, nextCluster, recordFinished, reportMinna } from "../actions";
+import app from "../app.module.css";
 import styles from "./shower.module.css";
 import { CuePrompt } from "./CuePrompt";
-import { TryForm } from "./TryForm";
+import { TryPage } from "./TryPage";
 import { WordSheet } from "./WordSheet";
 
 const GAP_MS = 700;
+/** The browser's history entry of a rain's 言ってみる page, marked with the rain's pattern. */
+const TRY_ENTRY = "kotonoameTry";
+
+function triedAt(state: unknown): string | null {
+  const at = state && typeof state === "object" ? (state as Record<string, unknown>)[TRY_ENTRY] : null;
+  return typeof at === "string" ? at : null;
+}
 
 /**
  * One rain: sentences that share a pattern fall in one at a time with their audio and stay on screen,
@@ -26,6 +34,8 @@ const GAP_MS = 700;
  * from other learners' corrected sentences, where the learner can say 「これ言いたかった」 or report one.
  */
 export function ShowerPlayer({
+  top,
+  head,
   initial,
   source,
   reached,
@@ -35,6 +45,9 @@ export function ShowerPlayer({
   target,
   rate,
 }: {
+  /** The page around the rain: the bar on a phone, then which rain and the way into the tutorial. 言ってみる replaces it. */
+  top: ReactNode;
+  head: ReactNode;
   initial: ShowerCluster | null;
   source: "library" | "minna";
   /** One of the learner's own shared sentences has reached someone since they last heard. */
@@ -66,6 +79,8 @@ export function ShowerPlayer({
   const [pending, startTransition] = useTransition();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const runRef = useRef(0); // bumping it stops whatever flow is running
+  const tryEntry = useRef(false); // the history entry showing is this rain's 言ってみる page
+  const rainScroll = useRef<number | null>(null); // where the rain was left for 言ってみる
 
   const recorded = useRef<{ key: string; done: Promise<void>; next: Promise<ShowerCluster | null> } | null>(null);
   const [hearted, setHearted] = useState<Set<string>>(() => new Set());
@@ -161,6 +176,40 @@ export function ShowerPlayer({
     }
   }
 
+  // 言ってみる is a page of its own (TryPage) with an entry in the browser's history: back, the browser's or the page's
+  // own arrow, returns to this rain just as it was left.
+  function openTry() {
+    if (!cluster) return;
+    runRef.current++;
+    stopAudio(audioRef.current);
+    setPlaying(null);
+    rainScroll.current = window.scrollY;
+    window.history.pushState({ [TRY_ENTRY]: cluster.patternId }, "");
+    tryEntry.current = true;
+    setTrying(true);
+  }
+
+  function closeTry() {
+    if (tryEntry.current) window.history.back();
+    else setTrying(false);
+  }
+
+  useEffect(() => {
+    function onPop(e: PopStateEvent) {
+      const open = cluster !== null && triedAt(e.state) === cluster.patternId;
+      tryEntry.current = open;
+      setTrying(open);
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [cluster]);
+
+  // 言ってみる opens at the top of its page; back in the rain, it is where it was left.
+  useLayoutEffect(() => {
+    if (trying) window.scrollTo({ top: 0 });
+    else if (rainScroll.current !== null) window.scrollTo({ top: rainScroll.current });
+  }, [trying]);
+
   function showNext() {
     if (!cluster) return;
     setShown((n) => Math.min(n + 1, cluster.sentences.length));
@@ -189,7 +238,6 @@ export function ShowerPlayer({
       setRainNo((n) => n + 1);
       setCluster(next);
       setRevealed(false);
-      setTrying(false);
       setShown(0);
       window.scrollTo({ top: 0 });
       if (next) {
@@ -199,11 +247,21 @@ export function ShowerPlayer({
     });
   }
 
+  // The rain's own page: the bar on a phone, which rain it is, then the rain.
+  const page = (content: ReactNode) => (
+    <>
+      {top}
+      <div className={app.body}>
+        {head}
+        {content}
+      </div>
+    </>
+  );
   const reachedNote = reached ? <p className={styles.reached}>{t.shower.reached}</p> : null;
   const firstRain = rainNo === 0;
   if (!cluster) {
-    if (!minna) return <p className={styles.empty}>{t.shower.empty}</p>;
-    return (
+    if (!minna) return page(<p className={styles.empty}>{t.shower.empty}</p>);
+    return page(
       <div className={styles.wrap}>
         {reachedNote}
         <p className={styles.empty}>{t.shower.minnaEmpty}</p>
@@ -212,7 +270,21 @@ export function ShowerPlayer({
             {t.shower.minnaShareHint}
           </Link>
         )}
-      </div>
+      </div>,
+    );
+  }
+  if (trying) {
+    return (
+      <TryPage
+        cluster={cluster}
+        source={source}
+        revealed={revealed}
+        onReveal={() => setRevealed(true)}
+        onBack={closeTry}
+        native={native}
+        target={target}
+        rate={rate}
+      />
     );
   }
   const allShown = shown >= cluster.sentences.length;
@@ -230,7 +302,7 @@ export function ShowerPlayer({
       ? t.shower.again + (cluster.againDays && cluster.againDays >= 1 ? t.shower.againDays(cluster.againDays) : "")
       : t.shower.fresh;
 
-  return (
+  return page(
     <div className={styles.wrap}>
       {/* The rain itself: on a wide screen the left column, with the controls beside it. */}
       <div className={styles.rain}>
@@ -360,20 +432,9 @@ export function ShowerPlayer({
             </button>
           )}
           {/* 言ってみる is what the rain is for, so it is the one filled button; 次の雨 stays a quiet way on. */}
-          {trying ? (
-            <TryForm
-              patternId={cluster.patternId}
-              native={native}
-              target={target}
-              sentences={cluster.sentences}
-              revealed={revealed}
-              focus
-            />
-          ) : (
-            <button type="button" className="btn" onClick={() => setTrying(true)}>
-              {t.shower.tryIt}
-            </button>
-          )}
+          <button type="button" className="btn" onClick={openTry}>
+            {t.shower.tryIt}
+          </button>
           <button type="button" className="btn-quiet" onClick={goNext} disabled={pending}>
             {pending ? t.shower.loading : t.shower.nextCluster}
           </button>
@@ -390,6 +451,6 @@ export function ShowerPlayer({
       {sheetFor ? (
         <WordSheet sentence={sheetFor} native={native} target={target} rate={rate} onClose={() => setSheetFor(null)} />
       ) : null}
-    </div>
+    </div>,
   );
 }

@@ -99,7 +99,7 @@ export async function pickMinnaCluster(
 
   // Try patterns in order until one has enough sentences the learner has not seen; otherwise take the first anyway.
   let patternId = candidates[0].id;
-  let rows: { id: string; text: string; gloss: string; start_index: number; end_index: number }[] = [];
+  let rows: SharedRow[] = [];
   for (const c of candidates.slice(0, 6)) {
     const { data } = await admin
       .from("pl_shared")
@@ -133,17 +133,7 @@ export async function pickMinnaCluster(
     : { data: null };
   const memo = (words ?? []).map((w) => String(w.text));
 
-  const sentences: ShowerSentence[] = chosen.map((r) => ({
-    id: r.id,
-    text: r.text,
-    gloss: r.gloss,
-    reading: readingFor(r.text, target, null),
-    audio: { src: audioUrl(r.text, target), fallback: `/api/tts?shared=${r.id}` },
-    mark: { start: r.start_index, end: r.end_index },
-    glossMark: null,
-    seenBefore: seen.has(r.id),
-    memoHits: findMemoHits(r.text, memo),
-  }));
+  const sentences = chosen.map((r) => sharedSentence(r, target, seen.has(r.id), memo));
   return {
     patternId,
     label: ((fn?.label ?? {}) as Record<string, string>)[native] ?? null,
@@ -152,6 +142,41 @@ export async function pickMinnaCluster(
     sentences,
     source: "minna",
   };
+}
+
+type SharedRow = { id: string; text: string; gloss: string; start_index: number; end_index: number };
+
+/** Another learner's sentence as the rain shows it: the pattern's part lit, nobody's name anywhere. */
+function sharedSentence(r: SharedRow, target: Lang, seenBefore: boolean, memo: string[]): ShowerSentence {
+  return {
+    id: r.id,
+    text: r.text,
+    gloss: r.gloss,
+    reading: readingFor(r.text, target, null),
+    audio: { src: audioUrl(r.text, target), fallback: `/api/tts?shared=${r.id}` },
+    mark: { start: r.start_index, end: r.end_index },
+    glossMark: null,
+    seenBefore,
+    memoHits: findMemoHits(r.text, memo),
+  };
+}
+
+/**
+ * Other learners' sentences a pattern was tried with after みんなの雨, in the given order, for the page of what the
+ * learner said: only those still raining, of that pattern, and never the learner's own. Memo words are the caller's.
+ */
+export async function sharedSentences(ids: string[], patternId: string, target: Lang, viewerId: string): Promise<ShowerSentence[]> {
+  if (ids.length === 0) return [];
+  const { data } = await createAdminClient()
+    .from("pl_shared")
+    .select("id, text, gloss, start_index, end_index")
+    .in("id", ids)
+    .eq("pattern_id", patternId)
+    .eq("target_lang", target)
+    .eq("status", "live")
+    .neq("user_id", viewerId);
+  const byId = new Map(((data ?? []) as SharedRow[]).map((r) => [r.id, r]));
+  return ids.filter((id) => byId.has(id)).map((id) => sharedSentence(byId.get(id)!, target, true, []));
 }
 
 /** Remember which of other learners' sentences this learner has bathed in, and the day's rain for 自分. */
