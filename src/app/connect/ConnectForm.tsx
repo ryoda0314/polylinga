@@ -2,13 +2,27 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signInCopy } from "@/lib/i18n/sign-in";
 import { createClient } from "@/lib/supabase/client";
-import { connectPath } from "@/lib/sisters";
+import { connectPath, type SisterLang } from "@/lib/sisters";
 import styles from "../login/login.module.css";
 import { connect } from "./actions";
 
-/** つなぐ, or another account, or back without connecting. */
-export function ConnectForm({ app, back, state, name }: { app: string; back: string; state: string; name: string }) {
+/** つなぐ, or another account, or back without connecting. In the sister's language. */
+export function ConnectForm({
+  app,
+  back,
+  state,
+  name,
+  lang = "ja",
+}: {
+  app: string;
+  back: string;
+  state: string;
+  name: string;
+  lang?: SisterLang;
+}) {
+  const t = signInCopy(lang).connect;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -22,13 +36,7 @@ export function ConnectForm({ app, back, state, name }: { app: string; back: str
       return;
     }
     setBusy(false);
-    setError(
-      result.reason === "invalid"
-        ? `つなぎ先が分かりませんでした。もう一度、${name}の「ことのあめでつなぐ」から始めてください。`
-        : result.reason === "signedOut"
-          ? "ログインが切れていました。もう一度ログインしてください。"
-          : "つなげませんでした。少し待ってから、もう一度お試しください。",
-    );
+    setError(result.reason === "invalid" ? t.invalid(name) : result.reason === "signedOut" ? t.signedOut : t.failed);
   }
 
   async function otherAccount() {
@@ -46,13 +54,13 @@ export function ConnectForm({ app, back, state, name }: { app: string; back: str
         </p>
       ) : null}
       <button type="button" className="btn" onClick={go} disabled={busy}>
-        {busy ? "つないでいます…" : `${name}につなぐ`}
+        {busy ? t.busy : t.go(name)}
       </button>
       <button type="button" className="btn-quiet" onClick={otherAccount} disabled={busy}>
-        別のアカウントにする
+        {t.other}
       </button>
       <a href={`${back}/login`} className={styles.textLink}>
-        つながずに{name}へ戻る
+        {t.back(name)}
       </a>
     </div>
   );

@@ -3,6 +3,8 @@
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { signInCopy } from "@/lib/i18n/sign-in";
+import type { SisterLang } from "@/lib/sisters";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./login.module.css";
 
@@ -33,11 +35,12 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 /** Google で続ける. Without our own client ID yet, the shared project's Google sign-in (a redirect) is used instead. */
-export function GoogleButton({ onError, next }: { onError: (message: string) => void; next?: string }) {
+export function GoogleButton({ onError, next, lang = "ja" }: { onError: (message: string) => void; next?: string; lang?: SisterLang }) {
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
-  const failed = "Google でログインできませんでした。メールアドレスとパスワードをお使いください。";
+  const t = signInCopy(lang).google;
+  const failed = t.failed;
 
   useEffect(() => {
     if (!CLIENT_ID || !ready || !box.current || !window.google) return;
@@ -70,7 +73,7 @@ export function GoogleButton({ onError, next }: { onError: (message: string) => 
         size: "large",
         shape: "pill",
         text: "continue_with",
-        locale: "ja",
+        locale: t.locale,
         width: Math.min(400, Math.round(parent.offsetWidth)),
       });
     });
@@ -79,7 +82,7 @@ export function GoogleButton({ onError, next }: { onError: (message: string) => 
     };
     // onError is a fresh function each render; the button only needs setting up once the script is there.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, router, next]);
+  }, [ready, router, next, lang]);
 
   async function redirectSignIn() {
     const { error } = await createClient().auth.signInWithOAuth({
@@ -92,7 +95,7 @@ export function GoogleButton({ onError, next }: { onError: (message: string) => 
   if (!CLIENT_ID) {
     return (
       <button type="button" className="btn-quiet" onClick={redirectSignIn}>
-        Google で続ける
+        {t.button}
       </button>
     );
   }

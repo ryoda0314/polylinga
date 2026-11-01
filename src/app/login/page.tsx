@@ -1,18 +1,23 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { redirect } from "next/navigation";
+import { signInCopy } from "@/lib/i18n/sign-in";
 import { safeNext } from "@/lib/safe-next";
-import { connectingTo } from "@/lib/sisters";
+import { connectingTo, connectLang } from "@/lib/sisters";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./LoginForm";
 import styles from "./login.module.css";
 
-export const metadata = { title: "ログイン" };
+// Where to go once signed in, when the link says (a sister app's つなぐ, /connect); otherwise the usual places.
+const nextOf = (asked: string | string[] | undefined) => (typeof asked === "string" ? safeNext(asked) : undefined);
+
+export async function generateMetadata({ searchParams }: PageProps<"/login">) {
+  return { title: signInCopy(connectLang(nextOf((await searchParams).next))).login.title };
+}
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { error, next: asked } = await searchParams;
-  // Where to go once signed in, when the link says (a sister app's つなぐ, /connect); otherwise the usual places.
-  const next = typeof asked === "string" ? safeNext(asked) : undefined;
+  const next = nextOf(asked);
 
   const supabase = await createClient();
   const {
@@ -21,24 +26,25 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (user) redirect(next ?? "/app");
 
   const sister = connectingTo(next);
+  // On the way to a sister for Korean speakers (ことのたね, ことのはし), in Korean.
+  const lang = connectLang(next);
+  const t = signInCopy(lang).login;
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} lang={lang}>
       <Logo size="md" />
       <div className={styles.card}>
-        <h1 className={styles.h1}>はじめる・ログイン</h1>
-        {sister ? (
-          <p className={styles.lead}>
-            {sister}につなぐために、ことのあめのアカウントでログインします。はじめてなら「新しく登録」から。確認メールのリンクを押すと、そのまま{sister}につなげます。
-          </p>
-        ) : (
-          <p className={styles.lead}>前のアプリ PolyLinga のアカウントも、そのまま使えます。</p>
-        )}
-        {error ? <p className={styles.error}>ログインできませんでした。もう一度お試しください。</p> : null}
-        <LoginForm next={next} />
+        <h1 className={styles.h1}>{t.heading}</h1>
+        <p className={styles.lead}>{sister ? t.leadSister(sister) : t.lead}</p>
+        {error ? <p className={styles.error}>{t.error}</p> : null}
+        <LoginForm next={next} lang={lang} />
       </div>
       <p className={styles.small}>
-        続けると<Link href="/terms">利用規約</Link>と<Link href="/privacy">プライバシーポリシー</Link>に同意したことになります。
+        {t.agree.before}
+        <Link href="/terms">{t.agree.terms}</Link>
+        {t.agree.and}
+        <Link href="/privacy">{t.agree.privacy}</Link>
+        {t.agree.after}
       </p>
     </div>
   );

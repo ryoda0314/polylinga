@@ -12,6 +12,8 @@ export type LinkMail = {
   url: string;
   linkNote: string;
   ignore: string;
+  /** The mail's language: ja, or ko for the learners of the sisters for Korean speakers (src/lib/i18n/sign-in.ts). */
+  lang?: string;
 };
 
 function esc(s: string): string {
@@ -20,10 +22,11 @@ function esc(s: string): string {
 
 /** One short, flat message: the name, what to do, one button, the link written out, and why they got it. */
 function html(m: LinkMail): string {
-  const sans = `"Hiragino Sans","Yu Gothic",Meiryo,sans-serif`;
+  const ko = m.lang === "ko";
+  const sans = ko ? `"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif` : `"Hiragino Sans","Yu Gothic",Meiryo,sans-serif`;
   const mincho = `"Hiragino Mincho ProN","Yu Mincho",serif`;
-  return `<!doctype html><html lang="ja"><body style="margin:0;padding:0;background:#fcfbf8">
-<div style="max-width:520px;margin:0 auto;padding:32px 24px;font-family:${sans};color:#172033;line-height:1.8">
+  return `<!doctype html><html lang="${ko ? "ko" : "ja"}"><body style="margin:0;padding:0;background:#fcfbf8">
+<div style="max-width:520px;margin:0 auto;padding:32px 24px;font-family:${sans};color:#172033;line-height:1.8${ko ? ";word-break:keep-all" : ""}">
 <p style="margin:0 0 28px;font-family:${mincho};font-size:20px;font-weight:700;letter-spacing:.06em">ことのあめ</p>
 <h1 style="margin:0 0 12px;font-size:20px;font-weight:600">${esc(m.title)}</h1>
 <p style="margin:0 0 24px;font-size:15px;color:#3b4558">${esc(m.body)}</p>

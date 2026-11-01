@@ -3,17 +3,29 @@
 // built. Nothing else is ever a destination, because what is sent there signs the learner in. A sister not published
 // yet has no address (null): only the learner's own computer, until its address is written here.
 // ことのね keeps its record on the device only; it has no account to つなぐ yet.
+// ことのたね and ことのはし are for Korean speakers: the pages and mails on the way to them are in Korean (`lang`,
+// src/lib/i18n/sign-in.ts).
 // Pure: tested in tests/sisters.test.mjs.
 
-export type SisterId = "kotonoha" | "kotonooto" | "kotonome" | "kotonoeda" | "kotonomi";
+export type SisterId = "kotonoha" | "kotonooto" | "kotonome" | "kotonoeda" | "kotonomi" | "kotonotane" | "kotonohashi";
 
-export const SISTERS: Record<SisterId, { name: string; url: string | null }> = {
+/** The language of a sister's learners: the pages and mails of its つなぐ are in it. */
+export type SisterLang = "ja" | "ko";
+
+export const SISTERS: Record<SisterId, { name: string; url: string | null; lang?: SisterLang }> = {
   kotonoha: { name: "ことのは", url: "https://kotonoha-ashy.vercel.app" },
   kotonooto: { name: "ことのおと", url: "https://kotonoame-ch.vercel.app" },
   kotonome: { name: "ことのめ", url: "https://kotonome-kappa.vercel.app" },
   kotonoeda: { name: "ことのえだ", url: "https://keigo-green.vercel.app" },
   kotonomi: { name: "ことのみ", url: null },
+  kotonotane: { name: "ことのたね", url: null, lang: "ko" },
+  kotonohashi: { name: "ことのはし", url: null, lang: "ko" },
 };
+
+/** The language of a sister (its `app` name at /connect): Japanese unless it says otherwise. */
+export function sisterLang(app: string | null | undefined): SisterLang {
+  return app && Object.prototype.hasOwnProperty.call(SISTERS, app) ? (SISTERS[app as SisterId].lang ?? "ja") : "ja";
+}
 
 export type Destination = { id: SisterId; name: string; origin: string };
 
@@ -52,6 +64,18 @@ export function connectingTo(next: string | null | undefined): string | null {
   if (!next || !next.startsWith("/connect?")) return null;
   const params = new URL(next, "http://x").searchParams;
   return destinationFor(params.get("app"), params.get("back"))?.name ?? null;
+}
+
+/**
+ * The language of the pages and mails on the way somewhere (`next`, a path in this site): the sister's when it is a
+ * /connect for one, or a page carrying such a /connect on (`/login/reset?next=/connect?…`); otherwise Japanese.
+ */
+export function connectLang(next: string | null | undefined): SisterLang {
+  if (!next || !next.startsWith("/")) return "ja";
+  const url = new URL(next, "http://x");
+  if (url.pathname !== "/connect") return connectLang(url.searchParams.get("next"));
+  const dest = destinationFor(url.searchParams.get("app"), url.searchParams.get("back"));
+  return dest ? sisterLang(dest.id) : "ja";
 }
 
 /**

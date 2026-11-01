@@ -2,12 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signInCopy } from "@/lib/i18n/sign-in";
+import type { SisterLang } from "@/lib/sisters";
 import { createClient } from "@/lib/supabase/client";
 import styles from "../login.module.css";
 
 const MIN_PASSWORD = 8;
 
-export function ResetForm() {
+/** `next`: a sister's つなぐ the learner was on the way to (on there once the password is set); else the app. */
+export function ResetForm({ next, lang = "ja" }: { next?: string; lang?: SisterLang }) {
+  const t = signInCopy(lang).reset;
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -16,7 +20,7 @@ export function ResetForm() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < MIN_PASSWORD) {
-      setError(`パスワードは${MIN_PASSWORD}文字以上にしてください。`);
+      setError(t.short(MIN_PASSWORD));
       return;
     }
     setBusy(true);
@@ -24,23 +28,17 @@ export function ResetForm() {
     const { error: updateError } = await createClient().auth.updateUser({ password });
     setBusy(false);
     if (updateError) {
-      setError(
-        updateError.code === "same_password"
-          ? "前と同じパスワードは使えません。"
-          : updateError.code === "weak_password"
-            ? "このパスワードは使えません。もう少し長く、推測されにくいものにしてください。"
-            : "変更できませんでした。もう一度お試しください。",
-      );
+      setError(updateError.code === "same_password" ? t.same : updateError.code === "weak_password" ? t.weak : t.failed);
       return;
     }
-    router.replace("/app");
+    router.replace(next ?? "/app");
     router.refresh();
   }
 
   return (
     <form onSubmit={submit} className={styles.stack}>
       <label htmlFor="password" className="label">
-        新しいパスワード（{MIN_PASSWORD}文字以上）
+        {t.label(MIN_PASSWORD)}
       </label>
       <input
         id="password"
@@ -58,7 +56,7 @@ export function ResetForm() {
         </p>
       ) : null}
       <button type="submit" className="btn" disabled={busy}>
-        {busy ? "変更しています…" : "このパスワードにする"}
+        {busy ? t.saving : t.submit}
       </button>
     </form>
   );

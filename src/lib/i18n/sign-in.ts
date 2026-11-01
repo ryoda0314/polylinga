@@ -1,0 +1,202 @@
+// The pages and mails on the way into an account: login and sign-up, the confirmation mail, the name, つなぐ, and a
+// forgotten password. In the language of the learner arriving (src/lib/sisters.ts connectLang / sisterLang): Japanese,
+// or Korean on the way to the sisters for Korean speakers (ことのたね, ことのはし). The rest of ことのあめ is Japanese only.
+import type { SisterLang } from "@/lib/sisters";
+import { ja as jaDict } from "./ja";
+
+const jaCopy = {
+  login: {
+    title: "ログイン",
+    heading: "はじめる・ログイン",
+    leadSister: (sister: string) =>
+      `${sister}につなぐために、ことのあめのアカウントでログインします。はじめてなら「新しく登録」から。確認メールのリンクを押すと、そのまま${sister}につなげます。`,
+    lead: "前のアプリ PolyLinga のアカウントも、そのまま使えます。",
+    error: "ログインできませんでした。もう一度お試しください。",
+    agree: { before: "続けると", terms: "利用規約", and: "と", privacy: "プライバシーポリシー", after: "に同意したことになります。" },
+  },
+  form: {
+    tabs: "ログインか新規登録か",
+    login: "ログイン",
+    register: "新しく登録",
+    email: "メールアドレス",
+    password: "パスワード",
+    passwordMin: (n: number) => `（${n}文字以上）`,
+    sent: (email: string) =>
+      `${email} に確認メールを送りました。メールのリンクを押すと登録が終わり、そのまま始められます。届かないときは、迷惑メールのフォルダも見てください。`,
+    invalid: "メールアドレスを確かめてください。",
+    exists: "このメールアドレスはすでに登録されています。ログインしてください。",
+    weak: (n: number) => `パスワードは${n}文字以上にしてください。`,
+    limit: "このアドレスへのメールは、今日はもう送れません。明日もう一度お試しください。",
+    mailFailed: "メールを送れませんでした。少し待ってから、もう一度お試しください。",
+    busy: "ログインの試行が続いたため、少し待つ必要があります。1分ほどしてからお試しください。",
+    unconfirmed: "メールアドレスの確認がまだです。届いた確認メールのリンクを押してから、もう一度ログインしてください。",
+    wrong: "メールアドレスかパスワードが違います。",
+    resend: "確認メールをもう一度送る",
+    checking: "確認しています…",
+    submitLogin: "ログイン",
+    submitRegister: "登録する",
+    forgot: "パスワードを忘れた",
+    or: "または",
+  },
+  google: {
+    failed: "Google でログインできませんでした。メールアドレスとパスワードをお使いください。",
+    button: "Google で続ける",
+    locale: "ja",
+  },
+  forgot: {
+    title: "パスワードを再設定",
+    lead: "登録したメールアドレスに、新しいパスワードを決めるためのリンクを送ります。",
+    back: "ログインに戻る",
+    /** After the address, which is shown in bold. */
+    sent: " が登録されていれば、リンクを送りました。メールのリンクを開いて、新しいパスワードを決めてください。",
+    email: "メールアドレス",
+    limit: "このアドレスへのメールは、今日はもう送れません。明日もう一度お試しください。",
+    sending: "送っています…",
+    send: "リンクを送る",
+  },
+  reset: {
+    title: "新しいパスワード",
+    expired: "リンクの有効期限が切れたか、すでに使われています。もう一度リンクを送ってください。",
+    resend: "リンクを送り直す",
+    label: (n: number) => `新しいパスワード（${n}文字以上）`,
+    short: (n: number) => `パスワードは${n}文字以上にしてください。`,
+    same: "前と同じパスワードは使えません。",
+    weak: "このパスワードは使えません。もう少し長く、推測されにくいものにしてください。",
+    failed: "変更できませんでした。もう一度お試しください。",
+    saving: "変更しています…",
+    submit: "このパスワードにする",
+  },
+  connect: {
+    title: "つなぐ",
+    invalidHeading: "つなげません",
+    invalidLead: "つなぎ先が分かりませんでした。もう一度、アプリの「ことのあめでつなぐ」から始めてください。",
+    sisters: (names: string[]) => `ことのあめのアカウントでつなげるのは、${names.join("・")}です。`,
+    heading: (name: string) => `${name}につなぐ`,
+    lead: (email: string, name: string) => `${email} のアカウントで、${name}につなぎます。${name}の記録も、このアカウントに残るようになります。`,
+    invalid: (name: string) => `つなぎ先が分かりませんでした。もう一度、${name}の「ことのあめでつなぐ」から始めてください。`,
+    signedOut: "ログインが切れていました。もう一度ログインしてください。",
+    failed: "つなげませんでした。少し待ってから、もう一度お試しください。",
+    busy: "つないでいます…",
+    go: (name: string) => `${name}につなぐ`,
+    other: "別のアカウントにする",
+    back: (name: string) => `つながずに${name}へ戻る`,
+  },
+  name: {
+    ...jaDict.name,
+    pageTitle: "ユーザー名",
+    field: (max: number) => `${jaDict.name.label}（${jaDict.name.limit(max)}）`,
+  },
+  mail: { ...jaDict.mail, lang: "ja" },
+};
+
+export type SignInCopy = typeof jaCopy;
+
+const koCopy: SignInCopy = {
+  login: {
+    title: "로그인",
+    heading: "시작하기·로그인",
+    leadSister: (sister: string) =>
+      `${sister}에 연결하려면 ことのあめ 계정으로 로그인해요. 처음이라면 '새로 가입'을 눌러 주세요. 확인 메일의 링크를 누르면 바로 ${sister}에 연결할 수 있어요.`,
+    lead: "ことのあめ 계정으로 로그인해요.",
+    error: "로그인하지 못했어요. 다시 시도해 주세요.",
+    agree: { before: "계속하면 ", terms: "이용약관", and: "과 ", privacy: "개인정보 처리방침", after: "(일본어)에 동의하는 것으로 봐요." },
+  },
+  form: {
+    tabs: "로그인 또는 새로 가입",
+    login: "로그인",
+    register: "새로 가입",
+    email: "이메일 주소",
+    password: "비밀번호",
+    passwordMin: (n: number) => ` (${n}자 이상)`,
+    sent: (email: string) =>
+      `${email} 주소로 확인 메일을 보냈어요. 메일의 링크를 누르면 가입이 끝나고, 바로 시작할 수 있어요. 메일이 오지 않으면 스팸 메일함도 확인해 주세요.`,
+    invalid: "이메일 주소를 확인해 주세요.",
+    exists: "이미 가입된 이메일 주소예요. 로그인해 주세요.",
+    weak: (n: number) => `비밀번호는 ${n}자 이상으로 해 주세요.`,
+    limit: "이 주소로는 오늘 더 이상 메일을 보낼 수 없어요. 내일 다시 시도해 주세요.",
+    mailFailed: "메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.",
+    busy: "로그인 시도가 이어져서 잠시 기다려야 해요. 1분쯤 뒤에 다시 시도해 주세요.",
+    unconfirmed: "아직 이메일 주소를 확인하지 않았어요. 받은 확인 메일의 링크를 누른 뒤 다시 로그인해 주세요.",
+    wrong: "이메일 주소나 비밀번호가 맞지 않아요.",
+    resend: "확인 메일 다시 보내기",
+    checking: "확인하고 있어요…",
+    submitLogin: "로그인",
+    submitRegister: "가입하기",
+    forgot: "비밀번호를 잊었어요",
+    or: "또는",
+  },
+  google: {
+    failed: "Google로 로그인하지 못했어요. 이메일 주소와 비밀번호를 사용해 주세요.",
+    button: "Google로 계속하기",
+    locale: "ko",
+  },
+  forgot: {
+    title: "비밀번호 재설정",
+    lead: "가입한 이메일 주소로, 새 비밀번호를 정할 수 있는 링크를 보내요.",
+    back: "로그인으로 돌아가기",
+    sent: " 주소가 가입되어 있다면 링크를 보냈어요. 메일의 링크를 열어 새 비밀번호를 정해 주세요.",
+    email: "이메일 주소",
+    limit: "이 주소로는 오늘 더 이상 메일을 보낼 수 없어요. 내일 다시 시도해 주세요.",
+    sending: "보내고 있어요…",
+    send: "링크 보내기",
+  },
+  reset: {
+    title: "새 비밀번호",
+    expired: "링크가 만료되었거나 이미 사용되었어요. 링크를 다시 받아 주세요.",
+    resend: "링크 다시 받기",
+    label: (n: number) => `새 비밀번호 (${n}자 이상)`,
+    short: (n: number) => `비밀번호는 ${n}자 이상으로 해 주세요.`,
+    same: "이전과 같은 비밀번호는 쓸 수 없어요.",
+    weak: "이 비밀번호는 쓸 수 없어요. 조금 더 길고 짐작하기 어려운 것으로 해 주세요.",
+    failed: "바꾸지 못했어요. 다시 시도해 주세요.",
+    saving: "바꾸고 있어요…",
+    submit: "이 비밀번호로 하기",
+  },
+  connect: {
+    title: "연결하기",
+    invalidHeading: "연결할 수 없어요",
+    invalidLead: "연결할 곳을 알 수 없었어요. 앱의 'ことのあめ로 연결하기'에서 다시 시작해 주세요.",
+    sisters: (names: string[]) => `ことのあめ 계정으로 연결할 수 있는 앱은 ${names.join("·")}예요.`,
+    heading: (name: string) => `${name}에 연결하기`,
+    lead: (email: string, name: string) => `${email} 계정으로 ${name}에 연결해요. ${name}의 기록도 이 계정에 남게 돼요.`,
+    invalid: (name: string) => `연결할 곳을 알 수 없었어요. ${name}의 'ことのあめ로 연결하기'에서 다시 시작해 주세요.`,
+    signedOut: "로그인이 끊겼어요. 다시 로그인해 주세요.",
+    failed: "연결하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    busy: "연결하고 있어요…",
+    go: (name: string) => `${name}에 연결하기`,
+    other: "다른 계정으로 하기",
+    back: (name: string) => `연결하지 않고 ${name}로 돌아가기`,
+  },
+  name: {
+    title: "사용자 이름 정하기",
+    lead: "계정의 이름이에요. 닉네임이어도 괜찮아요. 다른 사람에게는 보이지 않고, 나중에 바꿀 수 있어요.",
+    label: "사용자 이름",
+    limit: (max: number) => `${max}자까지`,
+    submit: "정하기",
+    saving: "저장하고 있어요…",
+    invalid: (max: number) => `1~${max}자로 입력해 주세요.`,
+    failed: "저장하지 못했어요. 다시 시도해 주세요.",
+    pageTitle: "사용자 이름",
+    field: (max: number) => `사용자 이름 (${max}자까지)`,
+  },
+  mail: {
+    confirmSubject: "ことのあめ | 이메일 주소 확인",
+    confirmTitle: "이메일 주소 확인",
+    confirmBody: "ことのあめ 계정에 가입해 주셔서 고마워요. 아래 버튼을 누르면 가입이 끝나고, 바로 시작할 수 있어요.",
+    confirmButton: "가입 마치기",
+    resetSubject: "ことのあめ | 비밀번호 재설정",
+    resetTitle: "비밀번호 재설정",
+    resetBody: "아래 버튼을 누르면 새 비밀번호를 정하는 화면이 열려요.",
+    resetButton: "새 비밀번호 정하기",
+    linkNote: "버튼이 눌리지 않으면 아래 주소를 브라우저에 붙여 넣어 주세요.",
+    ignore: "짐작 가는 일이 없다면, 이 메일은 아무것도 하지 말고 지워 주세요.",
+    lang: "ko",
+  },
+};
+
+const copies: Record<SisterLang, SignInCopy> = { ja: jaCopy, ko: koCopy };
+
+/** The sign-in pages' and mails' copy in one language. */
+export function signInCopy(lang: SisterLang): SignInCopy {
+  return copies[lang];
+}

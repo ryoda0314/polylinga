@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signInCopy, type SignInCopy } from "@/lib/i18n/sign-in";
+import type { SisterLang } from "@/lib/sisters";
 import { createClient } from "@/lib/supabase/client";
 import { register, resendConfirmation, type MailResult } from "./actions";
 import { GoogleButton } from "./GoogleButton";
@@ -12,26 +14,27 @@ type Mode = "login" | "register";
 
 const MIN_PASSWORD = 8;
 
-const sentNotice = (email: string) =>
-  `${email} に確認メールを送りました。メールのリンクを押すと登録が終わり、そのまま始められます。届かないときは、迷惑メールのフォルダも見てください。`;
-
-function mailError(result: Exclude<MailResult, { ok: true }>): string {
+function mailError(result: Exclude<MailResult, { ok: true }>, t: SignInCopy["form"]): string {
   switch (result.reason) {
     case "invalid":
-      return "メールアドレスを確かめてください。";
+      return t.invalid;
     case "exists":
-      return "このメールアドレスはすでに登録されています。ログインしてください。";
+      return t.exists;
     case "weak":
-      return `パスワードは${MIN_PASSWORD}文字以上にしてください。`;
+      return t.weak(MIN_PASSWORD);
     case "limit":
-      return "このアドレスへのメールは、今日はもう送れません。明日もう一度お試しください。";
+      return t.limit;
     default:
-      return "メールを送れませんでした。少し待ってから、もう一度お試しください。";
+      return t.mailFailed;
   }
 }
 
-/** `next`: where to go once signed in (and where a new account's mail leads), when the link said; else the usual places. */
-export function LoginForm({ next }: { next?: string }) {
+/**
+ * `next`: where to go once signed in (and where a new account's mail leads), when the link said; else the usual places.
+ * `lang`: Korean on the way to a sister for Korean speakers (src/lib/sisters.ts connectLang).
+ */
+export function LoginForm({ next, lang = "ja" }: { next?: string; lang?: SisterLang }) {
+  const t = signInCopy(lang).form;
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -55,7 +58,7 @@ export function LoginForm({ next }: { next?: string }) {
     setNotice("");
     setUnconfirmed(false);
     if (mode === "register" && password.length < MIN_PASSWORD) {
-      setError(`パスワードは${MIN_PASSWORD}文字以上にしてください。`);
+      setError(t.weak(MIN_PASSWORD));
       return;
     }
     setBusy(true);
@@ -65,13 +68,7 @@ export function LoginForm({ next }: { next?: string }) {
       setBusy(false);
       if (authError) {
         setUnconfirmed(authError.code === "email_not_confirmed");
-        setError(
-          authError.status === 429
-            ? "ログインの試行が続いたため、少し待つ必要があります。1分ほどしてからお試しください。"
-            : authError.code === "email_not_confirmed"
-              ? "メールアドレスの確認がまだです。届いた確認メールのリンクを押してから、もう一度ログインしてください。"
-              : "メールアドレスかパスワードが違います。",
-        );
+        setError(authError.status === 429 ? t.busy : authError.code === "email_not_confirmed" ? t.unconfirmed : t.wrong);
         return;
       }
       router.replace(next ?? "/app");
@@ -82,8 +79,8 @@ export function LoginForm({ next }: { next?: string }) {
     // ことのあめ's own confirmation mail (actions.ts); the account cannot log in until its link is pressed.
     const result = await register(email, password, next);
     setBusy(false);
-    if (result.ok) setNotice(sentNotice(email));
-    else setError(mailError(result));
+    if (result.ok) setNotice(t.sent(email));
+    else setError(mailError(result, t));
   }
 
   async function sendAgain() {
@@ -93,13 +90,13 @@ export function LoginForm({ next }: { next?: string }) {
     if (result.ok) {
       setUnconfirmed(false);
       setError("");
-      setNotice(sentNotice(email));
-    } else setError(mailError(result));
+      setNotice(t.sent(email));
+    } else setError(mailError(result, t));
   }
 
   return (
     <div className={styles.stack}>
-      <div className={styles.tabs} role="tablist" aria-label="ログインか新規登録か">
+      <div className={styles.tabs} role="tablist" aria-label={t.tabs}>
         <button
           type="button"
           role="tab"
@@ -107,7 +104,7 @@ export function LoginForm({ next }: { next?: string }) {
           className={mode === "login" ? styles.tabOn : styles.tab}
           onClick={() => switchMode("login")}
         >
-          ログイン
+          {t.login}
         </button>
         <button
           type="button"
@@ -116,7 +113,7 @@ export function LoginForm({ next }: { next?: string }) {
           className={mode === "register" ? styles.tabOn : styles.tab}
           onClick={() => switchMode("register")}
         >
-          新しく登録
+          {t.register}
         </button>
       </div>
 
@@ -127,7 +124,7 @@ export function LoginForm({ next }: { next?: string }) {
       ) : (
         <form onSubmit={submit} className={styles.stack}>
           <label htmlFor="email" className="label">
-            メールアドレス
+            {t.email}
           </label>
           <input
             id="email"
@@ -139,7 +136,8 @@ export function LoginForm({ next }: { next?: string }) {
             className={styles.input}
           />
           <label htmlFor="password" className="label">
-            パスワード{mode === "register" ? `（${MIN_PASSWORD}文字以上）` : ""}
+            {t.password}
+            {mode === "register" ? t.passwordMin(MIN_PASSWORD) : ""}
           </label>
           <input
             id="password"
@@ -158,22 +156,22 @@ export function LoginForm({ next }: { next?: string }) {
           ) : null}
           {unconfirmed ? (
             <button type="button" className="btn-quiet" onClick={sendAgain} disabled={busy}>
-              確認メールをもう一度送る
+              {t.resend}
             </button>
           ) : null}
           <button type="submit" className="btn" disabled={busy}>
-            {busy ? "確認しています…" : mode === "login" ? "ログイン" : "登録する"}
+            {busy ? t.checking : mode === "login" ? t.submitLogin : t.submitRegister}
           </button>
           {mode === "login" ? (
-            <Link href="/login/forgot" className={styles.textLink}>
-              パスワードを忘れた
+            <Link href={next ? `/login/forgot?${new URLSearchParams({ next })}` : "/login/forgot"} className={styles.textLink}>
+              {t.forgot}
             </Link>
           ) : null}
         </form>
       )}
 
-      <div className={styles.or}>または</div>
-      <GoogleButton onError={setError} next={next} />
+      <div className={styles.or}>{t.or}</div>
+      <GoogleButton onError={setError} next={next} lang={lang} />
     </div>
   );
 }

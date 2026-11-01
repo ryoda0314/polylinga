@@ -20,5 +20,7 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(`${origin}${next}`);
     console.error("[auth confirm]", error.message);
   }
-  return NextResponse.redirect(`${origin}/login?error=1`);
+  // On the way to a sister's つなぐ: back to the login for it (in the sister's language), not the plain one.
+  const onward = next.startsWith("/connect?") ? `&${new URLSearchParams({ next })}` : "";
+  return NextResponse.redirect(`${origin}/login?error=1${onward}`);
 }
