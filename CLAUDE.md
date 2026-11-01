@@ -44,11 +44,12 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   session token carries it and the sister apps can read it. Not unique, not a login, never shown to other learners. An
   account without one is sent to `/name` by the proxy before any page (`/name?next=` goes on after, so つなぐ and `/start`
   still follow); `saveUsername` renews the session so the token has it at once. Changed in settings.
-- つなぐ for the sister apps (`/connect`, `src/lib/sisters.ts`): ことのは, ことのおと, ことのめ and ことのえだ send their learner
+- つなぐ for the sister apps (`/connect`, `src/lib/sisters.ts`): ことのは, ことのおと, ことのめ, ことのえだ and ことのみ send their learner
   to `/connect?app=&back=&state=`; signed out, they log in or sign up first and come back (`/login?next=`); signed in,
   one press makes a magic-link token (`generateLink`, never mailed) and sends it back to the sister's `/login` in the
   URL fragment with the sister's state. Only to the sisters listed there, at their public addresses or localhost (a
-  token sent there signs the learner in). ことのね keeps its record on the device and has no account yet.
+  token sent there signs the learner in; ことのみ has no public address yet, so only localhost until it is written
+  there). ことのね keeps its record on the device and has no account yet.
 - `src/lib/shower.ts` (+ pure helpers in `shower-core.ts`): picks the next cluster (patterns due to return first,
   then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings. A pattern is due
   after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same

@@ -11,6 +11,7 @@ test("a sister's own public address, or this computer, is a destination", () => 
   assert.equal(destinationFor("kotonoha", "https://kotonoha-ashy.vercel.app/")?.origin, "https://kotonoha-ashy.vercel.app");
   assert.equal(destinationFor("kotonome", "http://localhost:3230")?.name, "ことのめ");
   assert.equal(destinationFor("kotonoeda", "http://127.0.0.1:3000")?.name, "ことのえだ");
+  assert.equal(destinationFor("kotonomi", "http://localhost:3250")?.name, "ことのみ", "not published yet: this computer only");
 });
 
 test("anything else is not", () => {
@@ -25,6 +26,8 @@ test("anything else is not", () => {
     ["kotonoha", "javascript:alert(1)"],
     ["kotonoha", "not a url"],
     ["polylinga", "https://polylinga.vercel.app"],
+    ["kotonomi", "https://kotonomi.vercel.app"], // no address of its own yet
+    ["kotonomi", "null"],
     ["toString", "http://localhost:3000"],
     ["kotonoha", null],
     [null, "https://kotonoha-ashy.vercel.app"],

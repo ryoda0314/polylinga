@@ -1,16 +1,18 @@
 // The sister apps that sign in with ことのあめ's accounts (the same Supabase project), and where つなぐ (/connect) may
 // send a learner back: each one's public address, or an address on the learner's own computer while one is being
-// built. Nothing else is ever a destination, because what is sent there signs the learner in.
+// built. Nothing else is ever a destination, because what is sent there signs the learner in. A sister not published
+// yet has no address (null): only the learner's own computer, until its address is written here.
 // ことのね keeps its record on the device only; it has no account to つなぐ yet.
 // Pure: tested in tests/sisters.test.mjs.
 
-export type SisterId = "kotonoha" | "kotonooto" | "kotonome" | "kotonoeda";
+export type SisterId = "kotonoha" | "kotonooto" | "kotonome" | "kotonoeda" | "kotonomi";
 
-export const SISTERS: Record<SisterId, { name: string; url: string }> = {
+export const SISTERS: Record<SisterId, { name: string; url: string | null }> = {
   kotonoha: { name: "ことのは", url: "https://kotonoha-ashy.vercel.app" },
   kotonooto: { name: "ことのおと", url: "https://kotonoame-ch.vercel.app" },
   kotonome: { name: "ことのめ", url: "https://kotonome-kappa.vercel.app" },
   kotonoeda: { name: "ことのえだ", url: "https://keigo-green.vercel.app" },
+  kotonomi: { name: "ことのみ", url: null },
 };
 
 export type Destination = { id: SisterId; name: string; origin: string };
@@ -30,7 +32,8 @@ export function destinationFor(app: string | null | undefined, back: string | nu
   }
   // An origin and nothing more: no path, query or credentials riding along.
   if (origin !== back.replace(/\/$/, "")) return null;
-  if (origin !== new URL(SISTERS[id].url).origin && !ON_THIS_COMPUTER.test(origin)) return null;
+  const home = SISTERS[id].url;
+  if ((!home || origin !== new URL(home).origin) && !ON_THIS_COMPUTER.test(origin)) return null;
   return { id, name: SISTERS[id].name, origin };
 }
 
