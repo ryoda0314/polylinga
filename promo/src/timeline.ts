@@ -71,14 +71,16 @@ function make() {
   notice.reveal = notice.press + 0.15;
   notice.end = Math.max(say("V05", v05), notice.reveal + 2.6) + 0.35;
 
-  // C3. 言ってみる：「これで言ってみる」。さっきの雨が欄の上に残り、そこから組んだ文（今日は韓国でいちご食べたい）を打って、
-  // 直してもらう。
-  const tri = { start: notice.end, cap: 0, press: 0, open: 0, type: 0, typed: 0, send: 0, end: 0 };
+  // C3. 言ってみる：「これで言ってみる」で、言ってみるの頁へ。さっきの4文が並び、その下の欄まで送って（4文とも見えたまま）、
+  // 欄を押して、そこから組んだ文（今日は韓国でいちご食べたい）を打ち、直してもらう。
+  const tri = { start: notice.end, cap: 0, press: 0, open: 0, field: 0, type: 0, typed: 0, send: 0, end: 0 };
   tri.cap = tri.start + 0.4;
   tri.press = tri.start + 0.75;
   tri.open = tri.press + 0.15;
   const v06 = say("V06", tri.start + 0.5);
-  tri.type = tri.open + 0.85;
+  // 頁が開いて、4文を見せてから欄へ。
+  tri.type = tri.open + 1.15;
+  tri.field = tri.type - 0.1;
   tri.typed = tri.type + [...LIB.say.attempt].length * TYPE_PER;
   tri.send = Math.max(tri.typed + 0.4, v06 + 0.15);
   // 「直しています…」のあいだ（使い方と同じ 1.1 秒）。
@@ -112,8 +114,9 @@ function make() {
   ask.q4 = ask.q3 + 0.22;
   ask.end = say("V16", v16) + 0.5;
 
-  // C6. 予測する：「文を押して」で三文目を押すと語のシート、「単語を選ぶ」で 오늘은 を選ぶと、ほかの文が5つ（少し送って、
-  // 5つとも見せる）。「見比べて」で、どの訳にもある「今日は」が光り、「意味を予測する」で、たぶん「今日は」。言い終わったら閉じる。
+  // C6. 予測する：まだ書く前の言ってみるの頁。「文を押して」で4文の三文目を押すと語のシート、「単語を選ぶ」で 오늘은 を選ぶと、
+  // ほかの文が5つ（少し送って、5つとも見せる）。「見比べて」で、どの訳にもある「今日は」が光り、「意味を予測する」で、
+  // たぶん「今日は」。言い終わったら閉じる。
   const guess = { start: ask.end, cap: 0, tap: 0, sheet: 0, pick: 0, others: 0, slide: 0, predict: 0, compare: 0, guessed: 0, sure: 0, close: 0, end: 0 };
   guess.cap = guess.start + 0.4;
   const v17 = guess.start + 0.5;

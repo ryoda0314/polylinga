@@ -112,7 +112,7 @@ function Sound() {
     MUSIC * interpolate(frame, [0, 20, TOTAL - 75, TOTAL - 4], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) * (1 - DUCK * (DUCKING[frame] ?? 0));
   // 冒頭で降ってくる3つの文と、問いで大きく降ってくる4つの文（どちらも鳴らさない文）に、雨粒。
   const drops = [h.s1, h.s2, h.s3, ...[0, 1, 2, 3].map((i) => q.mat + 4 + i * 4)];
-  const taps = [r.press, n.press, tr.press, fx.copy, g.tap, g.pick, g.close, b.explain, b.pick, a.press, l.en, l.zh, hb.pick, hb.save];
+  const taps = [r.press, n.press, tr.press, tr.field, fx.copy, g.tap, g.pick, g.close, b.explain, b.pick, a.press, l.en, l.zh, hb.pick, hb.save];
   // 打つ：言ってみるの欄に一字ずつ。
   const keys = [...LIB.say.attempt].map((_, k) => tr.type + Math.round(k * TYPE_PER * 30));
   return (

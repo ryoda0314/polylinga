@@ -1,11 +1,12 @@
 // C. アプリの画面で、ひとめぐり。左に映像の言葉、右にアプリ（電話の幅：アプリの枠のいちばん広い 560px）。
 //   浴びる：雨の最初の画面で 浴びる を押すと、同じかたち（〜したい）の4つの文が、置き場の声で一つずつ降る。
 //   気づく：「共通しているところは？」で、文と訳の同じところに色が付く。共通していたところ：したいことを言う。
-//   言ってみる：「これで言ってみる」。さっきの雨が欄の上に残る。雨の文から組んだ 오늘은 한국에 딸기 먹고 싶어. で、直してもらう。
-//   直った：あなたの文と直した文（에 に 서 を足した）、どこを直したか、コピー。
+//   言ってみる：「これで言ってみる」で、言ってみるの頁（浴びたかたちで言ってみる）。さっきの4文が並び、その下の欄に、雨の文から
+//     組んだ 오늘은 한국에 딸기 먹고 싶어. を打って、直してもらう。
+//   直った：あなたの文と直した文（에 に 서 を足した）、どこを直したか、コピー。その下に、浴びた4文が残る。
 //   （ここで全面の問い：Ask.tsx。この画面は見えていない）
-//   予測する：三文目（오늘은 일찍 자고 싶어.）を押して、語のシート。오늘은 を選ぶと、ほかの文が5つ。左でその訳を見比べると、
-//     どれも「今日は」。たぶん「今日は」。
+//   予測する：まだ書く前の言ってみるの頁。4文の三文目（오늘은 일찍 자고 싶어.）を押して、語のシート。오늘은 を選ぶと、
+//     ほかの文が5つ。左でその訳を見比べると、どれも「今日は」。たぶん「今日は」。
 //   そのまま使って、違っていたら直してもらう：さっきの直った文に戻って、詳しく解説で 오늘은 と「今日は」が光る。
 //   また出会う：3日後、前にも降ったかたちが、まだ出会っていない4つの文で降る。
 //   3つの言葉：はじめの画面で選べる 韓国語・英語・中国語。同じ文（いちごが食べたい）が、それぞれの声で。
@@ -28,7 +29,7 @@ const BEFORE: Cap[] = [
     sub: [["答え合わせは、文と訳の同じところに"], ["色が付くだけ。"]],
     subAt: T.notice.press,
   },
-  { from: T.tri.cap, door: "say", main: [["浴びたかたちで、"], ["自分のことを言ってみる。"]], sub: [["さっき降ってきた文が、すぐ上に残る。"]] },
+  { from: T.tri.cap, door: "say", main: [["浴びたかたちで、"], ["自分のことを言ってみる。"]], sub: [["さっき降ってきた4文を、見ながら書ける。"]] },
   { from: T.fixed.cap, door: "say", main: [["AI が直して、"], ["理由を説明してくれる。"]], sub: [["直った文は、コピーしてそのまま送れる。"]] },
 ];
 
@@ -150,11 +151,13 @@ function Compare({ frame }: { frame: number }) {
 }
 
 function Panel({ frame }: { frame: number }) {
-  // どの画面を、いつから：雨 → 直った →（問いで見えないあいだに）雨 → 直った → 3日後の雨 → 3つの言葉 → 続ける。
+  // どの画面を、いつから：雨 → 言ってみる → 直った →（問いで見えないあいだに）言ってみる → 直った → 3日後の雨 → 3つの言葉 →
+  // 続ける。
   const shows: [from: number, Screen: (p: { frame: number }) => ReactNode][] = [
     [T.rain.start, RainScreen],
+    [T.tri.open, TryScreen],
     [T.fixed.start, FixScreen],
-    [T.ask.start + 12, RainScreen],
+    [T.ask.start + 12, TryScreen],
     [T.back.start, FixScreen],
     [T.again.back, AgainScreen],
     [T.langs.start, LangsScreen],
@@ -274,7 +277,51 @@ function Answer({ frame, at }: { frame: number; at: number }) {
 /** フォーカスのある欄（:focus-visible の 2px の輪）。 */
 const focusRing = (on: boolean): CSSProperties => (on ? { outline: `2px solid ${C.accent}`, outlineOffset: 2 } : {});
 
-// ---- 浴びる・気づく・予測する・言ってみる（一つの頁） --------------------------------------------------------------
+/** 頁の上の帯（app.module.css の .subbar）：戻ると、頁の名前。 */
+function SubBar({ title, strong = false }: { title: string; strong?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 12px 8px 8px", borderBottom: `1px solid ${C.line}` }}>
+      <span style={{ width: 44, height: 44, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon name="back" size={22} />
+      </span>
+      <p style={{ flex: 1, margin: 0, fontSize: 15, fontWeight: strong ? 600 : 500 }}>{title}</p>
+    </div>
+  );
+}
+
+/**
+ * 言ってみるの文（_shower/Material.tsx）：見出しと働き（答え合わせのあとなので光ったまま）、4つの文、押すと語のシートになる案内。
+ * 言ってみるの頁と、直った文の頁で同じもの。`tap`：三文目を押したコマ。
+ */
+function Material({ frame, title, tap = -99 }: { frame: number; title: string; tap?: number }) {
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "4px 12px" }}>
+        <p style={label}>{title}</p>
+        <span style={{ padding: "2px 10px", borderRadius: 999, background: C.tint, color: C.accent, fontSize: 13, fontWeight: 600 }}>{LIB.label}</span>
+      </div>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, borderTop: `1px solid ${C.line}` }}>
+        {RAIN.map((s) => (
+          <li key={s.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: `1px solid ${C.line}` }}>
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ position: "relative", alignSelf: "flex-start", fontFamily: fontOf(s.lang as Lang), fontSize: 20, fontWeight: 500, lineHeight: 1.7, borderRadius: 6 }}>
+                <Sent text={s.text} hl={s.mark ? [{ start: s.mark[0], end: s.mark[1], kind: "mark" }] : []} reading={s.reading} />
+                {s.text === LIB.look.sentence ? <Press t={frame - tap} size={56} /> : null}
+              </span>
+              <span style={{ fontFamily: FONT.ja, fontSize: 14, color: C.muted }}>
+                <Sent text={s.gloss} color={C.muted} hl={s.glossMark ? [{ start: s.glossMark[0], end: s.glossMark[1], kind: "mark" }] : []} />
+              </span>
+            </div>
+            <PlayButton />
+          </li>
+        ))}
+      </ul>
+      <p style={note}>文を押すと、語を選んで、ほかの文での使われ方を見たりメモしたりできます。</p>
+    </section>
+  );
+}
+
+// ---- 浴びる・気づく（雨の頁） ------------------------------------------------------------------------------------------
 
 const RAIN = LIB.rain as Rained[];
 /** 雨の頁の高さの目安（px）：一文、文の並びの上、など。画面をどこまで送るかに使う。 */
@@ -285,16 +332,12 @@ const listBottom = (n: number) => LIST_TOP + 1 + n * ITEM;
 function RainScreen({ frame }: { frame: number }) {
   const r = T.rain;
   const n = T.notice;
-  const g = T.guess;
   const tr = T.tri;
   const at = [r.press + 3, startOf("rain2"), startOf("rain3"), startOf("rain4")];
   const shown = at.filter((a) => frame >= a).length;
   const all = shown === RAIN.length;
   const revealed = frame >= n.reveal;
-  // 言ってみるのは、直った文へ移るまで。問いのあと、語を押しに戻ってきたときは、言ってみる前の頁。
-  const trying = frame >= tr.open && frame < T.ask.start;
-  // 画面の送り：浴びるのボタンまで → 降りはじめに上へ → 4つ目に合わせて → 答え合わせのボタン → 答え → これで言ってみる →
-  // さっきの雨を欄の上に →（問いのあいだに）4つの文が見えるところへ。
+  // 画面の送り：浴びるのボタンまで → 降りはじめに上へ → 4つ目に合わせて → 答え合わせのボタン → 答え → これで言ってみる。
   const afterTop = listBottom(4) + 20;
   const answerEnd = afterTop + 120;
   const tryTop = answerEnd + 12;
@@ -305,8 +348,6 @@ function RainScreen({ frame }: { frame: number }) {
     [n.start + 2, afterTop + 52 + 16 - VIEW, 22],
     [n.reveal + 8, answerEnd + 12 - VIEW, 24],
     [tr.start + 1, tryTop + 52 + 16 - VIEW, 14],
-    [tr.open + 10, tryTop + 17 - 8, 20],
-    [T.ask.start + 20, LIST_TOP - 58, 1],
   ]);
   return (
     <>
@@ -318,7 +359,7 @@ function RainScreen({ frame }: { frame: number }) {
           ) : (
             <ol style={{ listStyle: "none", margin: 0, padding: 0, borderTop: `1px solid ${C.line}` }}>
               {RAIN.slice(0, shown).map((s, i) => (
-                <Item key={s.key} frame={frame} s={s} at={at[i]} revealAt={n.reveal} tap={s.text === LIB.look.sentence ? g.tap : -99} />
+                <Item key={s.key} frame={frame} s={s} at={at[i]} revealAt={n.reveal} />
               ))}
             </ol>
           )}
@@ -331,13 +372,9 @@ function RainScreen({ frame }: { frame: number }) {
                   共通しているところは？
                 </Btn>
               )}
-              {trying ? (
-                <TryForm frame={frame} />
-              ) : (
-                <Btn full press={frame - tr.press}>
-                  これで言ってみる
-                </Btn>
-              )}
+              <Btn full press={frame - tr.press}>
+                これで言ってみる
+              </Btn>
               <Btn quiet full>
                 次の雨
               </Btn>
@@ -346,13 +383,74 @@ function RainScreen({ frame }: { frame: number }) {
         </ShowerPage>
       </Scroll>
       <BottomNav active="shower" />
+    </>
+  );
+}
+
+// ---- 言ってみる・予測する（これで言ってみるの頁：_shower/TryPage.tsx） --------------------------------------------------
+
+/** 言ってみるの頁の高さの目安（px）：欄の下の端、直してもらうの下の端。画面をどこまで送るかに使う。 */
+const FIELD_BOTTOM = 640;
+const FORM_BOTTOM = 730;
+
+/**
+ * これで言ってみるの頁：さっきの4文（光ったまま）、その下に欄。言ってみる：開いたら、4文が見えたまま欄まで送って、欄を押して打ち、
+ * 直してもらう（そこで、直してもらうのボタンまで送る）。予測する（問いのあと）：まだ書く前の頁で、三文目を押すと語のシート。
+ */
+function TryScreen({ frame }: { frame: number }) {
+  const t = T.tri;
+  const writing = frame < T.ask.start;
+  const attempt = [...LIB.say.attempt];
+  const count = writing && frame >= t.type ? Math.min(attempt.length, Math.floor((frame - t.type) / (TYPE_PER * 30)) + 1) : 0;
+  const sending = writing && frame >= t.send;
+  const focused = writing && frame >= t.field && !sending;
+  const y = writing
+    ? glide(frame, [
+        [t.open + 12, FIELD_BOTTOM + 12 - VIEW, 15],
+        [t.typed - 3, FORM_BOTTOM + 16 - VIEW, 10],
+      ])
+    : 0;
+  return (
+    <>
+      <Scroll y={y}>
+        <SubBar title="浴びたかたちで言ってみる" strong />
+        <div style={{ display: "flex", flexDirection: "column", gap: 28, padding: "20px 20px 40px" }}>
+          <Material frame={frame} title="さっき降ってきた文" tap={writing ? -99 : T.guess.tap} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={label}>さっきの文みたいに、自分のことを言ってみる</p>
+            <div
+              style={{
+                position: "relative",
+                minHeight: 96,
+                padding: 14,
+                border: `1.5px solid ${C.ink}`,
+                borderRadius: 12,
+                fontFamily: FONT.ko,
+                fontSize: 18,
+                lineHeight: 1.6,
+                background: C.paper,
+                ...focusRing(focused),
+              }}
+            >
+              {attempt.slice(0, count).join("")}
+              {focused ? <Caret frame={frame} color={C.ink} /> : null}
+              {writing ? <Press t={frame - t.field} x="30%" size={56} /> : null}
+            </div>
+            <p style={note}>分からないところは日本語のままで大丈夫です。</p>
+            <Btn full press={writing ? frame - t.send : -99} style={sending ? { opacity: 0.55 } : undefined}>
+              {sending ? "直しています…" : "直してもらう"}
+            </Btn>
+          </div>
+        </div>
+      </Scroll>
+      <BottomNav active="shower" />
       <WordSheet frame={frame} />
     </>
   );
 }
 
 /**
- * 気になった語（WordSheet）：押した文（오늘은 일찍 자고 싶어.）の語。「単語を選ぶ」で 오늘은 を選ぶと、少しして、ほかの文が5つ
+ * 気になった語（WordSheet）：言ってみるの頁で押した文（오늘은 일찍 자고 싶어.）の語。「単語を選ぶ」で 오늘은 を選ぶと、少しして、ほかの文が5つ
  * （アプリの sentencesWith が返す文。その語が光る）。シートは高さの 88% まで（はみ出たところは、シートの中で送る）：5つ目まで
  * 見えるよう少し送る。下の、自分で打ってメモの欄は、はみ出て見えない。言い終わったら × で閉じる。
  */
@@ -454,57 +552,7 @@ function WordSheet({ frame }: { frame: number }) {
   );
 }
 
-/** これで言ってみる（TryForm）：さっき降ってきた文（答え合わせのあとなので光ったまま）、欄、直してもらう。 */
-function TryForm({ frame }: { frame: number }) {
-  const t = T.tri;
-  const count = frame < t.type ? 0 : Math.min([...LIB.say.attempt].length, Math.floor((frame - t.type) / (TYPE_PER * 30)) + 1);
-  const typed = [...LIB.say.attempt].slice(0, count).join("");
-  const sending = frame >= t.send;
-  const focused = !sending;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 0", borderTop: `1px solid ${C.line}`, ...rise(frame, t.open, 4, 6) }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "10px 12px", marginBottom: 4, background: C.surface, borderRadius: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: C.muted }}>さっき降ってきた文</span>
-        {/* 26vh まで（PH の 26%）：それより長いと、この中で送る。 */}
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, maxHeight: PH * 0.26, overflow: "hidden" }}>
-          {RAIN.map((s, i) => (
-            <li key={s.key} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: i < RAIN.length - 1 ? `1px solid ${C.line}` : undefined }}>
-              <span style={{ fontFamily: FONT.ko, fontSize: 17, fontWeight: 500, lineHeight: 1.6 }}>
-                <Sent text={s.text} hl={s.mark ? [{ start: s.mark[0], end: s.mark[1], kind: "mark" }] : []} />
-              </span>
-              <span style={{ fontSize: 12, color: C.muted }}>
-                <Sent text={s.gloss} color={C.muted} hl={s.glossMark ? [{ start: s.glossMark[0], end: s.glossMark[1], kind: "mark" }] : []} />
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <p style={label}>さっきの文みたいに、自分のことを言ってみる</p>
-      <div
-        style={{
-          minHeight: 96,
-          padding: 14,
-          border: `1.5px solid ${C.ink}`,
-          borderRadius: 12,
-          fontFamily: FONT.ko,
-          fontSize: 18,
-          lineHeight: 1.6,
-          background: C.paper,
-          ...focusRing(focused),
-        }}
-      >
-        {typed}
-        {focused ? <Caret frame={frame} color={C.ink} /> : null}
-      </div>
-      <p style={note}>分からないところは日本語のままで大丈夫です。</p>
-      <Btn full press={frame - t.send} style={sending ? { opacity: 0.55 } : undefined}>
-        {sending ? "直しています…" : "直してもらう"}
-      </Btn>
-    </div>
-  );
-}
-
-// ---- 直った（/app/s/[id]：浴びたかたちで言ってみた） ---------------------------------------------------------------
+// ---- 直った（/app/s/[id]：浴びたかたちで言ってみた。電話では、直した文の下に浴びた4文、もう一度書く） -------------------
 
 /** 詳しく解説で押す語：予測した 오늘은。 */
 const PICK = LIB.say.parts.findIndex((p) => LIB.say.corrected.slice(p.start, p.end) === LIB.look.word);
@@ -528,12 +576,7 @@ function FixScreen({ frame }: { frame: number }) {
   return (
     <>
       <Scroll y={y}>
-        <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 12px 8px 8px", borderBottom: `1px solid ${C.line}` }}>
-          <span style={{ width: 44, height: 44, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="back" size={22} />
-          </span>
-          <p style={{ flex: 1, margin: 0, fontSize: 15, fontWeight: 500 }}>浴びたかたちで言ってみた</p>
-        </div>
+        <SubBar title="浴びたかたちで言ってみた" />
         <div style={{ display: "flex", flexDirection: "column", gap: 28, padding: "20px 20px 40px" }}>
           <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <p style={label}>あなたの文</p>
@@ -603,6 +646,10 @@ function FixScreen({ frame }: { frame: number }) {
             <p style={label}>どこを直したか</p>
             <p style={{ margin: 0, fontSize: 15, lineHeight: 1.75 }}>{say.explanation}</p>
           </section>
+          <Material frame={frame} title="浴びた文" />
+          <p style={{ margin: 0, minHeight: 44, display: "flex", alignItems: "center", paddingTop: 4, borderTop: `1px solid ${C.line}`, fontSize: 14, fontWeight: 500, color: C.ink2 }}>
+            もう一度書く
+          </p>
         </div>
       </Scroll>
       <BottomNav active="write" />
