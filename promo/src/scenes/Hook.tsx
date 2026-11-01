@@ -6,7 +6,7 @@ import { T } from "../timeline";
 import { C, FONT } from "../theme";
 import { Rain, Sent } from "../ui";
 
-const ROWS = ["rain1", "rain3", "rain4"].map((k) => LIB.rain.find((s) => s.key === k)!);
+const ROWS = ["rain1", "rain2", "rain4"].map((k) => LIB.rain.find((s) => s.key === k)!);
 const caption = { position: "absolute", left: 0, right: 0, margin: 0, textAlign: "center", fontFamily: FONT.ui, fontWeight: 600, color: C.ink } as const;
 
 export function Hook({ frame }: { frame: number }) {
@@ -31,7 +31,7 @@ export function Hook({ frame }: { frame: number }) {
       {/* 似た文が降ってきて、共通しているところが光る */}
       {frame >= h.s1 ? (
         <>
-          <ol style={{ position: "absolute", left: 650, top: 150, width: 620, margin: 0, padding: 0, listStyle: "none", borderTop: `1.5px solid ${C.line}` }}>
+          <ol style={{ position: "absolute", left: 610, top: 150, width: 700, margin: 0, padding: 0, listStyle: "none", borderTop: `1.5px solid ${C.line}` }}>
             {ROWS.map((s, i) => (
               <li key={s.key} style={{ display: "flex", alignItems: "stretch", gap: 30, padding: "24px 0", borderBottom: `1.5px solid ${C.line}`, ...rainFall(frame, falls[i]) }}>
                 <span style={{ width: 5, margin: "8px 0", borderRadius: 3, background: C.line2, transformOrigin: "top", transform: `scaleY(${prog(frame, falls[i] + 7, 13)})` }} />

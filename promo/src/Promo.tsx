@@ -1,11 +1,12 @@
 import { AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame } from "remotion";
 import { prog } from "./anim";
+import { Ask } from "./scenes/Ask";
 import { End } from "./scenes/End";
 import { Hook } from "./scenes/Hook";
 import { NameMark, TAGLINE } from "./scenes/Mark";
 import { Story } from "./scenes/Story";
 import { C, FONT, useFonts } from "./theme";
-import { CLIP_AT, MEMO_KEYS, MEMO_PER, T, TOTAL, TYPE_PER, VOICE_AT } from "./timeline";
+import { CLIP_AT, T, TOTAL, TYPE_PER, VOICE_AT } from "./timeline";
 import LIB from "./library.json";
 import { Rain } from "./ui";
 
@@ -46,7 +47,14 @@ export function Promo() {
         <Rain frame={frame} scale={1.7} fade={0.32} />
         <NameMark frame={frame} icon={T.title.icon} word={T.title.word} lead={T.title.lead} line={TAGLINE} size={280} top={150} wordSize={104} leadSize={46} />
       </Window>
-      <Window frame={frame} from={T.rain.start} to={T.end.start + 10} fade={14}>
+      {/* アプリの画面は、問い（全面）のあいだだけ退く。 */}
+      <Window frame={frame} from={T.rain.start} to={T.ask.start + 10} fade={14}>
+        <Story frame={frame} />
+      </Window>
+      <Window frame={frame} from={T.ask.start} to={T.guess.start + 10} fade={14}>
+        <Ask frame={frame} />
+      </Window>
+      <Window frame={frame} from={T.guess.start} to={T.end.start + 10} fade={14}>
         <Story frame={frame} />
       </Window>
       <Window frame={frame} from={T.end.start} to={TOTAL} fade={20} fadeOut={false}>
@@ -92,22 +100,21 @@ function Sound() {
   const h = T.hook;
   const r = T.rain;
   const n = T.notice;
-  const m = T.memo;
   const tr = T.tri;
   const fx = T.fixed;
+  const q = T.ask;
+  const g = T.guess;
+  const b = T.back;
   const a = T.again;
   const l = T.langs;
   const hb = T.habit;
   const musicVolume = (frame: number) =>
     MUSIC * interpolate(frame, [0, 20, TOTAL - 75, TOTAL - 4], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) * (1 - DUCK * (DUCKING[frame] ?? 0));
-  // 冒頭で降ってくる3つの文（鳴らさない文）に、雨粒。
-  const drops = [h.s1, h.s2, h.s3];
-  const taps = [r.press, n.press, m.tap, m.type - 8, m.save, m.close, tr.press, fx.copy, fx.explain, fx.pick, a.press, l.en, l.zh, hb.pick, hb.save];
-  // 打つ：メモの欄に字母を一つずつ、言ってみるの欄に一字ずつ。
-  const keys = [
-    ...MEMO_KEYS.map((_, k) => m.type + Math.round(k * MEMO_PER * 30)),
-    ...[...LIB.say.attempt].map((_, k) => tr.type + Math.round(k * TYPE_PER * 30)),
-  ];
+  // 冒頭で降ってくる3つの文と、問いで大きく降ってくる4つの文（どちらも鳴らさない文）に、雨粒。
+  const drops = [h.s1, h.s2, h.s3, ...[0, 1, 2, 3].map((i) => q.mat + 4 + i * 4)];
+  const taps = [r.press, n.press, tr.press, fx.copy, g.tap, g.pick, g.close, b.explain, b.pick, a.press, l.en, l.zh, hb.pick, hb.save];
+  // 打つ：言ってみるの欄に一字ずつ。
+  const keys = [...LIB.say.attempt].map((_, k) => tr.type + Math.round(k * TYPE_PER * 30));
   return (
     <>
       <Audio src={staticFile("sound/music.wav")} volume={musicVolume} />
@@ -118,7 +125,7 @@ function Sound() {
         <Clip key={`${c.id}${c.from}`} from={c.from} src={`app/${c.id}.wav`} />
       ))}
       {drops.map((at, i) => (
-        <Clip key={`d${at}`} from={at} src={`sound/drop${(i % 3) + 1}.wav`} volume={0.2} />
+        <Clip key={`d${at}`} from={at} src={`sound/drop${(i % 3) + 1}.wav`} volume={i < 3 ? 0.2 : 0.14} />
       ))}
       {[0, 4, 7].map((delay, i) => (
         <Clip key={`t${delay}`} from={T.title.icon + delay + 8} src={`sound/drop${i + 1}.wav`} volume={0.28} />
@@ -134,6 +141,7 @@ function Sound() {
       ))}
       <Clip from={tr.send - 1} src="sound/send.wav" volume={0.32} />
       <Clip from={n.reveal + 2} src="sound/chime.wav" volume={0.24} />
+      <Clip from={g.compare + 2} src="sound/chime.wav" volume={0.16} />
       <Clip from={fx.start + 6} src="sound/chime.wav" volume={0.2} />
     </>
   );

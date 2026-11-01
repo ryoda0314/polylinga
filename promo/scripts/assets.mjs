@@ -4,8 +4,9 @@
 //     公開済みの文は誰でも読める（RLS：status = 'approved'）。書き込みはしない。→ src/library.json
 //   - 例文の声：アプリの公開の置き場（pl-audio、名前は文の sha256：../src/lib/audio.ts）からそのまま。大きさだけ
 //     ナレーションにそろえて（山は -1 dBFS まで）WAV に → public/app/<key>.wav、長さは src/clips.json
-//   - 言ってみるの例：使い方（/tutorial）の韓国語の例そのまま（../src/lib/tutorial.ts の PICKS.ko）。直したところは
-//     アプリの diff（../src/lib/diff.ts）で
+//   - 語を押したときの「ほかの文」：アプリの WordSheet と同じ問い合わせ（../src/lib/shower.ts の sentencesWith）
+//   - 言ってみるの例：予測した語で言ってみた文と、それにアプリの添削が返したもの（下の SAY）。直したところはアプリの diff
+//     （../src/lib/diff.ts）で
 //   - 字（IBM Plex Sans JP・IBM Plex Sans KR・Noto Sans SC・しっぽり明朝）。映像に出てくる字だけに切る（Python の fontTools）
 //   node scripts/assets.mjs        (npm run assets)
 import { createHash } from "node:crypto";
@@ -21,37 +22,54 @@ for (const d of ["public/app", "public/fonts", WHOLE, RAW]) mkdirSync(d, { recur
 copyFileSync(`${APP}/public/icons/icon-512.png`, "public/app/icon.png");
 copyFileSync(`${APP}/public/illustrations/sprout.png`, "public/app/sprout.png");
 
-// ---- 例文（使い方の韓国語の雨と同じ：誘う） -----------------------------------------------------------------------
+// ---- 例文（使い方の韓国語の雨と同じ：〜したい） -------------------------------------------------------------------
 
-/** 使い方（../src/lib/tutorial.ts の PICKS.ko）の雨、また降ってくる文、メモした語、言ってみるの例。 */
-const RAIN = ["내일 카페 갈래?", "주말에 영화 볼래?", "같이 밥 먹을래?", "오늘 노래방 갈래?"];
-const AGAIN = ["주말에 바다 갈래?", "불꽃놀이 보러 갈래?"];
-const MEMO = "주말";
-const SAY = {
-  attempt: "주말에 영화 보러 가을래?",
-  corrected: "주말에 영화 보러 갈래?",
-  meaning: "週末、映画見に行かない？",
-  explanation: "「가다」には「을래」ではなく「ㄹ래」が付いて、「갈래」になります。",
-  parts: [
-    ["주말에", "週末に", "週末"],
-    ["영화", "映画", "映画"],
-    ["보러", "見に", "見に"],
-    ["갈래", "行かない？（誘い）", "行かない？"],
-  ],
-};
+/** 使い方（../src/lib/tutorial.ts の PICKS.ko）の雨と、また降ってくる文。 */
+const RAIN = ["한국에 가고 싶어.", "딸기 먹고 싶어.", "오늘은 일찍 자고 싶어.", "아이스커피 마시고 싶어."];
+const AGAIN = ["오늘 밤엔 게임하고 싶어.", "새 신발 사고 싶어."];
 // アプリの例と同じであることを確かめる（アプリの方が変わったら、ここも合わせる）。
 const tutorialSource = readFileSync(`${APP}/src/lib/tutorial.ts`, "utf8");
-for (const s of [...RAIN, ...AGAIN, MEMO, SAY.attempt, SAY.corrected, SAY.meaning, SAY.explanation, ...SAY.parts.flat()]) {
+for (const s of [...RAIN, ...AGAIN]) {
   if (!tutorialSource.includes(s)) throw new Error(`使い方の例に無い：${s}`);
 }
 /**
  * 本物の雨は4文（../src/lib/shower.ts の CLUSTER_SIZE）。数日後の雨は、まだ出会っていない同じかたちの文から4つ：使い方の
- * 2文に、ライブラリの同じかたち（ko-eullae）の文を2つ足す。並びは、メモした語の入った文から。
+ * 2文に、ライブラリの同じかたち（ko-go-sipeo）の文を2つ足す。並びはアプリの rainOrder と同じく、やさしい文（どれも余分 0）の
+ * 短いものから。
  */
-const LATER = [AGAIN[0], "오늘 밤 라멘 먹을래?", AGAIN[1], "이따가 같이 산책할래?"];
-const PATTERN = "ko-eullae";
-/** 3つの言葉で見せる文（今日カラオケ行かない？）。 */
-const KARAOKE = "오늘 노래방 갈래?";
+const LATER = [...AGAIN, "주말에 만나고 싶어.", "카페에서 공부하고 싶어."].sort((a, b) => a.length - b.length);
+const FUNCTION = "want";
+const PATTERN = "ko-go-sipeo";
+/** 3つの言葉で見せる文（いちごが食べたい）。 */
+const KARAOKE = "딸기 먹고 싶어.";
+/**
+ * 予測する：言いたいこと（今日は韓国のいちご食べたい）の「今日は」が、雨の三文目（오늘은 일찍 자고 싶어.）のどれなのか。
+ * その文を押して、語を選ぶ（アプリの WordSheet）。語の並びはアプリと同じく Intl.Segmenter で、ほかの文もアプリと同じ問い
+ * 合わせで取る。오늘은 を選んだのは、ほかの文が5つ出てきて、その訳がどれも「今日は」だから（見比べられる。한국에・딸기 は
+ * ほかの文が一つしかない）。
+ */
+const LOOK = { sentence: RAIN[2], word: "오늘은" };
+/**
+ * 言ってみるの例：予測した 오늘은 に、一文目の 한국에（韓国に）と二文目（딸기 먹고 싶어）をつないで「今日は韓国のいちご
+ * 食べたい」と言ってみた文。直した文・訳・どこを直したかは、アプリの添削（../src/lib/ai.ts の correctSentence を、
+ * tryPattern と同じく intent なし・練習中のかたち V + 고 싶어 で）がこの文に返したもの（2026-11-01、gpt-5.2。3回とも
+ * 한국 딸기 に直し、説明は3回目のもの）、詳しく解説の語は explainSentence が返したもの。映像では AI を呼ばない（使い方と
+ * 同じ）。parts：[語, ここでの意味, 訳の中の対応するところ]。
+ */
+const SAY = {
+  attempt: "오늘은 한국에 딸기 먹고 싶어.",
+  corrected: "오늘은 한국 딸기 먹고 싶어.",
+  meaning: "今日は韓国のいちごが食べたい。",
+  explanation: "「한국에」は場所（〜に）なので、食べたい物を言うときは助詞なしで「한국 딸기」が自然だよ。意味は「韓国のいちご」。",
+  parts: [
+    ["오늘은", "今日は（きょうは）", "今日は"],
+    ["한국", "韓国", "韓国"],
+    ["딸기", "いちご", "いちご"],
+    ["먹고 싶어", "食べたい", "食べたい"],
+  ],
+};
+// 言ってみる文は、雨の文だけで組めている：三文目で予測した語、一文目の 한국에、二文目。
+if (SAY.attempt !== `${LOOK.word} ${RAIN[0].split(" ")[0]} ${RAIN[1]}`) throw new Error(`言ってみるの例が雨の文から組めていない：${SAY.attempt}`);
 
 function readEnv(path) {
   const env = {};
@@ -80,9 +98,11 @@ const marks = await read(`pl_sentence_patterns?select=sentence_id,pattern_id,lan
 for (const k of wanted) {
   if (!marks.some((m) => m.sentence_id === byKo.get(k).id && m.pattern_id === PATTERN)) throw new Error(`${PATTERN} の文ではない：${k}`);
 }
-const [fn] = await read("pl_functions?select=id,label&id=eq.invite");
+const [fn] = await read(`pl_functions?select=id,label&id=eq.${FUNCTION}`);
+// 光るところは、その働きの、その言葉のかたちのものだけ（一つの文に、ほかの働きの印が付いていることもある）。
+const patternOf = Object.fromEntries((await read(`pl_patterns?select=id,lang&function_id=eq.${FUNCTION}`)).map((p) => [p.lang, p.id]));
 const markOf = (id, lang) => {
-  const m = marks.find((x) => x.sentence_id === id && x.lang === lang);
+  const m = marks.find((x) => x.sentence_id === id && x.lang === lang && x.pattern_id === patternOf[lang]);
   return m ? [m.start_index, m.end_index] : null;
 };
 
@@ -192,11 +212,29 @@ function readingOf(text, pinyin) {
   return [...text].map((ch) => (/\p{Script=Han}/u.test(ch) ? (syl[k++] ?? "") : ""));
 }
 
+/**
+ * 語を押したときのシート：文の語（アプリの wordsOf と同じく Intl.Segmenter）と、選んだ語の入ったほかの文（sentencesWith と
+ * 同じ：その語を含む公開済みの文を、押した文を除いて6つまで取り、5つまで見せる。光るところは findMemoHits と同じく、語の
+ * あるところすべて）。
+ */
+async function lookUp(text, word) {
+  const words = [...new Intl.Segmenter("ko", { granularity: "word" }).segment(text)].filter((s) => s.isWordLike).map((s) => s.segment);
+  if (!words.includes(word)) throw new Error(`${text} の語に ${word} が無い（${words.join("・")}）`);
+  const found = await read(`pl_sentences?select=id,ko,ja&ko=ilike.${encodeURIComponent(`*${word}*`)}&id=neq.${byKo.get(text).id}&limit=6`);
+  if (found.length === 0) throw new Error(`${word} の入ったほかの文が無い`);
+  const others = found.slice(0, 5).map((r) => {
+    const hits = [];
+    for (let at = r.ko.indexOf(word); at !== -1; at = r.ko.indexOf(word, at + word.length)) hits.push([at, at + word.length]);
+    return { text: r.ko, gloss: r.ja, hits };
+  });
+  return { sentence: text, words, word, others };
+}
+
 const library = {
   label: fn?.label?.ja ?? "",
   rain: await Promise.all(RAIN.map((ko, i) => sentence(`rain${i + 1}`, ko))),
   again: await Promise.all(LATER.map((ko, i) => sentence(`again${i + 1}`, ko))),
-  memo: MEMO,
+  look: await lookUp(LOOK.sentence, LOOK.word),
   karaoke: {
     ko: await sentence("karaoke-ko", KARAOKE, "ko"),
     en: await sentence("karaoke-en", KARAOKE, "en"),
@@ -213,13 +251,11 @@ const parts = SAY.parts.map(([word, sense, gloss]) => {
   const g = SAY.meaning.indexOf(gloss);
   return { start: at, end: at + word.length, meaning: sense, gloss: g >= 0 ? [g, g + gloss.length] : null };
 });
-// 直した文の「誘う」の印：ライブラリの文と同じく 갈래。
-const said = SAY.corrected.indexOf("갈래");
-library.say = { ...SAY, removed, added, parts, mark: [said, said + 2] };
+library.say = { ...SAY, removed, added, parts };
 
 writeFileSync("src/library.json", `${JSON.stringify(library, null, 1)}\n`);
 writeFileSync("src/clips.json", `${JSON.stringify(clips, null, 1)}\n`);
-console.log(`  例文 ${RAIN.length + LATER.length}、3つの言葉、声 ${Object.keys(clips).length}（${library.label}）`);
+console.log(`  例文 ${RAIN.length + LATER.length}、「${LOOK.word}」のほかの文 ${library.look.others.length}、3つの言葉、声 ${Object.keys(clips).length}（${library.label}）`);
 
 // ---- 字 -------------------------------------------------------------------------------------------------------------
 

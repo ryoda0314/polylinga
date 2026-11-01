@@ -1,18 +1,18 @@
 {
- "label": "誘う",
+ "label": "したいことを言う",
  "rain": [
   {
    "key": "rain1",
    "lang": "ko",
-   "text": "내일 카페 갈래?",
-   "gloss": "明日カフェ行かない？",
+   "text": "한국에 가고 싶어.",
+   "gloss": "韓国に行きたい。",
    "mark": [
-    6,
-    8
+    5,
+    9
    ],
    "glossMark": [
-    7,
-    9
+    5,
+    7
    ],
    "reading": null,
    "audio": "app/rain1.wav"
@@ -20,11 +20,11 @@
   {
    "key": "rain2",
    "lang": "ko",
-   "text": "주말에 영화 볼래?",
-   "gloss": "週末、映画見ない？",
+   "text": "딸기 먹고 싶어.",
+   "gloss": "いちごが食べたい。",
    "mark": [
-    7,
-    9
+    4,
+    8
    ],
    "glossMark": [
     6,
@@ -36,15 +36,15 @@
   {
    "key": "rain3",
    "lang": "ko",
-   "text": "같이 밥 먹을래?",
-   "gloss": "一緒にご飯食べない？",
+   "text": "오늘은 일찍 자고 싶어.",
+   "gloss": "今日は早く寝たい。",
    "mark": [
-    5,
-    8
+    8,
+    12
    ],
    "glossMark": [
-    7,
-    9
+    6,
+    8
    ],
    "reading": null,
    "audio": "app/rain3.wav"
@@ -52,15 +52,15 @@
   {
    "key": "rain4",
    "lang": "ko",
-   "text": "오늘 노래방 갈래?",
-   "gloss": "今日カラオケ行かない？",
+   "text": "아이스커피 마시고 싶어.",
+   "gloss": "アイスコーヒー飲みたい。",
    "mark": [
-    7,
-    9
+    8,
+    12
    ],
    "glossMark": [
-    8,
-    10
+    9,
+    11
    ],
    "reading": null,
    "audio": "app/rain4.wav"
@@ -70,11 +70,11 @@
   {
    "key": "again1",
    "lang": "ko",
-   "text": "주말에 바다 갈래?",
-   "gloss": "週末、海行かない？",
+   "text": "새 신발 사고 싶어.",
+   "gloss": "新しい靴買いたい。",
    "mark": [
-    7,
-    9
+    6,
+    10
    ],
    "glossMark": [
     6,
@@ -86,15 +86,15 @@
   {
    "key": "again2",
    "lang": "ko",
-   "text": "오늘 밤 라멘 먹을래?",
-   "gloss": "今夜ラーメン食べない？",
+   "text": "주말에 만나고 싶어.",
+   "gloss": "週末会いたい。",
    "mark": [
-    8,
-    11
+    6,
+    10
    ],
    "glossMark": [
-    8,
-    10
+    4,
+    6
    ],
    "reading": null,
    "audio": "app/again2.wav"
@@ -102,15 +102,15 @@
   {
    "key": "again3",
    "lang": "ko",
-   "text": "불꽃놀이 보러 갈래?",
-   "gloss": "花火見に行かない？",
+   "text": "카페에서 공부하고 싶어.",
+   "gloss": "カフェで勉強したい。",
    "mark": [
     8,
-    10
+    12
    ],
    "glossMark": [
-    6,
-    8
+    7,
+    9
    ],
    "reading": null,
    "audio": "app/again3.wav"
@@ -118,34 +118,95 @@
   {
    "key": "again4",
    "lang": "ko",
-   "text": "이따가 같이 산책할래?",
-   "gloss": "あとで一緒に散歩しない？",
+   "text": "오늘 밤엔 게임하고 싶어.",
+   "gloss": "今夜はゲームしたい。",
    "mark": [
     9,
-    11
+    13
    ],
    "glossMark": [
-    9,
-    11
+    7,
+    9
    ],
    "reading": null,
    "audio": "app/again4.wav"
   }
  ],
- "memo": "주말",
+ "look": {
+  "sentence": "오늘은 일찍 자고 싶어.",
+  "words": [
+   "오늘은",
+   "일찍",
+   "자고",
+   "싶어"
+  ],
+  "word": "오늘은",
+  "others": [
+   {
+    "text": "오늘은 여기까지 하자.",
+    "gloss": "今日はここまでにしよう。",
+    "hits": [
+     [
+      0,
+      3
+     ]
+    ]
+   },
+   {
+    "text": "오늘은 그만 자는 게 좋다고 생각해.",
+    "gloss": "今日はもう寝たほうがいいと思う",
+    "hits": [
+     [
+      0,
+      3
+     ]
+    ]
+   },
+   {
+    "text": "오늘은 사람 많을 거라고 생각해.",
+    "gloss": "今日は人多いと思う",
+    "hits": [
+     [
+      0,
+      3
+     ]
+    ]
+   },
+   {
+    "text": "오늘은 무리하지 마.",
+    "gloss": "今日は無理しないでね",
+    "hits": [
+     [
+      0,
+      3
+     ]
+    ]
+   },
+   {
+    "text": "오늘은 배달 시키려고 해",
+    "gloss": "今日はデリバリー頼むつもり",
+    "hits": [
+     [
+      0,
+      3
+     ]
+    ]
+   }
+  ]
+ },
  "karaoke": {
   "ko": {
    "key": "karaoke-ko",
    "lang": "ko",
-   "text": "오늘 노래방 갈래?",
-   "gloss": "今日カラオケ行かない？",
+   "text": "딸기 먹고 싶어.",
+   "gloss": "いちごが食べたい。",
    "mark": [
-    7,
-    9
+    4,
+    8
    ],
    "glossMark": [
-    8,
-    10
+    6,
+    8
    ],
    "reading": null,
    "audio": "app/karaoke-ko.wav"
@@ -153,15 +214,15 @@
   "en": {
    "key": "karaoke-en",
    "lang": "en",
-   "text": "Wanna go to karaoke today?",
-   "gloss": "今日カラオケ行かない？",
+   "text": "I want to eat strawberries.",
+   "gloss": "いちごが食べたい。",
    "mark": [
-    0,
-    5
+    2,
+    9
    ],
    "glossMark": [
-    8,
-    10
+    6,
+    8
    ],
    "reading": null,
    "audio": "app/karaoke-en.wav"
@@ -169,49 +230,46 @@
   "zh": {
    "key": "karaoke-zh",
    "lang": "zh",
-   "text": "今天要不要去唱歌？",
-   "gloss": "今日カラオケ行かない？",
+   "text": "我想吃草莓。",
+   "gloss": "いちごが食べたい。",
    "mark": [
-    2,
-    5
+    1,
+    2
    ],
    "glossMark": [
-    8,
-    10
+    6,
+    8
    ],
    "reading": [
-    "jīn",
-    "tiān",
-    "yào",
-    "bu",
-    "yào",
-    "qù",
-    "chàng",
-    "gē",
+    "wǒ",
+    "xiǎng",
+    "chī",
+    "cǎo",
+    "méi",
     ""
    ],
    "audio": "app/karaoke-zh.wav"
   }
  },
  "say": {
-  "attempt": "주말에 영화 보러 가을래?",
-  "corrected": "주말에 영화 보러 갈래?",
-  "meaning": "週末、映画見に行かない？",
-  "explanation": "「가다」には「을래」ではなく「ㄹ래」が付いて、「갈래」になります。",
+  "attempt": "오늘은 한국에 딸기 먹고 싶어.",
+  "corrected": "오늘은 한국 딸기 먹고 싶어.",
+  "meaning": "今日は韓国のいちごが食べたい。",
+  "explanation": "「한국에」は場所（〜に）なので、食べたい物を言うときは助詞なしで「한국 딸기」が自然だよ。意味は「韓国のいちご」。",
   "parts": [
    {
     "start": 0,
     "end": 3,
-    "meaning": "週末に",
+    "meaning": "今日は（きょうは）",
     "gloss": [
      0,
-     2
+     3
     ]
    },
    {
     "start": 4,
     "end": 6,
-    "meaning": "映画",
+    "meaning": "韓国",
     "gloss": [
      3,
      5
@@ -220,37 +278,28 @@
    {
     "start": 7,
     "end": 9,
-    "meaning": "見に",
+    "meaning": "いちご",
     "gloss": [
-     5,
-     7
+     6,
+     9
     ]
    },
    {
     "start": 10,
-    "end": 12,
-    "meaning": "行かない？（誘い）",
+    "end": 15,
+    "meaning": "食べたい",
     "gloss": [
-     7,
-     12
+     10,
+     14
     ]
    }
   ],
   "removed": [
    {
-    "start": 10,
-    "end": 12
+    "start": 6,
+    "end": 7
    }
   ],
-  "added": [
-   {
-    "start": 10,
-    "end": 11
-   }
-  ],
-  "mark": [
-   10,
-   12
-  ]
+  "added": []
  }
 }

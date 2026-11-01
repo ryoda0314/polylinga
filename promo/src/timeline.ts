@@ -3,8 +3,10 @@
 // ナレーションと重ならない所で鳴らす。ナレーションの中の言葉に合わせるところ（「答え合わせは」で押す、など）は、
 // クリップの中の息つぎの位置（秒）で決めてある：声を作り直したら、ここも確かめる。
 //
-// 見る人：文法は分かるのに、使えない人。似た文を浴びて、共通しているところに自分で気づき、そのかたちで言ってみて直して
-// もらい、忘れてもまた出会う。その流れ（使い方 /tutorial と同じ順）を、アプリの画面と、ライブラリの本物の例文と声で見せる。
+// 見る人：文法は分かるのに、使えない人と、はじめたばかりの人。似た文を浴びて、共通しているところに自分で気づき、そのかたち
+// で言ってみて直してもらい、忘れてもまた出会う。その流れ（使い方 /tutorial と同じ順）を、アプリの画面と、ライブラリの本物の
+// 例文と声で見せる。言ってみて直してもらうところを見せてから「でも、言葉を知らなかったら？」に答える：材料は浴びた4つの文、
+// どれがどの意味かは文を押して語を選べば、ほかの文を見比べて予測できる。そのまま使って、違っていたら直してもらえばいい。
 import { f } from "./anim";
 import CLIPS from "./clips.json";
 import LIB from "./library.json";
@@ -31,9 +33,6 @@ const play = (id: ClipId, at: number) => {
 const GAP = 0.7;
 /** 例の文が欄に一字ずつ入る速さ（使い方の SayStep：85ms）。 */
 export const TYPE_PER = 0.085;
-/** メモの欄に打つ語：韓国語のキーボードで、字母を一つずつ組み立てていく。 */
-export const MEMO_KEYS = ["ㅈ", "주", "줌", "주마", "주말"];
-export const MEMO_PER = 0.17;
 
 function make() {
   // A. 問い：「分かる」と「できる」のあいだを埋める。似た文が降ってきて、共通しているところが光る。
@@ -72,20 +71,9 @@ function make() {
   notice.reveal = notice.press + 0.15;
   notice.end = Math.max(say("V05", v05), notice.reveal + 2.6) + 0.35;
 
-  // C3. メモ：気になった文を押すと、語のシート。「自分の指で打って」のところで打って、メモする。
-  const memo = { start: notice.end, cap: 0, tap: 0, sheet: 0, type: 0, typed: 0, save: 0, close: 0, end: 0 };
-  memo.cap = memo.start + 0.4;
-  memo.tap = memo.start + 0.55;
-  memo.sheet = memo.tap + 0.15;
-  const v08 = memo.start + 0.5;
-  memo.type = v08 + 1.65;
-  memo.typed = memo.type + MEMO_KEYS.length * MEMO_PER;
-  memo.save = memo.typed + 0.45;
-  memo.close = Math.max(memo.save + 1.3, say("V08", v08) + 0.1);
-  memo.end = memo.close + 0.45;
-
-  // C4. 言ってみる：「これで言ってみる」。さっきの雨が欄の上に残り、例の文が欄に入って、直してもらう。
-  const tri = { start: memo.end, cap: 0, press: 0, open: 0, type: 0, typed: 0, send: 0, end: 0 };
+  // C3. 言ってみる：「これで言ってみる」。さっきの雨が欄の上に残り、そこから組んだ文（今日は韓国のいちご食べたい）を打って、
+  // 直してもらう。
+  const tri = { start: notice.end, cap: 0, press: 0, open: 0, type: 0, typed: 0, send: 0, end: 0 };
   tri.cap = tri.start + 0.4;
   tri.press = tri.start + 0.75;
   tri.open = tri.press + 0.15;
@@ -96,32 +84,78 @@ function make() {
   // 「直しています…」のあいだ（使い方と同じ 1.1 秒）。
   tri.end = tri.send + 1.1;
 
-  // C5. 直った：あなたの文と直した文、どこを直したか。「そのまま友だちに」でコピー。詳しく解説で、語と訳の対応。
-  const fixed = { start: tri.end, cap: 0, why: 0, copy: 0, explain: 0, pick: 0, end: 0 };
+  // C4. 直った：あなたの文（에 に線）と直した文。「どこを」で、どこを直したか。言い終わったら、コピー。
+  const fixed = { start: tri.end, cap: 0, why: 0, copy: 0, end: 0 };
   fixed.cap = fixed.start + 0.4;
-  const v07 = fixed.start + 0.5;
-  fixed.why = v07 + 1.7;
-  fixed.copy = v07 + 5.6;
-  fixed.explain = say("V07", v07) + 0.3;
-  fixed.pick = fixed.explain + 1.25;
-  fixed.end = fixed.pick + 1.7;
+  const v24 = fixed.start + 0.5;
+  fixed.why = v24 + 1.7;
+  fixed.copy = say("V24", v24) + 0.25;
+  fixed.end = fixed.copy + 1.0;
 
-  // C6. また出会う：「日をあけて」で日が進み、3日後の雨（前にも降ったかたち）。メモした 주말 も、その中に。
-  const again = { start: fixed.end, cap: 0, d1: 0, d2: 0, d3: 0, back: 0, press: 0, s1: 0, s2: 0, s3: 0, s4: 0, end: 0 };
+  // C5. 問い（全面）：添削を見せたあとで「でも、言葉を知らなかったら？」。材料は、いま浴びた4つの文（右に大きく）。「今日は」で
+  // 言いたいこと（今日は韓国のいちご食べたい）が出て、「言葉は」で文と訳の中の同じ言葉が光る。「どれが、どの意味」で
+  // 三文目の語に「？」。
+  const ask = { start: fixed.end, q: 0, mat: 0, want: 0, lit: 0, lit2: 0, which: 0, q1: 0, q2: 0, q3: 0, q4: 0, end: 0 };
+  ask.q = ask.start + 0.3;
+  const v13 = ask.start + 0.5;
+  ask.mat = say("V13", v13) + 0.45;
+  const v14 = ask.mat + 0.35;
+  const v25 = say("V14", v14) + 0.3;
+  ask.want = v25 + 1.15;
+  ask.lit = v25 + 4.2;
+  ask.lit2 = ask.lit + 0.45;
+  const v16 = say("V25", v25) + 0.45;
+  ask.which = v16 - 0.1;
+  ask.q1 = v16 + 0.95;
+  ask.q2 = ask.q1 + 0.22;
+  ask.q3 = ask.q2 + 0.22;
+  ask.q4 = ask.q3 + 0.22;
+  ask.end = say("V16", v16) + 0.5;
+
+  // C6. 予測する：「文を押して」で三文目を押すと語のシート、「単語を選ぶ」で 오늘은 を選ぶと、ほかの文が5つ（少し送って、
+  // 5つとも見せる）。「見比べて」で、どの訳にもある「今日は」が光り、「意味を予測する」で、たぶん「今日は」。言い終わったら閉じる。
+  const guess = { start: ask.end, cap: 0, tap: 0, sheet: 0, pick: 0, others: 0, slide: 0, predict: 0, compare: 0, guessed: 0, sure: 0, close: 0, end: 0 };
+  guess.cap = guess.start + 0.4;
+  const v17 = guess.start + 0.5;
+  guess.tap = v17 + 1.3;
+  guess.sheet = guess.tap + 0.15;
+  guess.pick = v17 + 2.68;
+  guess.others = guess.pick + 0.3;
+  guess.slide = guess.others + 0.7;
+  const v18 = say("V17", v17) + 0.25;
+  const v19 = say("V18", v18) + 0.4;
+  guess.predict = v19 - 0.1;
+  guess.compare = v19 + 0.05;
+  guess.guessed = v19 + 1.36;
+  guess.sure = v19 + 3.5;
+  guess.close = say("V19", v19) + 0.2;
+  guess.end = guess.close + 0.45;
+
+  // C7. そのまま使って、違っていたら直してもらう：さっきの直った文に戻る（あなたの文の 에 に線）。「違っていたら」で詳しく解説、
+  // 「直してもらえば」で 오늘은 を押すと、오늘은 と「今日は」が光る（予測は合っていた）。
+  const back = { start: guess.end, cap: 0, explain: 0, pick: 0, end: 0 };
+  back.cap = back.start + 0.3;
+  const v23 = back.start + 0.5;
+  back.explain = v23 + 1.9;
+  back.pick = back.explain + 1.25;
+  back.end = Math.max(say("V23", v23) + 0.4, back.pick + 1.8);
+
+  // C8. また出会う：「日をあけて」で日が進み、3日後の雨（前にも降ったかたち）。まだ出会っていない4つの文で。
+  const again = { start: back.end, cap: 0, d1: 0, d2: 0, d3: 0, back: 0, press: 0, s1: 0, s2: 0, s3: 0, s4: 0, end: 0 };
   again.cap = again.start + 0.4;
-  const v09 = again.start + 0.5;
-  again.d1 = v09 + 1.45;
+  const v22 = again.start + 0.5;
+  again.d1 = v22 + 1.45;
   again.d2 = again.d1 + 0.42;
   again.d3 = again.d2 + 0.42;
   again.back = again.d3 + 0.45;
-  again.press = say("V09", v09) + 0.25;
+  again.press = say("V22", v22) + 0.25;
   again.s1 = again.press + 0.3;
   again.s2 = play("again1", again.s1) + GAP;
   again.s3 = play("again2", again.s2) + GAP;
   again.s4 = play("again3", again.s3) + GAP;
   again.end = play("again4", again.s4) + 0.7;
 
-  // C7. 韓国語・英語・中国語：はじめの画面で選べる3つ（言うのに合わせて選ぶ）。同じ文が、それぞれの声で。
+  // C9. 韓国語・英語・中国語：はじめの画面で選べる3つ（言うのに合わせて選ぶ）。同じ文が、それぞれの声で。
   const langs = { start: again.end, cap: 0, en: 0, zh: 0, ko: 0, enRain: 0, zhRain: 0, end: 0 };
   langs.cap = langs.start + 0.4;
   const v10 = langs.start + 0.5;
@@ -147,7 +181,7 @@ function make() {
   end.rest = end.lead + 0.6;
   end.end = Math.max(end.start + 6, say("V12", v12) + 1.6);
 
-  return { hook, title, rain, notice, memo, tri, fixed, again, langs, habit, end };
+  return { hook, title, rain, notice, tri, fixed, ask, guess, back, again, langs, habit, end };
 }
 
 const S = make();
@@ -158,9 +192,11 @@ export const T = {
   title: frames(S.title),
   rain: frames(S.rain),
   notice: frames(S.notice),
-  memo: frames(S.memo),
   tri: frames(S.tri),
   fixed: frames(S.fixed),
+  ask: frames(S.ask),
+  guess: frames(S.guess),
+  back: frames(S.back),
   again: frames(S.again),
   langs: frames(S.langs),
   habit: frames(S.habit),

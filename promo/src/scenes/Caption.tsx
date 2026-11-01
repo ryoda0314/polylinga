@@ -11,18 +11,18 @@ export const KICKER = { icon: { left: CAP.left, top: 301, size: 34 }, text: { le
 
 /** 一切れ：ただの字か、色や字体を変えた字（韓国語）。`at`：その字に色が付くコマ（無ければ一文が降りたとき）。 */
 export type Part = string | { text: string; color?: string; font?: "ko" | "mincho"; at?: number };
-/** いまどこか：使い方の5つ（浴びる・気づく・言ってみる・また出会う・続ける）に、メモと3つの言葉。 */
-export type Door = "rain" | "notice" | "memo" | "say" | "again" | "langs" | "habit";
+/** いまどこか：使い方の5つ（浴びる・気づく・言ってみる・また出会う・続ける）に、予測する（語を押して、ほかの文から）と3つの言葉。 */
+export type Door = "rain" | "notice" | "guess" | "say" | "again" | "langs" | "habit";
 export const DOOR_NAME: Record<Door, string> = {
   rain: "浴びる",
   notice: "気づく",
-  memo: "メモ",
+  guess: "予測する",
   say: "言ってみる",
   again: "また出会う",
   langs: "3つの言葉",
   habit: "続ける",
 };
-const DOOR_ICON: Record<Door, IconName> = { rain: "shower", notice: "eye", memo: "bookmark", say: "pencil", again: "shower", langs: "globe", habit: "sprout" };
+const DOOR_ICON: Record<Door, IconName> = { rain: "shower", notice: "eye", guess: "search", say: "pencil", again: "shower", langs: "globe", habit: "sprout" };
 const doorColor = (door: Door) => (door === "again" ? C.again : C.accent);
 /** `subAt`：静かな一文が降る時（ふだんは本文のすぐあと）。`more`：その下に置くもの（また出会うの、日が進む帯）。 */
 export type Cap = { from: number; door: Door; main: Part[][]; sub?: Part[][]; subAt?: number; more?: (frame: number) => ReactNode };

@@ -1,22 +1,25 @@
 // C. アプリの画面で、ひとめぐり。左に映像の言葉、右にアプリ（電話の幅：アプリの枠のいちばん広い 560px）。
-//   浴びる：雨の最初の画面で 浴びる を押すと、同じかたち（誘う）の4つの文が、置き場の声で一つずつ降る。
-//   気づく：「共通しているところは？」で、文と訳の同じところに色が付く。共通していたところ：誘う。
-//   メモ：주말에 영화 볼래? を押して、語のシート。「주말」を自分で打ってメモする。
-//   言ってみる：「これで言ってみる」。さっきの雨が欄の上に残る。使い方の例の文で、直してもらう。
-//   直った：あなたの文と直した文（メモした 주말 は紫の点線）、コピー、詳しく解説で 갈래 と「行かない？」が光る。
-//   また出会う：3日後、前にも降ったかたちが、まだ出会っていない4つの文で降る。주말 が紫の点線で、その知らせ。
-//   3つの言葉：はじめの画面で選べる 韓国語・英語・中国語。同じ文（今日カラオケ行かない？）が、それぞれの声で。
+//   浴びる：雨の最初の画面で 浴びる を押すと、同じかたち（〜したい）の4つの文が、置き場の声で一つずつ降る。
+//   気づく：「共通しているところは？」で、文と訳の同じところに色が付く。共通していたところ：したいことを言う。
+//   言ってみる：「これで言ってみる」。さっきの雨が欄の上に残る。雨の文から組んだ 오늘은 한국에 딸기 먹고 싶어. で、直してもらう。
+//   直った：あなたの文（에 に線）と直した文、どこを直したか、コピー。
+//   （ここで全面の問い：Ask.tsx。この画面は見えていない）
+//   予測する：三文目（오늘은 일찍 자고 싶어.）を押して、語のシート。오늘은 を選ぶと、ほかの文が5つ。左でその訳を見比べると、
+//     どれも「今日は」。たぶん「今日は」。
+//   そのまま使って、違っていたら直してもらう：さっきの直った文に戻って、詳しく解説で 오늘은 と「今日は」が光る。
+//   また出会う：3日後、前にも降ったかたちが、まだ出会っていない4つの文で降る。
+//   3つの言葉：はじめの画面で選べる 韓国語・英語・中国語。同じ文（いちごが食べたい）が、それぞれの声で。
 //   続ける：使い方の最後の画面。電車の窓の前で、いつ浴びるかを決める。
 import type { CSSProperties, ReactNode } from "react";
-import { fall, mix, mixColor, prog, rainFall, rise, SOFT } from "../anim";
+import { fall, leave, mix, mixColor, prog, rainFall, rise, SOFT } from "../anim";
 import LIB from "../library.json";
-import { MEMO_KEYS, MEMO_PER, sounding, startOf, T, TYPE_PER, type ClipId } from "../timeline";
+import { sounding, startOf, T, TYPE_PER, type ClipId } from "../timeline";
 import { C, FONT, fontOf, type Lang } from "../theme";
 import { BottomNav, Btn, Caret, Icon, label, Logo, note, PlayButton, Press, Rain, Sent, Sky, SolidSpeak, Sources, Toolbar, TopBar, type HL } from "../ui";
-import { Captions, type Cap } from "./Caption";
+import { CAP, Captions, type Cap } from "./Caption";
 
-/** 映像の言葉。 */
-const CAPS: Cap[] = [
+/** 映像の言葉：問い（Ask.tsx）の前。 */
+const BEFORE: Cap[] = [
   { from: T.rain.cap, door: "rain", main: [["同じかたちの文が、"], ["音声付きで降ってくる。"]], sub: [["覚えようとしなくて大丈夫。"], ["聞きながら、見比べる。"]] },
   {
     from: T.notice.cap,
@@ -25,19 +28,29 @@ const CAPS: Cap[] = [
     sub: [["答え合わせは、文と訳の同じところに"], ["色が付くだけ。"]],
     subAt: T.notice.press,
   },
-  { from: T.memo.cap, door: "memo", main: [["知らない語は、"], ["自分の指で打ってメモ。"]], sub: [["見返さなくていいし、忘れていい。"]] },
-  { from: T.tri.cap, door: "say", main: [["浴びたかたちで、"], ["自分のことを言ってみる。"]], sub: [["分からないところは、日本語のままで大丈夫。"]] },
+  { from: T.tri.cap, door: "say", main: [["浴びたかたちで、"], ["自分のことを言ってみる。"]], sub: [["さっき降ってきた文が、すぐ上に残る。"]] },
+  { from: T.fixed.cap, door: "say", main: [["AI が直して、"], ["理由を説明してくれる。"]], sub: [["直った文は、コピーしてそのまま送れる。"]] },
+];
+
+/** 映像の言葉：問いのあと。予測するの下には、見比べるほかの文の訳（Compare）。 */
+const AFTER: Cap[] = [
+  { from: T.guess.cap, door: "guess", main: [["文を押して、語を選ぶと、"], ["ほかの文が出てくる。"]] },
+  { from: T.guess.predict, door: "guess", main: [["見比べて、"], ["意味を予測する。"]], sub: [["確かめなくていい。予測で十分。"]], subAt: T.guess.sure },
   {
-    from: T.fixed.cap,
-    door: "say",
-    main: [["AI が直して、"], ["理由を説明してくれる。"]],
-    sub: [["直った文は、コピーしてそのまま送れる。"], ["語を押すと、文と訳の対応するところが光る。"]],
+    from: T.back.cap,
+    door: "guess",
+    main: [["そのまま使って、"], ["違っていたら直してもらう。"]],
+    sub: [
+      ["「韓国の」は ", { text: "한국", font: "ko" }, "。そこは AI が直してくれた。"],
+      ["予測した ", { text: LIB.look.word, font: "ko" }, " は、やっぱり「今日は」。"],
+    ],
+    subAt: T.back.explain,
   },
   {
     from: T.again.cap,
     door: "again",
     main: [["忘れたころに、"], ["また降ってくる。"]],
-    sub: [["浴びたかたちは、日をあけて新しい文で。"], ["メモした語も、その中でまた出会う。"]],
+    sub: [["浴びたかたちは、日をあけて新しい文で。"]],
     more: (frame) => <Days frame={frame} />,
   },
   {
@@ -92,20 +105,66 @@ const VIEW = PH - NAV;
 export function Story({ frame }: { frame: number }) {
   return (
     <>
-      <Captions frame={frame} caps={CAPS} until={T.end.start} />
+      <Captions frame={frame} caps={BEFORE} until={T.ask.start} />
+      <Captions frame={frame} caps={AFTER} until={T.end.start} />
+      <Compare frame={frame} />
       <Panel frame={frame} />
     </>
   );
 }
 
+/** 予測で、訳の中の その語のところ（学習者の予測。データではない）。 */
+const GUESS = "今日は";
+
+/**
+ * 見比べる（予測するの左、本文の下）：語のシートに出てきた、ほかの文の訳。「見比べて」で、どの訳にもある同じところが一つずつ
+ * 光る（同じ色が対応：アプリの答え合わせと同じ見せ方）。「意味を予測する」で、たぶん。
+ */
+function Compare({ frame }: { frame: number }) {
+  const g = T.guess;
+  const until = T.back.cap;
+  if (frame < g.others || frame > until + 14) return null;
+  const style = frame >= until ? leave(frame, until, 9, 12) : fall(frame, g.others + 4, 12, 14);
+  const word = LIB.look.word;
+  return (
+    <div style={{ position: "absolute", left: CAP.left, top: 600, width: CAP.width, ...style }}>
+      <p style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 600, color: C.muted, fontFamily: FONT.ui }}>
+        <span style={{ fontFamily: FONT.ko }}>{word}</span> が入った、ほかの文の訳
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", padding: "10px 26px", background: C.surface, borderRadius: 18 }}>
+        {LIB.look.others.map((o, i) => {
+          const at = o.gloss.indexOf(GUESS);
+          const hl: HL[] = at >= 0 ? [{ start: at, end: at + GUESS.length, kind: "mark", p: prog(frame, g.compare + i * 3, 12, SOFT) }] : [];
+          return (
+            <span key={o.text} style={{ padding: "7px 0", fontFamily: FONT.ja, fontSize: 26, lineHeight: 1.45, color: C.ink2, borderTop: i ? `1px solid ${C.line2}` : undefined }}>
+              <Sent text={o.gloss} color={C.ink2} hl={hl} />
+            </span>
+          );
+        })}
+      </div>
+      <p style={{ margin: "20px 0 0", fontSize: 32, fontWeight: 600, lineHeight: 1.4, color: C.accent, fontFamily: FONT.ui, ...fall(frame, g.guessed, 10, 14) }}>
+        たぶん、<span style={{ fontFamily: FONT.ko }}>{word}</span> は「{GUESS}」。
+      </p>
+    </div>
+  );
+}
+
 function Panel({ frame }: { frame: number }) {
-  const cuts = [T.fixed.start, T.again.back, T.langs.start, T.habit.start];
-  const w = (i: number) => (i === 0 ? 1 : prog(frame, cuts[i - 1], 12, SOFT)) * (i === cuts.length ? 1 : 1 - prog(frame, cuts[i], 12, SOFT));
-  const screens = [RainScreen, FixScreen, AgainScreen, LangsScreen, HabitScreen];
+  // どの画面を、いつから：雨 → 直った →（問いで見えないあいだに）雨 → 直った → 3日後の雨 → 3つの言葉 → 続ける。
+  const shows: [from: number, Screen: (p: { frame: number }) => ReactNode][] = [
+    [T.rain.start, RainScreen],
+    [T.fixed.start, FixScreen],
+    [T.ask.start + 12, RainScreen],
+    [T.back.start, FixScreen],
+    [T.again.back, AgainScreen],
+    [T.langs.start, LangsScreen],
+    [T.habit.start, HabitScreen],
+  ];
+  const w = (i: number) => (i === 0 ? 1 : prog(frame, shows[i][0], 12, SOFT)) * (i === shows.length - 1 ? 1 : 1 - prog(frame, shows[i + 1][0], 12, SOFT));
   return (
     <div style={{ position: "absolute", ...PANEL, borderRadius: 28, border: `1.5px solid ${C.line2}`, overflow: "hidden", background: C.paper, ...fall(frame, T.rain.start, 24, 18) }}>
       <div style={{ position: "absolute", left: 0, top: 0, width: PW, height: PH, transform: `scale(${K})`, transformOrigin: "0 0", fontFamily: FONT.ui, color: C.ink, fontSize: 16, lineHeight: 1.6 }}>
-        {screens.map((Screen, i) =>
+        {shows.map(([, Screen], i) =>
           w(i) > 0 ? (
             <div key={i} style={{ position: "absolute", inset: 0, overflow: "hidden", opacity: w(i), background: C.paper }}>
               <Screen frame={frame} />
@@ -146,15 +205,14 @@ function ShowerPage({ target = "한국어", targetLang = "ko", children }: { tar
   );
 }
 
-/** 雨の最初の画面（.intro）：空、雨が来ています、何文か、メモした語、案内、浴びる。 */
-function Intro({ frame, memo, press }: { frame: number; memo?: string; press: number }) {
+/** 雨の最初の画面（.intro）：空、雨が来ています、何文か、案内、浴びる。 */
+function Intro({ frame, press }: { frame: number; press: number }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "8px 0 24px" }}>
       <Sky frame={frame} />
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <p style={{ margin: 0, fontFamily: FONT.mincho, fontSize: 26, fontWeight: 700, letterSpacing: "0.04em", lineHeight: 1.6 }}>雨が来ています</p>
         <p style={{ margin: 0, fontSize: 15, color: C.ink2 }}>4つの文が、音声付きで降ってきます</p>
-        {memo ? <p style={memoNote}>メモした「<span style={{ fontFamily: FONT.ko }}>{memo}</span>」も降ってきます</p> : null}
       </div>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.8, color: C.ink2 }}>聞きながら見比べて、共通しているところを探してみてください。答え合わせは最後に。</p>
       <Btn full press={frame - press}>
@@ -165,21 +223,15 @@ function Intro({ frame, memo, press }: { frame: number; memo?: string; press: nu
   );
 }
 
-const memoNote: CSSProperties = { margin: 0, fontSize: 13, lineHeight: 1.7, color: C.again, fontWeight: 500 };
-
 type Rained = { key: string; lang: string; text: string; gloss: string; mark: number[] | null; glossMark: number[] | null; reading: string[] | null };
 
-/** 雨の一文（.item）：雨粒、文、訳、再生。`at`：降ってきたコマ。鳴っている間は青く、波紋。 */
-function Item({ frame, s, at, revealAt = Infinity, memo, tap = -99 }: { frame: number; s: Rained; at: number; revealAt?: number; memo?: string; tap?: number }) {
+/** 雨の一文（.item）：雨粒、文、訳、再生。`at`：降ってきたコマ。鳴っている間は青く、波紋。`tap`：文を押したコマ。 */
+function Item({ frame, s, at, revealAt = Infinity, tap = -99 }: { frame: number; s: Rained; at: number; revealAt?: number; tap?: number }) {
   const play = sounding(frame, s.key as ClipId);
   const playing = play >= 0;
   const lit = prog(frame, revealAt, 15, SOFT);
   const lang = s.lang as Lang;
-  const memoAt = memo ? s.text.indexOf(memo) : -1;
-  const hl: HL[] = [
-    ...(memoAt >= 0 ? [{ start: memoAt, end: memoAt + memo!.length, kind: "memo" as const }] : []),
-    ...(s.mark ? [{ start: s.mark[0], end: s.mark[1], kind: "mark" as const, p: lit }] : []),
-  ];
+  const hl: HL[] = s.mark ? [{ start: s.mark[0], end: s.mark[1], kind: "mark", p: lit }] : [];
   return (
     <li style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderBottom: `1px solid ${C.line}`, ...rainFall(frame, at) }}>
       <span
@@ -222,7 +274,7 @@ function Answer({ frame, at }: { frame: number; at: number }) {
 /** フォーカスのある欄（:focus-visible の 2px の輪）。 */
 const focusRing = (on: boolean): CSSProperties => (on ? { outline: `2px solid ${C.accent}`, outlineOffset: 2 } : {});
 
-// ---- 浴びる・気づく・メモ・言ってみる（一つの頁） ------------------------------------------------------------------
+// ---- 浴びる・気づく・予測する・言ってみる（一つの頁） --------------------------------------------------------------
 
 const RAIN = LIB.rain as Rained[];
 /** 雨の頁の高さの目安（px）：一文、文の並びの上、など。画面をどこまで送るかに使う。 */
@@ -233,14 +285,16 @@ const listBottom = (n: number) => LIST_TOP + 1 + n * ITEM;
 function RainScreen({ frame }: { frame: number }) {
   const r = T.rain;
   const n = T.notice;
-  const m = T.memo;
+  const g = T.guess;
   const tr = T.tri;
   const at = [r.press + 3, startOf("rain2"), startOf("rain3"), startOf("rain4")];
   const shown = at.filter((a) => frame >= a).length;
   const all = shown === RAIN.length;
   const revealed = frame >= n.reveal;
-  const trying = frame >= tr.open;
-  // 画面の送り：浴びるのボタンまで → 降りはじめに上へ → 4つ目に合わせて → 答え合わせのボタン → 答え → これで言ってみる → さっきの雨を欄の上に。
+  // 言ってみるのは、直った文へ移るまで。問いのあと、語を押しに戻ってきたときは、言ってみる前の頁。
+  const trying = frame >= tr.open && frame < T.ask.start;
+  // 画面の送り：浴びるのボタンまで → 降りはじめに上へ → 4つ目に合わせて → 答え合わせのボタン → 答え → これで言ってみる →
+  // さっきの雨を欄の上に →（問いのあいだに）4つの文が見えるところへ。
   const afterTop = listBottom(4) + 20;
   const answerEnd = afterTop + 120;
   const tryTop = answerEnd + 12;
@@ -252,6 +306,7 @@ function RainScreen({ frame }: { frame: number }) {
     [n.reveal + 8, answerEnd + 12 - VIEW, 24],
     [tr.start + 1, tryTop + 52 + 16 - VIEW, 14],
     [tr.open + 10, tryTop + 17 - 8, 20],
+    [T.ask.start + 20, LIST_TOP - 58, 1],
   ]);
   return (
     <>
@@ -263,7 +318,7 @@ function RainScreen({ frame }: { frame: number }) {
           ) : (
             <ol style={{ listStyle: "none", margin: 0, padding: 0, borderTop: `1px solid ${C.line}` }}>
               {RAIN.slice(0, shown).map((s, i) => (
-                <Item key={s.key} frame={frame} s={s} at={at[i]} revealAt={n.reveal} tap={i === 1 ? m.tap : -99} />
+                <Item key={s.key} frame={frame} s={s} at={at[i]} revealAt={n.reveal} tap={s.text === LIB.look.sentence ? g.tap : -99} />
               ))}
             </ol>
           )}
@@ -296,18 +351,20 @@ function RainScreen({ frame }: { frame: number }) {
   );
 }
 
-/** 気になった語（WordSheet）：주말에 영화 볼래? の語と、自分で打つ欄。下からせり上がり、× で閉じる。 */
+/**
+ * 気になった語（WordSheet）：押した文（오늘은 일찍 자고 싶어.）の語。「単語を選ぶ」で 오늘은 を選ぶと、少しして、ほかの文が5つ
+ * （アプリの sentencesWith が返す文。その語が光る）。シートは高さの 88% まで（はみ出たところは、シートの中で送る）：5つ目まで
+ * 見えるよう少し送る。下の、自分で打ってメモの欄は、はみ出て見えない。言い終わったら × で閉じる。
+ */
 function WordSheet({ frame }: { frame: number }) {
-  const m = T.memo;
-  if (frame < m.sheet || frame >= m.close + 10) return null;
-  const up = frame < m.close ? prog(frame, m.sheet, 9) : 1 - prog(frame, m.close, 9, SOFT);
-  const s = RAIN[1];
-  const k = frame < m.type ? 0 : Math.min(MEMO_KEYS.length, Math.floor((frame - m.type) / (MEMO_PER * 30)) + 1);
-  const typed = k > 0 ? MEMO_KEYS[k - 1] : "";
-  const saving = frame >= m.save && frame < m.save + 8;
-  const done = frame >= m.save + 8;
-  const words = ["주말에", "영화", "볼래"];
-  const input: CSSProperties = { minHeight: 48, padding: "0 12px", border: `1.5px solid ${C.ink}`, borderRadius: 12, fontSize: 17, background: C.paper, display: "flex", alignItems: "center" };
+  const g = T.guess;
+  if (frame < g.sheet || frame >= g.close + 10) return null;
+  const up = frame < g.close ? prog(frame, g.sheet, 9) : 1 - prog(frame, g.close, 9, SOFT);
+  const look = LIB.look;
+  const picked = frame >= g.pick + 2;
+  // 案内の一行がシートの上の縁に隠れきるところまで（語のボタンが上に来る）。
+  const slid = glide(frame, [[g.slide, 145, 22]]);
+  const input: CSSProperties = { minHeight: 48, padding: "0 12px", border: `1.5px solid ${C.ink}`, borderRadius: 12, background: C.paper };
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 20 }}>
       <div style={{ position: "absolute", inset: 0, background: `rgba(23,32,51,${0.32 * up})` }} />
@@ -317,6 +374,8 @@ function WordSheet({ frame }: { frame: number }) {
           left: 0,
           right: 0,
           bottom: 0,
+          maxHeight: PH * 0.88,
+          overflow: "hidden",
           background: C.paper,
           borderRadius: "16px 16px 0 0",
           padding: "16px 20px 24px",
@@ -326,49 +385,69 @@ function WordSheet({ frame }: { frame: number }) {
           transform: `translateY(${(1 - up) * 105}%)`,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, transform: `translateY(${-slid}px)` }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>気になった語</p>
           <span style={{ position: "relative", width: 44, height: 44, marginRight: -10, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="close" size={20} />
-            <Press t={frame - m.close} size={44} />
+            <Press t={frame - g.close} size={44} />
           </span>
         </div>
-        <p style={{ margin: 0, fontFamily: FONT.ko, fontSize: 20, fontWeight: 500, lineHeight: 1.6 }}>{s.text}</p>
-        <p style={note}>語を選ぶと、ほかの文での使われ方が見られます。</p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {words.map((w) => (
-            <span key={w} style={{ minHeight: 40, padding: "0 14px", border: `1px solid ${C.line2}`, borderRadius: 999, display: "inline-flex", alignItems: "center", fontFamily: FONT.ko, fontSize: 16 }}>
-              {w}
-            </span>
-          ))}
+        <p style={{ margin: 0, fontFamily: FONT.ko, fontSize: 20, fontWeight: 500, lineHeight: 1.6, flexShrink: 0 }}>{look.sentence}</p>
+        <p style={{ ...note, flexShrink: 0 }}>語を選ぶと、ほかの文での使われ方が見られます。</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, flexShrink: 0 }}>
+          {look.words.map((w) => {
+            const on = picked && w === look.word;
+            return (
+              <span
+                key={w}
+                style={{
+                  position: "relative",
+                  minHeight: 40,
+                  padding: "0 14px",
+                  border: `1px solid ${on ? C.accent : C.line2}`,
+                  borderRadius: 999,
+                  background: on ? C.tint : C.paper,
+                  color: on ? C.accent : C.ink,
+                  fontWeight: on ? 600 : 400,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  fontFamily: FONT.ko,
+                  fontSize: 16,
+                }}
+              >
+                {w}
+                {w === look.word ? <Press t={frame - g.pick} size={46} /> : null}
+              </span>
+            );
+          })}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 14, borderTop: `1px solid ${C.line}` }}>
+        {picked ? (
+          <section style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
+            <p style={label}>ほかの文</p>
+            {frame >= g.others
+              ? look.others.map((o, i) => (
+                  <div key={o.text} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.line}`, ...rise(frame, g.others + i * 2, 6, 8) }}>
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontFamily: FONT.ko, fontSize: 18, lineHeight: 1.7 }}>
+                        <Sent text={o.text} hl={o.hits.map(([start, end]) => ({ start, end, kind: "mark" as const }))} />
+                      </span>
+                      <span style={{ fontSize: 14, color: C.muted }}>{o.gloss}</span>
+                    </div>
+                    <PlayButton />
+                  </div>
+                ))
+              : null}
+          </section>
+        ) : null}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 14, borderTop: `1px solid ${C.line}`, flexShrink: 0 }}>
           <p style={label}>自分で打ってメモ</p>
-          <div style={{ position: "relative", ...input, fontFamily: FONT.ko, ...focusRing(frame >= m.type - 8 && frame < m.save) }}>
-            {typed}
-            {frame >= m.type - 8 && frame < m.save ? <Caret frame={frame} color={C.ink} /> : null}
-            <Press t={frame - (m.type - 8)} size={48} />
-          </div>
+          <div style={input} />
           <p style={{ margin: 0, fontSize: 12, color: C.muted }}>意味やメモ（なくても可）</p>
           <div style={input} />
           <p style={note}>見返さなくて大丈夫。また出会うたびに数えます。</p>
-          {done ? (
-            <p style={{ margin: 0, fontSize: 14, color: C.ink2, ...rise(frame, m.save + 8, 4, 7) }}>
-              「<span style={{ fontFamily: FONT.ko }}>{LIB.memo}</span>」をメモしました。
-            </p>
-          ) : null}
-          <Btn full done={done} press={frame - m.save} style={saving ? { opacity: 0.55 } : undefined}>
-            {done ? (
-              <>
-                <Icon name="check" size={20} />
-                メモしました
-              </>
-            ) : saving ? (
-              "メモしています…"
-            ) : (
-              "メモする"
-            )}
-          </Btn>
+          <Btn full>メモする</Btn>
+        </div>
         </div>
       </div>
     </div>
@@ -427,17 +506,24 @@ function TryForm({ frame }: { frame: number }) {
 
 // ---- 直った（/app/s/[id]：浴びたかたちで言ってみた） ---------------------------------------------------------------
 
+/** 詳しく解説で押す語：予測した 오늘은。 */
+const PICK = LIB.say.parts.findIndex((p) => LIB.say.corrected.slice(p.start, p.end) === LIB.look.word);
+
 function FixScreen({ frame }: { frame: number }) {
   const t = T.fixed;
+  const b = T.back;
   const say = LIB.say;
-  const open = frame >= t.explain;
-  const picked = frame >= t.pick;
-  const part = say.parts[3];
-  const lit = prog(frame, t.pick, 15, SOFT);
-  const memoAt = say.corrected.indexOf(LIB.memo);
+  // 消しただけの直し（한국에 → 한국）では、足したところは無い（library.json では空の並び）。
+  const removed: { start: number; end: number }[] = say.removed;
+  const added: { start: number; end: number }[] = say.added;
+  const open = frame >= b.explain;
+  const picked = frame >= b.pick;
+  const part = say.parts[PICK];
+  const lit = prog(frame, b.pick, 15, SOFT);
   const y = glide(frame, [
-    [t.why, 24, 18],
-    [t.explain + 4, 226, 24],
+    [t.why, 50, 18],
+    [T.ask.start + 20, 0, 1],
+    [b.explain + 4, 190, 24],
   ]);
   return (
     <>
@@ -452,17 +538,14 @@ function FixScreen({ frame }: { frame: number }) {
           <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <p style={label}>あなたの文</p>
             <p style={{ margin: 0, fontFamily: FONT.ko, fontSize: 20, lineHeight: 1.7, color: C.muted }}>
-              <Sent text={say.attempt} color={C.muted} hl={say.removed.map((r) => ({ ...r, kind: "del" as const }))} />
+              <Sent text={say.attempt} color={C.muted} hl={removed.map((r) => ({ ...r, kind: "del" as const }))} />
             </p>
           </section>
           <section style={{ display: "flex", flexDirection: "column", gap: 8, borderTop: `1px solid ${C.line}`, paddingTop: 24 }}>
             <p style={label}>直した文</p>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <p style={{ flex: 1, minWidth: 0, margin: 0, fontFamily: FONT.ko, fontSize: 24, fontWeight: 500, lineHeight: 1.8 }}>
-                <Sent
-                  text={say.corrected}
-                  hl={[...say.added.map((r) => ({ ...r, kind: "ins" as const })), ...(memoAt >= 0 ? [{ start: memoAt, end: memoAt + LIB.memo.length, kind: "memo" as const }] : [])]}
-                />
+                <Sent text={say.corrected} hl={added.map((r) => ({ ...r, kind: "ins" as const }))} />
               </p>
               <SolidSpeak />
             </div>
@@ -478,11 +561,11 @@ function FixScreen({ frame }: { frame: number }) {
               </Btn>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <Btn quiet full press={frame - t.explain}>
+              <Btn quiet full press={frame - b.explain}>
                 {open ? "解説を閉じる" : "詳しく解説"}
               </Btn>
               {open ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, border: `1px solid ${C.line2}`, borderRadius: 12, ...rise(frame, t.explain, 10, 12) }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, border: `1px solid ${C.line2}`, borderRadius: 12, ...rise(frame, b.explain, 10, 12) }}>
                   <p style={{ margin: 0, fontFamily: FONT.ko, fontSize: 20, fontWeight: 500, lineHeight: 1.8 }}>
                     <Sent text={say.corrected} hl={picked ? [{ start: part.start, end: part.end, kind: "mark", p: lit }] : []} />
                   </p>
@@ -502,13 +585,13 @@ function FixScreen({ frame }: { frame: number }) {
                           alignItems: "baseline",
                           padding: "10px 6px",
                           borderBottom: `1px solid ${C.line}`,
-                          background: i === 3 && picked ? C.tint : undefined,
-                          ...rise(frame, t.explain + Math.round(i * 2.1), 10, 12),
+                          background: i === PICK && picked ? C.tint : undefined,
+                          ...rise(frame, b.explain + Math.round(i * 2.1), 10, 12),
                         }}
                       >
                         <span style={{ fontFamily: FONT.ko, fontSize: 18, fontWeight: 500 }}>{say.corrected.slice(p.start, p.end)}</span>
                         <span style={{ fontSize: 14, lineHeight: 1.6, color: C.ink2 }}>{p.meaning}</span>
-                        {i === 3 ? <Press t={frame - t.pick} x="30%" size={52} /> : null}
+                        {i === PICK ? <Press t={frame - b.pick} x="30%" size={52} /> : null}
                       </li>
                     ))}
                   </ul>
@@ -536,14 +619,11 @@ function AgainScreen({ frame }: { frame: number }) {
   const at = [a.press + 3, startOf("again2"), startOf("again3"), startOf("again4")];
   const shown = at.filter((x) => frame >= x).length;
   const all = shown === LATER.length;
-  const met = shown > 0;
-  // 4つ目のあと、メモした語の知らせが見えるところまで。
-  const noteEnd = listBottom(4) + 20 + 22;
   const y = glide(frame, [
-    [a.press - 24, 139, 18],
+    [a.press - 24, 110, 18],
     [a.press + 3, 0, 14],
-    [at[2] + 4, listBottom(3) + 20 + 22 + 16 - VIEW, 18],
-    [at[3] + 4, noteEnd + 16 - VIEW, 20],
+    [at[2] + 4, listBottom(3) + 16 - VIEW, 18],
+    [at[3] + 4, listBottom(4) + 16 - VIEW, 20],
   ]);
   return (
     <>
@@ -551,19 +631,14 @@ function AgainScreen({ frame }: { frame: number }) {
         <ShowerPage>
           <Toolbar badge="前にも降ったかたち・3日ぶり" again />
           {shown === 0 ? (
-            <Intro frame={frame} memo={LIB.memo} press={a.press} />
+            <Intro frame={frame} press={a.press} />
           ) : (
             <ol style={{ listStyle: "none", margin: 0, padding: 0, borderTop: `1px solid ${C.line}` }}>
               {LATER.slice(0, shown).map((s, i) => (
-                <Item key={s.key} frame={frame} s={s} at={at[i]} memo={LIB.memo} />
+                <Item key={s.key} frame={frame} s={s} at={at[i]} />
               ))}
             </ol>
           )}
-          {met ? (
-            <p style={{ ...memoNote, ...rise(frame, at[0] + 10, 4, 9) }}>
-              メモした「<span style={{ fontFamily: FONT.ko }}>{LIB.memo}</span>」が、また降ってきました。
-            </p>
-          ) : null}
           {all ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <Btn quiet full>
