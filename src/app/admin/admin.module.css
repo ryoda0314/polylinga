@@ -1,11 +1,19 @@
 :global(body):has(.shell) { --status-fill: var(--surface); }
 .shell { min-height: calc(100dvh - env(safe-area-inset-top, 0px)); background: var(--surface); }
 .header {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px;
   padding: 12px 20px; background: var(--paper); border-bottom: 1px solid var(--line);
 }
 .brand { font-weight: 600; text-decoration: none; color: var(--ink); }
 .headerLink { font-size: 14px; color: var(--muted); }
+/* On a phone the pages go on a row of their own under the name. */
+.nav { order: 3; flex: 1 0 100%; display: flex; gap: 4px; overflow-x: auto; }
+@media (min-width: 720px) { .nav { order: 0; flex: 1 1 auto; } }
+.navItem {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 8px;
+  font-size: 14px; color: var(--ink-2); text-decoration: none; white-space: nowrap;
+}
+.navActive { background: var(--tint); color: var(--accent); font-weight: 600; }
 
 .layout { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px; padding: 20px; max-width: 1280px; margin: 0 auto; }
 .side {

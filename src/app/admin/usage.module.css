@@ -1,0 +1,114 @@
+/* 利用状況 (/admin) and 利用者 (/admin/users): one column on a phone, cards side by side from 1024 px. */
+.page {
+  display: flex; flex-direction: column; gap: 24px;
+  max-width: 1280px; margin: 0 auto; padding: 20px 20px 56px;
+}
+@media (max-width: 720px) { .page { gap: 20px; padding: 16px 16px 48px; } }
+
+.titleRow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; }
+.h1 { margin: 0; font-size: 26px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.sub { margin: 4px 0 0; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.scope { margin: 0; font-size: 13px; color: var(--ink-2); }
+.scope a { color: var(--accent); }
+.help { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.7; }
+.notice {
+  margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--danger-tint);
+  font-size: 13px; color: var(--ink-2); line-height: 1.7;
+}
+.back { align-self: flex-start; font-size: 13px; color: var(--muted); }
+
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tile {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 14px 16px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.tileLabel { font-size: 13px; color: var(--muted); }
+.tileValue { font-size: 30px; font-weight: 600; line-height: 1.25; color: var(--ink); }
+.tileUnit { margin-left: 2px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.tileNote { font-size: 12px; color: var(--muted); }
+/* The one number the page leads with. */
+.hero { grid-column: 1 / -1; }
+.hero .tileValue { font-size: 52px; line-height: 1.1; }
+/* The hero and six tiles: 2 × 3 under it on a phone, 3 × 2 on a tablet, one row on a PC. */
+@media (min-width: 720px) {
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .tiles { grid-template-columns: minmax(0, 1.6fr) repeat(6, minmax(0, 1fr)); }
+  .hero { grid-column: auto; }
+  .tiles[data-count="8"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sectionHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.h2 { margin: 0; font-size: 17px; font-weight: 600; }
+
+.cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 1024px) {
+  .cards[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cards[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.card {
+  display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 16px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.cardTitle { margin: 0; font-size: 14px; font-weight: 600; }
+.cardNote { margin: -8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* A row of choices that scope everything below them (the period, the language, the order). */
+.choices { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; background: var(--paper); }
+.choice {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px;
+  font-size: 13px; color: var(--ink-2); text-decoration: none;
+}
+.choice + .choice { border-left: 1px solid var(--line-2); }
+.choice[aria-current="true"] { background: var(--tint); color: var(--accent); font-weight: 600; }
+
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.input, .select {
+  min-height: 36px; padding: 0 10px; border: 1px solid var(--line-2); border-radius: 8px;
+  background: var(--paper); font-size: 14px; color: var(--ink);
+}
+.input { flex: 1 1 220px; min-width: 0; }
+.small {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px;
+  border: 1px solid var(--line-2); border-radius: 8px; background: var(--paper);
+  font-size: 13px; color: var(--ink); cursor: pointer;
+}
+
+/* Closed, only its line; open, the numbers in a card below it. */
+.tableView > summary { width: fit-content; min-height: 32px; line-height: 32px; font-size: 13px; color: var(--accent); cursor: pointer; }
+.tableView[open] > summary { margin-bottom: 8px; }
+.tableWrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th, .table td {
+  padding: 7px 10px; border-bottom: 1px solid var(--line);
+  text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.table th:first-child, .table td:first-child { text-align: left; }
+.table thead th { font-size: 12px; font-weight: 500; color: var(--muted); }
+.table tbody tr:last-child > * { border-bottom: 0; }
+
+/* 利用者: the name column stays put while the numbers scroll sideways on a phone. */
+.people td:first-child, .people th:first-child { position: sticky; left: 0; z-index: 1; background: var(--paper); }
+.people td:first-child { white-space: normal; min-width: 11em; max-width: 18em; }
+.person { display: flex; flex-direction: column; }
+.person a { font-weight: 600; color: var(--ink); }
+.email { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.people tr[data-excluded] td { color: var(--faint); }
+.people tr[data-excluded] .person a { color: var(--muted); }
+.badge {
+  display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px;
+  font-size: 11px; font-weight: 500; line-height: 18px; background: var(--surface); color: var(--muted);
+}
+.badge[data-kind="excluded"] { background: var(--danger-tint); color: var(--danger); }
+.empty { margin: 0; padding: 24px 0; text-align: center; font-size: 14px; color: var(--muted); }
+
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 0; font-size: 14px; }
+@media (min-width: 1024px) {
+  .facts { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); column-gap: 24px; }
+}
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+
+.more { align-self: flex-start; font-size: 14px; color: var(--accent); }

@@ -3,7 +3,9 @@ import OpenAI from "openai";
 import { LANG_ENGLISH_NAME, type Lang } from "@/lib/langs";
 
 export const EMBEDDING_MODEL = "text-embedding-3-small";
-export const CORRECTION_MODEL = "gpt-5.2";
+// gpt-5.2 sometimes wrote the explanation in the language being learned instead of the learner's own (in a 2026-11 test,
+// 2 of 5 Korean attempts), even when the schema named the language; gpt-6.1-sol did not, at about the same cost.
+export const CORRECTION_MODEL = "gpt-6.1-sol";
 
 let client: OpenAI | null = null;
 function openai() {

@@ -11,7 +11,7 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - Supabase: shares the project with the old poly-lang app. Everything new is prefixed `pl_`; `kn_` objects (`kn_days`,
   `kn_hours`, `kn_ping`, `kn_hourly`, `kn_stats`, `kn_summary`) belong to the sister app ことのね (its usage counts; schema in that repo's `supabase/usage.sql`). Never touch the old tables
   or the old `tts-audio` bucket (the old app's cron empties it). Schema: `supabase/migrations/`.
-- AI (`src/lib/ai.ts`): OpenAI `gpt-5.2` for corrections (one call per attempt, also returns which library patterns the
+- AI (`src/lib/ai.ts`): OpenAI `gpt-6.1-sol` for corrections (one call per attempt, also returns which library patterns the
   corrected sentence uses) and `text-embedding-3-small` for finding close example sentences. The one other runtime call
   is 詳しく解説 on a learner's own correction (`explainSentence`, action `explainCorrection`): each word with its plain
   meaning and its part of the translation, made only when they press the button and kept in
@@ -103,6 +103,14 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   例文から探す: library sentences containing a word typed in either language, `lookUp` in corpus.ts; no definitions),
   `/app/me` 自分.
   `src/app/admin/library`: check flagged AI content (allowed for addresses in `ADMIN_EMAILS`).
+- 管理 › 利用状況 (`/admin`) and 利用者 (`/admin/users`, `/admin/users/[id]`): how many learners there are and how much
+  of each part they use, counts only (never what anyone wrote). A learner is an account with `pl_settings` (made on
+  `/start`); a day is active when it has a finished rain, a sentence said, a correction or a memo word (opening the app
+  leaves no trace). Read through `pl_admin_*` functions (`supabase/migrations/20261101000000_admin_usage.sql`, service
+  role only) by `src/lib/admin-usage.ts`, whose every loader checks the admin itself; pure helpers in
+  `admin-usage-core.ts`. Accounts in `pl_admin_excluded` (the admin's own, tests; 集計から外す on a learner's page) are
+  left out unless 含めて見る. Charts are server-drawn (`src/app/admin/_usage/charts.tsx`): two tones of the accent,
+  a readout on hover and focus, and the numbers in 表で見る.
 
 ## Commands
 

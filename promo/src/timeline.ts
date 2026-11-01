@@ -71,7 +71,7 @@ function make() {
   notice.reveal = notice.press + 0.15;
   notice.end = Math.max(say("V05", v05), notice.reveal + 2.6) + 0.35;
 
-  // C3. 言ってみる：「これで言ってみる」。さっきの雨が欄の上に残り、そこから組んだ文（今日は韓国のいちご食べたい）を打って、
+  // C3. 言ってみる：「これで言ってみる」。さっきの雨が欄の上に残り、そこから組んだ文（今日は韓国でいちご食べたい）を打って、
   // 直してもらう。
   const tri = { start: notice.end, cap: 0, press: 0, open: 0, type: 0, typed: 0, send: 0, end: 0 };
   tri.cap = tri.start + 0.4;
@@ -84,7 +84,7 @@ function make() {
   // 「直しています…」のあいだ（使い方と同じ 1.1 秒）。
   tri.end = tri.send + 1.1;
 
-  // C4. 直った：あなたの文（에 に線）と直した文。「どこを」で、どこを直したか。言い終わったら、コピー。
+  // C4. 直った：あなたの文と直した文（에 に 서 を足した）。「どこを」で、どこを直したか。言い終わったら、コピー。
   const fixed = { start: tri.end, cap: 0, why: 0, copy: 0, end: 0 };
   fixed.cap = fixed.start + 0.4;
   const v24 = fixed.start + 0.5;
@@ -93,18 +93,18 @@ function make() {
   fixed.end = fixed.copy + 1.0;
 
   // C5. 問い（全面）：添削を見せたあとで「でも、言葉を知らなかったら？」。材料は、いま浴びた4つの文（右に大きく）。「今日は」で
-  // 言いたいこと（今日は韓国のいちご食べたい）が出て、「言葉は」で文と訳の中の同じ言葉が光る。「どれが、どの意味」で
+  // 言いたいこと（今日は韓国でいちご食べたい）が出て、「言葉は」で文と訳の中の同じ言葉が光る。「どれが、どの意味」で
   // 三文目の語に「？」。
   const ask = { start: fixed.end, q: 0, mat: 0, want: 0, lit: 0, lit2: 0, which: 0, q1: 0, q2: 0, q3: 0, q4: 0, end: 0 };
   ask.q = ask.start + 0.3;
   const v13 = ask.start + 0.5;
   ask.mat = say("V13", v13) + 0.45;
   const v14 = ask.mat + 0.35;
-  const v25 = say("V14", v14) + 0.3;
-  ask.want = v25 + 1.15;
-  ask.lit = v25 + 4.2;
+  const v26 = say("V14", v14) + 0.3;
+  ask.want = v26 + 1.3;
+  ask.lit = v26 + 4.55;
   ask.lit2 = ask.lit + 0.45;
-  const v16 = say("V25", v25) + 0.45;
+  const v16 = say("V26", v26) + 0.45;
   ask.which = v16 - 0.1;
   ask.q1 = v16 + 0.95;
   ask.q2 = ask.q1 + 0.22;
@@ -131,7 +131,7 @@ function make() {
   guess.close = say("V19", v19) + 0.2;
   guess.end = guess.close + 0.45;
 
-  // C7. そのまま使って、違っていたら直してもらう：さっきの直った文に戻る（あなたの文の 에 に線）。「違っていたら」で詳しく解説、
+  // C7. そのまま使って、違っていたら直してもらう：さっきの直った文に戻る（直した文の 서 に線）。「違っていたら」で詳しく解説、
   // 「直してもらえば」で 오늘은 を押すと、오늘은 と「今日は」が光る（予測は合っていた）。
   const back = { start: guess.end, cap: 0, explain: 0, pick: 0, end: 0 };
   back.cap = back.start + 0.3;
