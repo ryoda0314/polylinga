@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useLayoutEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { playToEnd, prefetchAudio, stopAudio } from "@/components/audio";
 import { Icon } from "@/components/Icon";
 import { usePref } from "@/components/local";
@@ -11,7 +11,7 @@ import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
 import type { ShowerCluster, ShowerSentence } from "@/lib/shower";
 import Link from "next/link";
-import { heartMinna, markReachedSeen, nextCluster, recordFinished, reportMinna } from "../actions";
+import { heartMinna, markReachedSeen, recordFinished, reportMinna } from "../actions";
 import app from "../app.module.css";
 import styles from "./shower.module.css";
 import { CuePrompt } from "./CuePrompt";
@@ -31,7 +31,8 @@ function triedAt(state: unknown): string | null {
  * One rain: sentences that share a pattern fall in one at a time with their audio and stay on screen,
  * so the learner can compare them and find the common part. Nothing is explained until they ask, and then
  * only by lighting the matching parts of the sentence and its translation. The rain comes from the library, or (みんなの雨)
- * from other learners' corrected sentences, where the learner can say 「これ言いたかった」 or report one.
+ * from other learners' corrected sentences, where the learner can say 「これ言いたかった」 or report one. The way on is
+ * これで言ってみる: the next rain comes after the correction (its 次の雨).
  */
 export function ShowerPlayer({
   top,
@@ -55,8 +56,8 @@ export function ShowerPlayer({
   /** The learner shares their corrected sentences. */
   sharing: boolean;
   /**
-   * Making the rain a habit: their plan (電車に乗ったら) and whether to ask for one, whether this visit brings their first
-   * rain today, and whether they are back after a few days away.
+   * Making the rain a habit: their plan (電車に乗ったら) and whether to ask for one, whether this is their first rain
+   * today, and whether they are back after a few days away.
    */
   habit: { cue: string | null; ask: boolean; firstToday: boolean; back: boolean };
   native: Lang;
@@ -64,25 +65,22 @@ export function ShowerPlayer({
   rate: number;
 }) {
   const t = getDict(native);
-  const [cluster, setCluster] = useState(initial);
+  // The rain this page opened with, even if the page is drawn again meanwhile (by then it would pick another).
+  const [cluster] = useState(initial);
   const [shown, setShown] = useState(0);
   const [playing, setPlaying] = useState<number | null>(null);
   // Remembered on this device: on a train the sound stays off until the learner turns it back on.
   const [autoplay, setAutoplay] = usePref("autoplay", true);
   const [hideGloss, setHideGloss] = usePref("hideGloss", false);
-  // Which rain of this visit this is (0 = the first): the greeting and today's note belong to the first only.
-  const [rainNo, setRainNo] = useState(0);
-  const [offline, setOffline] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [trying, setTrying] = useState(false);
   const [sheetFor, setSheetFor] = useState<ShowerSentence | null>(null);
-  const [pending, startTransition] = useTransition();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const runRef = useRef(0); // bumping it stops whatever flow is running
   const tryEntry = useRef(false); // the history entry showing is this rain's 言ってみる page
   const rainScroll = useRef<number | null>(null); // where the rain was left for 言ってみる
 
-  const recorded = useRef<{ key: string; done: Promise<void>; next: Promise<ShowerCluster | null> } | null>(null);
+  const recorded = useRef(false);
   const [hearted, setHearted] = useState<Set<string>>(() => new Set());
   const [reported, setReported] = useState<Set<string>>(() => new Set());
   const minna = source === "minna";
@@ -111,16 +109,9 @@ export function ShowerPlayer({
 
   // Once every sentence has fallen, the cluster counts as bathed in, even if the learner then tries a sentence or leaves.
   useEffect(() => {
-    if (!cluster || shown < cluster.sentences.length) return;
-    const sentenceIds = cluster.sentences.map((s) => s.id);
-    const key = `${cluster.patternId}:${sentenceIds.join(",")}`;
-    if (recorded.current?.key === key) return;
-    const done = recordFinished({ patternId: cluster.patternId, sentenceIds }, source).catch(() => {});
-    // The next rain is fetched now, while this one is still on screen: 次の雨 then needs no connection (a tunnel).
-    const next = done.then(() => nextCluster(cluster.patternId, source));
-    // Its stored clips too, so the next rain plays even in a tunnel. A failure is asked for again when the learner moves on.
-    next.then((c) => c && prefetchAudio(c.sentences.map((s) => s.audio), { generate: false })).catch(() => {});
-    recorded.current = { key, done, next };
+    if (!cluster || shown < cluster.sentences.length || recorded.current) return;
+    recorded.current = true;
+    void recordFinished({ patternId: cluster.patternId, sentenceIds: cluster.sentences.map((s) => s.id) }, source).catch(() => {});
   }, [cluster, shown, source]);
 
   function element() {
@@ -215,38 +206,6 @@ export function ShowerPlayer({
     setShown((n) => Math.min(n + 1, cluster.sentences.length));
   }
 
-  function goNext() {
-    if (!cluster) return;
-    runRef.current++;
-    stopAudio(audioRef.current);
-    setPlaying(null);
-    const avoid = cluster.patternId;
-    const ahead = recorded.current?.next;
-    startTransition(async () => {
-      let next: ShowerCluster | null;
-      try {
-        next = await (ahead ?? nextCluster(avoid, source));
-      } catch {
-        try {
-          next = await nextCluster(avoid, source);
-        } catch {
-          setOffline(true);
-          return;
-        }
-      }
-      setOffline(false);
-      setRainNo((n) => n + 1);
-      setCluster(next);
-      setRevealed(false);
-      setShown(0);
-      window.scrollTo({ top: 0 });
-      if (next) {
-        if (autoplay) void flowFrom(next, 0);
-        else setShown(1);
-      }
-    });
-  }
-
   // The rain's own page: the bar on a phone, which rain it is, then the rain.
   const page = (content: ReactNode) => (
     <>
@@ -258,7 +217,6 @@ export function ShowerPlayer({
     </>
   );
   const reachedNote = reached ? <p className={styles.reached}>{t.shower.reached}</p> : null;
-  const firstRain = rainNo === 0;
   if (!cluster) {
     if (!minna) return page(<p className={styles.empty}>{t.shower.empty}</p>);
     return page(
@@ -327,7 +285,7 @@ export function ShowerPlayer({
           </button>
         </div>
       ) : (
-        <ol className={styles.list} aria-live="polite" data-leaving={pending || undefined}>
+        <ol className={styles.list} aria-live="polite">
           {visible.map((s, i) => {
             const highlights: Highlight[] = [
               ...s.memoHits.map((h) => ({ ...h, kind: "memo" as const })),
@@ -399,7 +357,7 @@ export function ShowerPlayer({
       {/* What the rain is (badge, switches) and what to do after it: on a phone above and below the rain. */}
       <div className={styles.side}>
       {reachedNote}
-      {habit.back && firstRain && shown === 0 ? (
+      {habit.back && shown === 0 ? (
         <p className={styles.welcome}>{cluster.again ? t.shower.welcomeBackAgain : t.shower.welcomeBack}</p>
       ) : null}
       <div className={styles.toolbar}>
@@ -418,8 +376,8 @@ export function ShowerPlayer({
 
       {allShown ? (
         <div className={styles.after}>
-          {firstRain && habit.firstToday ? <p className={styles.doneToday}>{t.shower.doneToday}</p> : null}
-          {firstRain && habit.ask && !minna ? <CuePrompt native={native} /> : null}
+          {habit.firstToday ? <p className={styles.doneToday}>{t.shower.doneToday}</p> : null}
+          {habit.ask && !minna ? <CuePrompt native={native} /> : null}
           {revealed ? (
             <section className={styles.answer}>
               <h2 className="label">{t.shower.revealed}</h2>
@@ -431,18 +389,10 @@ export function ShowerPlayer({
               {t.shower.reveal}
             </button>
           )}
-          {/* 言ってみる is what the rain is for, so it is the one filled button; 次の雨 stays a quiet way on. */}
+          {/* 言ってみる is what the rain is for, and the only way on: 次の雨 waits on the correction's page. */}
           <button type="button" className="btn" onClick={openTry}>
             {t.shower.tryIt}
           </button>
-          <button type="button" className="btn-quiet" onClick={goNext} disabled={pending}>
-            {pending ? t.shower.loading : t.shower.nextCluster}
-          </button>
-          {offline ? (
-            <p className={styles.offline} role="alert">
-              {t.shower.offline}
-            </p>
-          ) : null}
         </div>
       ) : null}
 

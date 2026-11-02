@@ -1,6 +1,6 @@
 // The pages and mails on the way into an account: login and sign-up, the confirmation mail, the name, つなぐ, and a
 // forgotten password. In the language of the learner arriving (src/lib/sisters.ts connectLang / sisterLang): Japanese,
-// or Korean on the way to the sisters for Korean speakers (ことのたね, ことのはし). The rest of ことのあめ is Japanese only.
+// or Korean on the way to the sisters for Korean speakers (글씨앗, 말씨앗). The rest of ことのあめ is Japanese only.
 import type { SisterLang } from "@/lib/sisters";
 import { ja as jaDict } from "./ja";
 
@@ -91,6 +91,8 @@ const jaCopy = {
 
 export type SignInCopy = typeof jaCopy;
 
+// A sister's name is followed only by particles that don't change with its last sound (에, 의) or by 앱, so every
+// name reads right (말씨앗 would need 으로 and 이에요 where ことのめ needs 로 and 예요).
 const koCopy: SignInCopy = {
   login: {
     title: "로그인",
@@ -156,7 +158,7 @@ const koCopy: SignInCopy = {
     title: "연결하기",
     invalidHeading: "연결할 수 없어요",
     invalidLead: "연결할 곳을 알 수 없었어요. 앱의 'ことのあめ로 연결하기'에서 다시 시작해 주세요.",
-    sisters: (names: string[]) => `ことのあめ 계정으로 연결할 수 있는 앱은 ${names.join("·")}예요.`,
+    sisters: (names: string[]) => `ことのあめ 계정으로는 ${names.join("·")}에 연결할 수 있어요.`,
     heading: (name: string) => `${name}에 연결하기`,
     lead: (email: string, name: string) => `${email} 계정으로 ${name}에 연결해요. ${name}의 기록도 이 계정에 남게 돼요.`,
     invalid: (name: string) => `연결할 곳을 알 수 없었어요. ${name}의 'ことのあめ로 연결하기'에서 다시 시작해 주세요.`,
@@ -165,7 +167,7 @@ const koCopy: SignInCopy = {
     busy: "연결하고 있어요…",
     go: (name: string) => `${name}에 연결하기`,
     other: "다른 계정으로 하기",
-    back: (name: string) => `연결하지 않고 ${name}로 돌아가기`,
+    back: (name: string) => `연결하지 않고 ${name} 앱으로 돌아가기`,
   },
   name: {
     title: "사용자 이름 정하기",

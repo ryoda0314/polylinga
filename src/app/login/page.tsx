@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (user) redirect(next ?? "/app");
 
   const sister = connectingTo(next);
-  // On the way to a sister for Korean speakers (ことのたね, ことのはし), in Korean.
+  // On the way to a sister for Korean speakers (글씨앗, 말씨앗), in Korean.
   const lang = connectLang(next);
   const t = signInCopy(lang).login;
 

@@ -10,9 +10,9 @@ import { getDict } from "@/lib/i18n";
 import { isAccent, isLang, type Accent, type Lang } from "@/lib/langs";
 import { consume, LIMITS, refund } from "@/lib/metering";
 import { LAUNCH_NATIVE, LAUNCH_TARGETS, requireSettings } from "@/lib/settings";
-import { heartShared, pickMinnaCluster, recordMinna, reportShared, shareCorrection } from "@/lib/minna";
+import { heartShared, recordMinna, reportShared, shareCorrection } from "@/lib/minna";
 import { withdrawShared } from "@/lib/me";
-import { findMemoHits, pickCluster, recordCluster, sentencesWith, type ShowerCluster } from "@/lib/shower";
+import { findMemoHits, recordCluster, sentencesWith } from "@/lib/shower";
 import { createAdminClient } from "@/lib/supabase/server";
 import { ensureClip } from "@/lib/tts";
 import { cleanUsername, USERNAME_MAX } from "@/lib/username";
@@ -39,8 +39,8 @@ export type FormState = { error: string | null };
 // ---------------------------------------------------------------------------
 
 /**
- * Record a cluster once all of it has fallen. It counts as bathed in then, whatever the learner does next (move on,
- * try a sentence, or leave), so the same pattern does not come straight back next time.
+ * Record a cluster once all of it has fallen. It counts as bathed in then, whatever the learner does next (say
+ * something with it, or leave), so the same pattern does not come straight back next time.
  */
 export async function recordFinished(finished: { patternId: string; sentenceIds: string[] }, source: "library" | "minna" = "library") {
   const { user } = await requireUser();
@@ -49,15 +49,6 @@ export async function recordFinished(finished: { patternId: string; sentenceIds:
   const ids = finished.sentenceIds.map(String);
   if (source === "minna") await recordMinna(user.id, finished.patternId, ids.filter((id) => UUID.test(id)));
   else await recordCluster(user.id, settings.targetLang, finished.patternId, ids);
-}
-
-/** The next cluster, avoiding the pattern the learner just had. */
-export async function nextCluster(avoidPatternId: string | null, source: "library" | "minna" = "library"): Promise<ShowerCluster | null> {
-  const { user } = await requireUser();
-  const settings = await requireSettings();
-  const avoid = typeof avoidPatternId === "string" ? avoidPatternId : null;
-  if (source === "minna") return pickMinnaCluster(user.id, settings.targetLang, settings.nativeLang, avoid);
-  return pickCluster(user.id, settings.targetLang, settings.nativeLang, avoid);
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

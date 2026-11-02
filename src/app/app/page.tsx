@@ -22,13 +22,16 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
   // Three rains: the library's (ことのあめ), other learners' corrected sentences (みんなの雨), and the learner's own memo
   // words with their meanings (単語の雨).
   const source = params.rain === "minna" ? "minna" : params.rain === "words" ? "words" : "library";
+  // The rain a correction's 次の雨 leads to (`after` the way of saying just tried): another way of saying, and the
+  // question of when to bathe is left to the first rain of a sitting.
+  const after = typeof params.after === "string" ? params.after : null;
   // The day so far is read before this visit's rain is recorded: it says whether this is today's first rain.
   const [first, reached, sofar, { data: memo }] = await Promise.all([
     source === "words"
       ? null
       : source === "minna"
-        ? pickMinnaCluster(user.id, settings.targetLang, settings.nativeLang, null)
-        : pickCluster(user.id, settings.targetLang, settings.nativeLang, null),
+        ? pickMinnaCluster(user.id, settings.targetLang, settings.nativeLang, after)
+        : pickCluster(user.id, settings.targetLang, settings.nativeLang, after),
     reachedSomeone(user.id, settings.reachedSeenAt),
     rainSoFar(user.id, settings.targetLang),
     source === "words"
@@ -103,7 +106,7 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
       sharing={settings.shareRain}
       habit={{
         cue: settings.rainCue,
-        ask: !settings.rainCueAsked && !settings.rainCue,
+        ask: !after && !settings.rainCueAsked && !settings.rainCue,
         firstToday: !sofar.today,
         back: sofar.back,
       }}

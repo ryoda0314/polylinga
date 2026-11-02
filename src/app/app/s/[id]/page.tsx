@@ -113,6 +113,14 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
         ))}
       </details>
     ) : null;
+  // A way of saying tried with a rain: once it is corrected, the next rain is the way on (the rain itself has no 次の雨).
+  // It rains from where the sentences came from, another way of saying than this one.
+  const fromMinna = matches.some((m) => typeof m.shared_id === "string");
+  const nextRain = patternId ? (
+    <Link href={`/app?${fromMinna ? "rain=minna&" : ""}after=${encodeURIComponent(patternId)}`} className="btn">
+      {t.saying.nextRain}
+    </Link>
+  ) : null;
   const foot = (
     <div className={`${styles.pageFoot} ${styles.full}`}>
       <DeleteSaying
@@ -130,8 +138,8 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
 
   if (material.length) {
     // Said with a rain's sentences: they stay where they were while it was written (on a wide screen on the left),
-    // beside the correction and another try. On a phone the correction comes first, then the sentences, right above
-    // もう一度書く. The way of saying the rain was about is lit in them, so it is not listed again below.
+    // beside the correction and another try. On a phone the correction and 次の雨 come first, then the sentences,
+    // right above もう一度書く. The way of saying the rain was about is lit in them, so it is not listed again below.
     return (
       <>
         {header}
@@ -153,6 +161,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
               <>
                 <div className={styles.result}>
                   <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+                  {nextRain}
                 </div>
                 {rewrite}
                 {earlier}
@@ -187,6 +196,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
           <>
             <div className={styles.col}>
               <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+              {nextRain}
             </div>
             <div className={styles.col}>
             <PatternsView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />

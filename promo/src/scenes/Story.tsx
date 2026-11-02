@@ -3,7 +3,7 @@
 //   気づく：「共通しているところは？」で、文と訳の同じところに色が付く。共通していたところ：したいことを言う。
 //   言ってみる：「これで言ってみる」で、言ってみるの頁（浴びたかたちで言ってみる）。さっきの4文が並び、その下の欄に、雨の文から
 //     組んだ 오늘은 한국에 딸기 먹고 싶어. を打って、直してもらう。
-//   直った：あなたの文と直した文（에 に 서 を足した）、どこを直したか、コピー。その下に、浴びた4文が残る。
+//   直った：あなたの文と直した文（에 に 서 を足した）、どこを直したか、コピー。その下に次の雨と、浴びた4文が残る。
 //   （ここで全面の問い：Ask.tsx。この画面は見えていない）
 //   予測する：まだ書く前の言ってみるの頁。4文の三文目（오늘은 일찍 자고 싶어.）を押して、語のシート。오늘은 を選ぶと、
 //     ほかの文が5つ。左でその訳を見比べると、どれも「今日は」。たぶん「今日は」。
@@ -375,9 +375,6 @@ function RainScreen({ frame }: { frame: number }) {
               <Btn full press={frame - tr.press}>
                 これで言ってみる
               </Btn>
-              <Btn quiet full>
-                次の雨
-              </Btn>
             </div>
           ) : null}
         </ShowerPage>
@@ -552,7 +549,7 @@ function WordSheet({ frame }: { frame: number }) {
   );
 }
 
-// ---- 直った（/app/s/[id]：浴びたかたちで言ってみた。電話では、直した文の下に浴びた4文、もう一度書く） -------------------
+// ---- 直った（/app/s/[id]：浴びたかたちで言ってみた。電話では、直した文の下に次の雨、浴びた4文、もう一度書く） -------------
 
 /** 詳しく解説で押す語：予測した 오늘은。 */
 const PICK = LIB.say.parts.findIndex((p) => LIB.say.corrected.slice(p.start, p.end) === LIB.look.word);
@@ -646,6 +643,7 @@ function FixScreen({ frame }: { frame: number }) {
             <p style={label}>どこを直したか</p>
             <p style={{ margin: 0, fontSize: 15, lineHeight: 1.75 }}>{say.explanation}</p>
           </section>
+          <Btn full>次の雨</Btn>
           <Material frame={frame} title="浴びた文" />
           <p style={{ margin: 0, minHeight: 44, display: "flex", alignItems: "center", paddingTop: 4, borderTop: `1px solid ${C.line}`, fontSize: 14, fontWeight: 500, color: C.ink2 }}>
             もう一度書く
@@ -692,9 +690,6 @@ function AgainScreen({ frame }: { frame: number }) {
                 共通しているところは？
               </Btn>
               <Btn full>これで言ってみる</Btn>
-              <Btn quiet full>
-                次の雨
-              </Btn>
             </div>
           ) : null}
         </ShowerPage>

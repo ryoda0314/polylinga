@@ -22,8 +22,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   - Gemini's pace varies between generations, so each clip is asked for at a learner's pace and measured (speech units
     per second, `PACE_RANGE`); a rushed one is made again.
   - A correction's clip is made right after the correction (`after()` in actions.ts), so its speaker never waits.
-  - `src/components/audio.ts` fetches a rain's clips while its first screen is up, and the next rain's while this one
-    plays (they then play at once, even in a tunnel). One play per element: a newer one cancels an older one still loading.
+  - `src/components/audio.ts` fetches a rain's clips while its first screen is up (they then play at once, even in a
+    tunnel). One play per element: a newer one cancels an older one still loading.
   - Pro TTS allows about 10 clips a minute per project, and the app needs that for its own generation. Bulk generation
     (`scripts/generate-audio.mjs`) therefore runs on Flash (same voice, its own quota).
 
@@ -53,7 +53,7 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - `src/lib/shower.ts` (+ pure helpers in `shower-core.ts`): picks the next cluster (patterns due to return first,
   then new ones; unseen sentences first) and records exposures, seen sentences and memo-word meetings. A pattern is due
   after `RETURN_DAYS` days or `RETURN_RAINS` other clusters, whichever first, so heavy users meet it again the same
-  sitting. A cluster counts as bathed in once all of it has fallen (`recordFinished`), not only on 次の雨.
+  sitting. A cluster counts as bathed in once all of it has fallen (`recordFinished`), whatever the learner does next.
   A gentle start (a tester's first day of Korean began with -ㄹ래 and 하러 갈래, two patterns stacked): new patterns come
   in an order for someone new to each language (`pl_patterns.step` from `scripts/library/steps.json`: in Korean and
   Chinese first the everyday verbs in their plain form, one per rain with only the noun changing (eat … sleep: 밥 먹어,
@@ -61,14 +61,18 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   sentences rain plainest first (`pl_sentence_patterns.extra`, what else a beginner would not know yet, judged by hand
   for each language's opening patterns; unjudged ones count as one), then shortest (`rainOrder`).
 - Habit, without streaks (habits form from a cue repeated, and a missed day barely slows that): after the first rain the
-  learner is asked once when they will bathe (`pl_settings.rain_cue`, e.g. 電車に乗ったら; `CuePrompt`, settings), and the
-  rain shows 「〜、ひと雨。」. The first rain of a day ends with "enough for today", and coming back after 3+ days away is
-  greeted (`rainSoFar` in me.ts). For train rides: sound and translation settings are kept on the device, the next rain
-  is fetched while the current one is on screen, and half-written sentences are kept as drafts (`src/components/local.ts`).
+  learner is asked once when they will bathe (`pl_settings.rain_cue`, e.g. 電車に乗ったら; `CuePrompt`, settings; not
+  again on the rains a correction's 次の雨 leads to), and the rain shows 「〜、ひと雨。」. The first rain of a day ends with
+  "enough for today", and coming back after 3+ days away is greeted (`rainSoFar` in me.ts). For train rides: sound and
+  translation settings are kept on the device, a rain's clips are fetched before it falls, and half-written sentences
+  are kept as drafts (`src/components/local.ts`).
 - 単語の雨 (`/app?rain=words`, `_shower/WordRain.tsx`): the third rain on 浴びる, also linked from メモ. The learner's memo
   words fall one at a time with what they wrote beside them, in a new order each round, until they stop it; read aloud by
   the browser's voice if they want, speed kept on the device, the screen kept awake while it runs. Nothing is asked or
   counted, and it does not count as meeting a word (that stays the sentence rain's job).
+- One way through: rain → これで言ってみる → correction → 次の雨. The rain has no 次の雨 of its own; the correction page of
+  a way of saying has it, right after the correction (`/app?after=<pattern>`, `?rain=minna` too for みんなの雨's
+  sentences): the next rain is another way of saying than the one just tried.
 - 言ってみる after a rain (`_shower/TryPage.tsx`): a page of its own with no route. ShowerPlayer swaps the whole page and
   pushes a history entry, so back returns to the rain as it was left. The rain's sentences (`Material`: play, tap for
   the word sheet) sit beside the field, or above it on a phone. `tryAfterRain` keeps them with the saying in

@@ -3,8 +3,8 @@
 // built. Nothing else is ever a destination, because what is sent there signs the learner in. A sister not published
 // yet has no address (null): only the learner's own computer, until its address is written here.
 // ことのね keeps its record on the device only; it has no account to つなぐ yet.
-// ことのたね and ことのはし are for Korean speakers: the pages and mails on the way to them are in Korean (`lang`,
-// src/lib/i18n/sign-in.ts).
+// 글씨앗 and 말씨앗 are for Korean speakers, so their names are Korean, and so are the pages and mails on the way to
+// them (`lang`, src/lib/i18n/sign-in.ts). Their `app` names are from before (ことのたね, ことのはし).
 // Pure: tested in tests/sisters.test.mjs.
 
 export type SisterId = "kotonoha" | "kotonooto" | "kotonome" | "kotonoeda" | "kotonomi" | "kotonotane" | "kotonohashi";
@@ -18,8 +18,8 @@ export const SISTERS: Record<SisterId, { name: string; url: string | null; lang?
   kotonome: { name: "ことのめ", url: "https://kotonome-kappa.vercel.app" },
   kotonoeda: { name: "ことのえだ", url: "https://keigo-green.vercel.app" },
   kotonomi: { name: "ことのみ", url: null },
-  kotonotane: { name: "ことのたね", url: null, lang: "ko" },
-  kotonohashi: { name: "ことのはし", url: null, lang: "ko" },
+  kotonotane: { name: "글씨앗", url: null, lang: "ko" },
+  kotonohashi: { name: "말씨앗", url: null, lang: "ko" },
 };
 
 /** The language of a sister (its `app` name at /connect): Japanese unless it says otherwise. */

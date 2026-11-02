@@ -23,8 +23,9 @@ function esc(s: string): string {
 /** One short, flat message: the name, what to do, one button, the link written out, and why they got it. */
 function html(m: LinkMail): string {
   const ko = m.lang === "ko";
-  const sans = ko ? `"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif` : `"Hiragino Sans","Yu Gothic",Meiryo,sans-serif`;
-  const mincho = `"Hiragino Mincho ProN","Yu Mincho",serif`;
+  // Single quotes: these go inside style="…", where a double quote would end the attribute and drop the rest.
+  const sans = ko ? `'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif` : `'Hiragino Sans','Yu Gothic',Meiryo,sans-serif`;
+  const mincho = `'Hiragino Mincho ProN','Yu Mincho',serif`;
   return `<!doctype html><html lang="${ko ? "ko" : "ja"}"><body style="margin:0;padding:0;background:#fcfbf8">
 <div style="max-width:520px;margin:0 auto;padding:32px 24px;font-family:${sans};color:#172033;line-height:1.8${ko ? ";word-break:keep-all" : ""}">
 <p style="margin:0 0 28px;font-family:${mincho};font-size:20px;font-weight:700;letter-spacing:.06em">ことのあめ</p>

@@ -8,18 +8,18 @@ export type AudioSource = { src: string; fallback: string | null } | null;
 // loading never comes back later to take the element (or the browser's voice) from the one that replaced it.
 const turns = new WeakMap<HTMLAudioElement, AbortController>();
 
-// Clips fetched ahead (the rest of a rain while its first sentence plays, the next rain while this one is on screen),
-// kept as in-memory URLs: they start at once and still play in a tunnel.
+// Clips fetched ahead (a rain's while its first screen is up), kept as in-memory URLs: they start at once and still play
+// in a tunnel.
 const fetching = new Map<string, Promise<string | null>>();
 const ready = new Map<string, string>();
 const KEEP = 40;
 
-function fetchClip(audio: NonNullable<AudioSource>, generate: boolean): Promise<string | null> {
+function fetchClip(audio: NonNullable<AudioSource>): Promise<string | null> {
   const key = audio.src;
   const known = fetching.get(key);
   if (known) return known;
   const job = (async () => {
-    for (const url of generate ? [audio.src, audio.fallback] : [audio.src]) {
+    for (const url of [audio.src, audio.fallback]) {
       if (!url) continue;
       try {
         const res = await fetch(url);
@@ -45,14 +45,10 @@ function fetchClip(audio: NonNullable<AudioSource>, generate: boolean): Promise<
   return job;
 }
 
-/**
- * Fetch these clips one after another, in the order they will play, so each is there before its turn. With
- * `generate: false` only stored clips are fetched: a missing one would be made on the server, which allows only a few a
- * minute, so that waits until it is about to be heard.
- */
-export function prefetchAudio(list: AudioSource[], { generate = true }: { generate?: boolean } = {}) {
+/** Fetch these clips one after another, in the order they will play, so each is there before its turn. */
+export function prefetchAudio(list: AudioSource[]) {
   let chain: Promise<unknown> = Promise.resolve();
-  for (const audio of list) if (audio) chain = chain.then(() => fetchClip(audio, generate));
+  for (const audio of list) if (audio) chain = chain.then(() => fetchClip(audio));
 }
 
 function tryPlay(el: HTMLAudioElement, src: string, rate: number, signal: AbortSignal): Promise<boolean> {

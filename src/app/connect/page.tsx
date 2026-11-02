@@ -15,7 +15,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/connect">) 
 /**
  * つなぐ: a sister app (ことのは, ことのおと…) sends its learner here to sign in with their ことのあめ account. Signed out,
  * they log in or sign up first and come back here (after a new account's mail too); signed in, one press sends them
- * back signed in there as well (actions.ts). In the sister's language (Korean for ことのたね and ことのはし).
+ * back signed in there as well (actions.ts). In the sister's language (Korean for 글씨앗 and 말씨앗).
  */
 export default async function ConnectPage({ searchParams }: PageProps<"/connect">) {
   const params = await searchParams;
