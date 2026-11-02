@@ -56,10 +56,12 @@ test("the token and the state go back in the fragment", () => {
   assert.equal(returnUrl(dest, "abc123", "Ab3_-xY9Ab3_-xY9Ab3_"), "https://kotonoha-ashy.vercel.app/login#kotonoame=abc123&state=Ab3_-xY9Ab3_-xY9Ab3_");
 });
 
-test("글씨앗 and 말씨앗 (for Korean speakers, app names kotonotane and kotonohashi) are sisters too: this computer only, until they are published", () => {
-  assert.equal(destinationFor("kotonotane", "http://localhost:5191")?.name, "글씨앗");
+test("글씨앗 and 말씨앗 (for Korean speakers, app names kotonotane and kotonohashi) are sisters too: 말씨앗 at its public address, 글씨앗 on this computer only until it is published", () => {
+  assert.deepEqual(destinationFor("kotonohashi", "https://kanji-delta.vercel.app"), { id: "kotonohashi", name: "말씨앗", origin: "https://kanji-delta.vercel.app" });
   assert.equal(destinationFor("kotonohashi", "http://127.0.0.1:5192")?.name, "말씨앗");
-  assert.equal(destinationFor("kotonotane", "https://kotonotane.vercel.app"), null);
+  assert.equal(destinationFor("kotonotane", "http://localhost:5191")?.name, "글씨앗");
+  assert.equal(destinationFor("kotonotane", "https://kanji-delta.vercel.app"), null, "another sister's address");
+  assert.equal(destinationFor("kotonohashi", "https://kanji-delta.vercel.app/login"), null, "an origin only");
   assert.equal(destinationFor("kotonohashi", "https://evil.example"), null);
 });
 

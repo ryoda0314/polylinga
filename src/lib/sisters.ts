@@ -19,7 +19,7 @@ export const SISTERS: Record<SisterId, { name: string; url: string | null; lang?
   kotonoeda: { name: "ことのえだ", url: "https://keigo-green.vercel.app" },
   kotonomi: { name: "ことのみ", url: null },
   kotonotane: { name: "글씨앗", url: null, lang: "ko" },
-  kotonohashi: { name: "말씨앗", url: null, lang: "ko" },
+  kotonohashi: { name: "말씨앗", url: "https://kanji-delta.vercel.app", lang: "ko" },
 };
 
 /** The language of a sister (its `app` name at /connect): Japanese unless it says otherwise. */
