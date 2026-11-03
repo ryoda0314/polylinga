@@ -1,5 +1,6 @@
 import "server-only";
-import type { AppAccounts, AppCounts, AppDay, Cohort } from "@/lib/admin-apps-core";
+import type { AppAccounts, AppCounts, AppDay, Cohort, ProfileRow } from "@/lib/admin-apps-core";
+import type { WeekHour } from "@/lib/admin-usage-core";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -15,6 +16,7 @@ type AppSqlRow = {
   month: number;
   new_week: number;
   from_home_week: number;
+  signed_week: number;
   opens_week: number;
   learns_week: number;
   says_week: number;
@@ -29,6 +31,7 @@ type DaySqlRow = {
   devices: number;
   new_devices: number;
   from_home: number;
+  signed_in: number;
   opens: number;
   learns: number;
   says: number;
@@ -57,6 +60,7 @@ export async function loadAppCounts(): Promise<Map<string, AppCounts>> {
         month: r.month,
         newWeek: r.new_week,
         fromHomeWeek: r.from_home_week,
+        signedWeek: r.signed_week,
         opensWeek: r.opens_week,
         learnsWeek: r.learns_week,
         saysWeek: r.says_week,
@@ -87,6 +91,7 @@ export async function loadAppDays(app: string, span: number): Promise<AppDay[]> 
     devices: r.devices,
     newDevices: r.new_devices,
     fromHome: r.from_home,
+    signedIn: r.signed_in,
     opens: r.opens,
     learns: r.learns,
     says: r.says,
@@ -104,5 +109,25 @@ export async function loadAppCohorts(app: string, span: number): Promise<Cohort[
     backNext: r.back_next,
     backWeek: r.back_week,
     backAny: r.back_any,
+  }));
+}
+
+/** Who one app's devices of the last `span` days were: guests or signed in, which kind of device, how far they went. */
+export async function loadAppProfile(app: string, span: number): Promise<ProfileRow[]> {
+  await requireAdmin();
+  const { data, error } = await createAdminClient().rpc("pl_admin_app_profile", { p_app: app, span_days: span });
+  if (error) throw new Error(`[admin-apps] profile: ${error.message}`);
+  return (data ?? []) as ProfileRow[];
+}
+
+/** One app's devices by weekday and hour over the last `span` days. */
+export async function loadAppWeekHours(app: string, span: number): Promise<WeekHour[]> {
+  await requireAdmin();
+  const { data, error } = await createAdminClient().rpc("pl_admin_app_week_hours", { p_app: app, span_days: span });
+  if (error) throw new Error(`[admin-apps] week hours: ${error.message}`);
+  return ((data ?? []) as { dow: number; hour: number; devices: number }[]).map((r) => ({
+    dow: r.dow,
+    hour: r.hour,
+    count: r.devices,
   }));
 }

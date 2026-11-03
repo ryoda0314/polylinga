@@ -56,7 +56,7 @@
 .cardNote { margin: -8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
 
 /* A row of choices that scope everything below them (the period, the language, the order). */
-.choices { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; background: var(--paper); }
+.choices { width: fit-content; display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; background: var(--paper); }
 .choice {
   display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px;
   font-size: 13px; color: var(--ink-2); text-decoration: none;
@@ -103,6 +103,12 @@
 }
 .badge[data-kind="excluded"] { background: var(--danger-tint); color: var(--danger); }
 .empty { margin: 0; padding: 24px 0; text-align: center; font-size: 14px; color: var(--muted); }
+/* かたちごと: a thin bar under the count (its share of the most bathed pattern), and a mark where learners drop. */
+.inlineBar {
+  display: block; width: calc(100% * var(--f)); min-width: 2px; height: 4px; margin-top: 4px;
+  margin-left: auto; border-radius: 2px; background: #0a64f0;
+}
+.people tr[data-drop] > * { background: var(--danger-tint); }
 /* 姉妹アプリ: an app that has not counted anything yet says why across its number columns. */
 .table .waiting { text-align: left; white-space: normal; color: var(--muted); }
 

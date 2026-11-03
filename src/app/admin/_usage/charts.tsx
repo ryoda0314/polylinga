@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from "react";
-import { niceScale, num } from "@/lib/admin-usage-core";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
+import { niceScale, num, weekGrid, type WeekHour } from "@/lib/admin-usage-core";
 import styles from "./charts.module.css";
 
 // The admin's charts, drawn on the server with no script: thin columns and bars from one baseline, a readout on hover
@@ -181,5 +181,80 @@ export function Meter({ label, used, limit, unit }: { label: string; used: numbe
       </div>
       {high ? <p className={styles.meterWarn}>上限の8割を超えています</p> : null}
     </div>
+  );
+}
+
+const HOUR_MARKS = new Set([0, 6, 12, 18]);
+
+/**
+ * A week's hours (Japan time) as a 7 × 24 grid, one hue from light to dark by how many came, each cell's count on
+ * hover. Too many cells to step through by keyboard: the grid says its busiest hour, and 表で見る has every count.
+ */
+export function WeekHeat({ cells, unit }: { cells: WeekHour[]; unit: string }) {
+  const { rows, max } = weekGrid(cells);
+  const busiest = cells.reduce<WeekHour | null>((b, c) => (!b || c.count > b.count ? c : b), null);
+  const busiestLabel = busiest ? `${"月火水木金土日"[busiest.dow - 1]}曜 ${busiest.hour}時台の ${num(busiest.count)}${unit}` : "まだありません";
+  return (
+    <figure className={styles.figure}>
+      <div className={styles.heat} role="img" aria-label={`曜日と時間ごと。いちばん多いのは${busiestLabel}`}>
+        <span aria-hidden="true" />
+        {Array.from({ length: 24 }, (_, hour) => (
+          <span key={hour} className={styles.heatHour} aria-hidden="true">
+            {HOUR_MARKS.has(hour) ? hour : ""}
+          </span>
+        ))}
+        {rows.map((row) => (
+          <Fragment key={row.dow}>
+            <span className={styles.heatDay} aria-hidden="true">
+              {row.label}
+            </span>
+            {row.cells.map((c) => (
+              <span
+                key={c.hour}
+                className={styles.heatCell}
+                data-level={c.level}
+                data-edge={c.hour < 5 ? "start" : c.hour > 18 ? "end" : undefined}
+                data-tip={`${row.label}曜 ${c.hour}時台 ${num(c.count)}${unit}`}
+                aria-hidden="true"
+              />
+            ))}
+          </Fragment>
+        ))}
+      </div>
+      <div className={styles.heatLegend} aria-hidden="true">
+        <span>少ない</span>
+        {[1, 2, 3, 4, 5].map((level) => (
+          <span key={level} className={styles.heatSwatch} data-level={level} />
+        ))}
+        <span>多い（いちばん多い時間で {num(max)}{unit}）</span>
+      </div>
+      <details className={styles.heatTable}>
+        <summary>表で見る</summary>
+        <div className={styles.heatScroll}>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">曜日</th>
+                {Array.from({ length: 24 }, (_, hour) => (
+                  <th key={hour} scope="col">
+                    {hour}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.dow}>
+                  <th scope="row">{row.label}</th>
+                  {row.cells.map((c) => (
+                    <td key={c.hour}>{c.count || ""}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </figure>
   );
 }

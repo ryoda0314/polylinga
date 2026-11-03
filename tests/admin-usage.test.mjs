@@ -150,3 +150,20 @@ test("only a UUID names a learner", () => {
   assert.ok(!isUuid("c5f0b2e6"));
   assert.ok(!isUuid("../admin"));
 });
+
+test("a week's grid: Monday first, empty hours at 0, a single visit still shows, the busiest at 5", async () => {
+  const { weekGrid } = await import("../src/lib/admin-usage-core.ts");
+  const { rows, max } = weekGrid([
+    { dow: 7, hour: 19, count: 100 },
+    { dow: 1, hour: 8, count: 1 },
+    { dow: 3, hour: 12, count: 50 },
+  ]);
+  assert.equal(max, 100);
+  assert.deepEqual(rows.map((r) => r.label).join(""), "月火水木金土日");
+  assert.equal(rows.every((r) => r.cells.length === 24), true);
+  assert.equal(rows[6].cells[19].level, 5);
+  assert.equal(rows[0].cells[8].level, 1);
+  assert.equal(rows[2].cells[12].level, 3);
+  assert.equal(rows[0].cells[9].level, 0);
+  assert.deepEqual(weekGrid([]).max, 0);
+});

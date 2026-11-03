@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { loadAppAccounts, loadAppCohorts, loadAppCounts, loadAppDays } from "@/lib/admin-apps";
-import { appInfo, type AppDay } from "@/lib/admin-apps-core";
+import {
+  loadAppAccounts,
+  loadAppCohorts,
+  loadAppCounts,
+  loadAppDays,
+  loadAppProfile,
+  loadAppWeekHours,
+} from "@/lib/admin-apps";
+import { appInfo, profileOf, type AppDay } from "@/lib/admin-apps-core";
 import { labelEvery, longDay, num, percent, shortDay, tokyoDay, tokyoTime } from "@/lib/admin-usage-core";
-import { ColumnChart, type Column } from "../../_usage/charts";
+import { BarRows, ColumnChart, WeekHeat, type Column } from "../../_usage/charts";
 import { Tile } from "../../_usage/Tile";
 import styles from "../../usage.module.css";
 
@@ -27,14 +34,19 @@ export default async function AppPage({ params, searchParams }: PageProps<"/admi
   const query = await searchParams;
   const span = SPANS.find((s) => String(s) === first(query.days)) ?? DEFAULT_SPAN;
 
-  const [counts, accounts, days, cohorts] = await Promise.all([
+  const [counts, accounts, days, cohorts, profileRows, weekHours] = await Promise.all([
     loadAppCounts(),
     loadAppAccounts(),
     loadAppDays(app.id, span),
     loadAppCohorts(app.id, COHORT_DAYS),
+    loadAppProfile(app.id, span),
+    loadAppWeekHours(app.id, span),
   ]);
   const c = counts.get(app.id);
   const a = accounts.get(app.id);
+  const profile = profileOf(profileRows);
+  const opened = profile.reach.opened;
+  const knownPlatforms = profile.platforms.filter((p) => p.key !== "unknown");
   const now = new Date().toISOString();
   const today = tokyoDay(now);
   const every = labelEvery(days.length);
@@ -88,7 +100,16 @@ export default async function AppPage({ params, searchParams }: PageProps<"/admi
               unit="台"
               note={`この7日・来た端末の ${percent(c.fromHomeWeek, c.week)}`}
             />
-            <Tile label="開いた（7日）" value={c.opensWeek} unit="回" />
+            {app.accounts ? (
+              <Tile
+                label="ゲスト（7日）"
+                value={c.week - c.signedWeek}
+                unit="台"
+                note={`ログインしていた ${num(c.signedWeek)}台`}
+              />
+            ) : (
+              <Tile label="開いた（7日）" value={c.opensWeek} unit="回" />
+            )}
             <Tile label={`${app.learn}（7日）`} value={c.learnsWeek} unit="回" />
             {app.say ? (
               <Tile label={`${app.say}（7日）`} value={c.saysWeek} unit="回" />
@@ -125,7 +146,10 @@ export default async function AppPage({ params, searchParams }: PageProps<"/admi
                 ]}
                 columns={dayColumns(
                   (d) => [d.devices - d.newDevices, d.newDevices],
-                  (d) => [`ホーム画面から ${num(d.fromHome)}台`],
+                  (d) =>
+                    app.accounts
+                      ? [`ログインしていた ${num(d.signedIn)}台`, `ホーム画面から ${num(d.fromHome)}台`]
+                      : [`ホーム画面から ${num(d.fromHome)}台`],
                 )}
                 unit="台"
                 every={every}
@@ -158,6 +182,7 @@ export default async function AppPage({ params, searchParams }: PageProps<"/admi
                         <th scope="col">日付</th>
                         <th scope="col">来た端末</th>
                         <th scope="col">うちはじめて</th>
+                        {app.accounts ? <th scope="col">ログイン</th> : null}
                         <th scope="col">ホーム画面から</th>
                         <th scope="col">開いた</th>
                         <th scope="col">{app.learn}</th>
@@ -170,6 +195,7 @@ export default async function AppPage({ params, searchParams }: PageProps<"/admi
                           <th scope="row">{longDay(d.day)}</th>
                           <td>{num(d.devices)}</td>
                           <td>{num(d.newDevices)}</td>
+                          {app.accounts ? <td>{num(d.signedIn)}</td> : null}
                           <td>{num(d.fromHome)}</td>
                           <td>{num(d.opens)}</td>
                           <td>{num(d.learns)}</td>
@@ -181,6 +207,67 @@ export default async function AppPage({ params, searchParams }: PageProps<"/admi
                 </div>
               </div>
             </details>
+          </section>
+
+          <section className={styles.section} aria-labelledby="who">
+            <h2 id="who" className={styles.h2}>
+              どんな端末で、どこまで（この{span}日に来た {num(opened)}台）
+            </h2>
+            <div className={styles.cards} data-cols="2">
+              <div className={styles.card}>
+                <h3 className={styles.cardTitle}>どこまで進んだか</h3>
+                <p className={styles.cardNote}>来た端末のうち、その期間に一度でもしたか</p>
+                <BarRows
+                  unit="台"
+                  rows={[
+                    { key: "opened", label: "開いた", value: opened },
+                    { key: "learned", label: app.learn, value: profile.reach.learned, note: percent(profile.reach.learned, opened) },
+                    ...(app.say
+                      ? [{ key: "said", label: app.say, value: profile.reach.said, note: percent(profile.reach.said, opened) }]
+                      : []),
+                    { key: "two", label: "2日以上来た", value: profile.reach.twoDays, note: percent(profile.reach.twoDays, opened) },
+                    { key: "three", label: "3日以上来た", value: profile.reach.threeDays, note: percent(profile.reach.threeDays, opened) },
+                  ]}
+                />
+              </div>
+              <div className={styles.card}>
+                <h3 className={styles.cardTitle}>ゲスト・端末・開き方</h3>
+                {app.accounts ? (
+                  <BarRows
+                    unit="台"
+                    max={opened}
+                    rows={[
+                      { key: "guest", label: "ゲスト", value: profile.guest, note: percent(profile.guest, opened) },
+                      { key: "signed", label: "ログイン", value: profile.signed, note: percent(profile.signed, opened) },
+                    ]}
+                  />
+                ) : (
+                  <p className={styles.help}>{app.name} にはアカウントがないので、全員ゲストです。</p>
+                )}
+                {knownPlatforms.length > 0 ? (
+                  <BarRows
+                    unit="台"
+                    max={opened}
+                    rows={profile.platforms.map((p) => ({ key: p.key, label: p.label, value: p.devices, note: percent(p.devices, opened) }))}
+                  />
+                ) : (
+                  <p className={styles.help}>端末の種類は、それを送る版を公開してからの分だけ出ます（まだありません）。</p>
+                )}
+                <BarRows
+                  unit="台"
+                  max={opened}
+                  rows={[
+                    { key: "home", label: "ホーム画面から", value: profile.home, note: percent(profile.home, opened) },
+                    { key: "browser", label: "ブラウザだけ", value: profile.browser, note: percent(profile.browser, opened) },
+                  ]}
+                />
+              </div>
+            </div>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>曜日と時間（日本時間）</h3>
+              <p className={styles.cardNote}>その時間に来た端末の数。いつ使われているかの目安に。</p>
+              <WeekHeat cells={weekHours} unit="台" />
+            </div>
           </section>
 
           <section className={styles.card} aria-labelledby="cohorts">

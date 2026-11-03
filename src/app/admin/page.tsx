@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { loadDays, loadLearners } from "@/lib/admin-usage";
+import { loadCohorts, loadDays, loadLearners, loadWeekHours } from "@/lib/admin-usage";
 import {
   bucketLabel,
   buckets,
@@ -18,7 +18,7 @@ import {
 } from "@/lib/admin-usage-core";
 import { getDict } from "@/lib/i18n";
 import { LIMITS } from "@/lib/metering";
-import { BarRows, ColumnChart, Meter, type Column } from "./_usage/charts";
+import { BarRows, ColumnChart, Meter, WeekHeat, type Column } from "./_usage/charts";
 import { Tile } from "./_usage/Tile";
 import styles from "./usage.module.css";
 
@@ -29,6 +29,7 @@ const DEFAULT_SPAN = 30;
 // Rains per learner: 0, 1, 2, 3–5, 6–10, 11–30, 31+. Days per learner: 0, 1, 2, 3–4, 5–9, 10+.
 const RAIN_EDGES = [0, 1, 2, 3, 6, 11, 31];
 const DAY_EDGES = [0, 1, 2, 3, 5, 10];
+const COHORT_DAYS = 14;
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -46,7 +47,13 @@ export default async function UsagePage({ searchParams }: PageProps<"/admin">) {
     return query.size ? `/admin?${query}` : "/admin";
   };
 
-  const [everyone, days] = await Promise.all([loadLearners(), loadDays(span, withExcluded)]);
+  const [everyone, days, weekHours, cohorts] = await Promise.all([
+    loadLearners(),
+    loadDays(span, withExcluded),
+    loadWeekHours(span, withExcluded),
+    loadCohorts(COHORT_DAYS, withExcluded),
+  ]);
+  const back = (n: number | null, of: number) => (n === null ? "—" : `${num(n)}人（${percent(n, of)}）`);
   const excluded = everyone.filter((l) => l.excluded).length;
   const learners = withExcluded ? everyone : everyone.filter((l) => !l.excluded);
   const now = new Date().toISOString();
@@ -286,6 +293,51 @@ export default async function UsagePage({ searchParams }: PageProps<"/admin">) {
         </div>
       </section>
 
+      <section className={styles.section} aria-labelledby="when">
+        <h2 id="when" className={styles.h2}>
+          いつ使われ、戻ってきたか
+        </h2>
+        <div className={styles.card}>
+          <h3 className={styles.cardTitle}>曜日と時間（この{span}日・日本時間）</h3>
+          <p className={styles.cardNote}>雨を浴び終えた・言ってみた・単語をメモした時間に、その人を数えています。</p>
+          <WeekHeat cells={weekHours} unit="人" />
+        </div>
+        <div className={styles.card}>
+          <h3 className={styles.cardTitle}>戻ってきたか</h3>
+          <p className={styles.cardNote}>
+            はじめて来た日ごとに、その人がまた来たか（この{COHORT_DAYS}日）。まだその日が来ていない数は「—」。
+          </p>
+          {cohorts.length === 0 ? (
+            <p className={styles.empty}>この{COHORT_DAYS}日にはじめて来た人はいません</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">はじめて来た日</th>
+                    <th scope="col">人数</th>
+                    <th scope="col">次の日</th>
+                    <th scope="col">7日以内</th>
+                    <th scope="col">その後いつか</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cohorts.map((k) => (
+                    <tr key={k.firstDay}>
+                      <th scope="row">{longDay(k.firstDay)}</th>
+                      <td>{num(k.devices)}人</td>
+                      <td>{back(k.backNext, k.devices)}</td>
+                      <td>{back(k.backWeek, k.devices)}</td>
+                      <td>{back(k.backAny, k.devices)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
+
       <div className={styles.cards} data-cols="2">
         <section className={styles.card} aria-labelledby="features">
           <h2 id="features" className={styles.cardTitle}>
@@ -325,6 +377,9 @@ export default async function UsagePage({ searchParams }: PageProps<"/admin">) {
         </section>
       </div>
 
+      <Link href="/admin/patterns" className={styles.more}>
+        かたちごとに見る（どこで止まっているか）→
+      </Link>
       <Link href="/admin/users" className={styles.more}>
         一人ずつ見る →
       </Link>

@@ -232,6 +232,32 @@ export function niceScale(max: number, most = 4): { top: number; ticks: number[]
   return { top, ticks };
 }
 
+/** How many (people or devices) were there on a weekday (1 Monday … 7 Sunday) at an hour (0–23), Japan time. */
+export type WeekHour = { dow: number; hour: number; count: number };
+
+/** Monday first, as the weekdays are read in a week's grid. */
+export const WEEKDAY_ROWS = [1, 2, 3, 4, 5, 6, 7].map((dow) => ({ dow, label: "月火水木金土日"[dow - 1] }));
+
+/**
+ * The 7 × 24 grid of a week's hours, each cell with its count and its step on a five-step scale (0 when empty, then
+ * 1–5 by its share of the busiest cell, rounded up so a single visit still shows).
+ */
+export function weekGrid(cells: WeekHour[]): { rows: { dow: number; label: string; cells: { hour: number; count: number; level: number }[] }[]; max: number } {
+  const counts = new Map(cells.map((c) => [`${c.dow}:${c.hour}`, c.count]));
+  const max = Math.max(0, ...cells.map((c) => c.count));
+  return {
+    max,
+    rows: WEEKDAY_ROWS.map(({ dow, label }) => ({
+      dow,
+      label,
+      cells: Array.from({ length: 24 }, (_, hour) => {
+        const count = counts.get(`${dow}:${hour}`) ?? 0;
+        return { hour, count, level: count > 0 && max > 0 ? Math.max(1, Math.ceil((count / max) * 5)) : 0 };
+      }),
+    })),
+  };
+}
+
 /** Which day columns get a date under them, so the labels never crowd on a phone: every k-th from today back. */
 export function labelEvery(columns: number): number {
   if (columns <= 14) return 2;

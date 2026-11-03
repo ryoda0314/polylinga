@@ -1,5 +1,6 @@
 import "server-only";
-import type { DayRow, Learner, LearnerDay } from "@/lib/admin-usage-core";
+import type { Cohort } from "@/lib/admin-apps-core";
+import type { DayRow, Learner, LearnerDay, WeekHour } from "@/lib/admin-usage-core";
 import { requireAdmin } from "@/lib/auth";
 import type { Lang } from "@/lib/langs";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -151,5 +152,81 @@ export async function loadLearnerDays(id: string): Promise<LearnerDay[]> {
     sayings: r.sayings,
     corrections: r.corrections,
     words: r.words,
+  }));
+}
+
+/** Learners by weekday and hour over the last `span` days. */
+export async function loadWeekHours(span: number, withExcluded: boolean): Promise<WeekHour[]> {
+  await requireAdmin();
+  const { data, error } = await createAdminClient().rpc("pl_admin_week_hours", {
+    span_days: span,
+    with_excluded: withExcluded,
+  });
+  if (error) throw new Error(`[admin-usage] week hours: ${error.message}`);
+  return ((data ?? []) as { dow: number; hour: number; learners: number }[]).map((r) => ({
+    dow: r.dow,
+    hour: r.hour,
+    count: r.learners,
+  }));
+}
+
+/** Learners by their first active day in the last `span` days, newest first, and whether they came back. */
+export async function loadCohorts(span: number, withExcluded: boolean): Promise<Cohort[]> {
+  await requireAdmin();
+  const { data, error } = await createAdminClient().rpc("pl_admin_cohorts", {
+    span_days: span,
+    with_excluded: withExcluded,
+  });
+  if (error) throw new Error(`[admin-usage] cohorts: ${error.message}`);
+  return ((data ?? []) as { first_day: string; learners: number; back_next: number | null; back_week: number | null; back_any: number }[]).map(
+    (r) => ({ firstDay: r.first_day, devices: r.learners, backNext: r.back_next, backWeek: r.back_week, backAny: r.back_any }),
+  );
+}
+
+export type PatternUse = {
+  id: string;
+  form: string;
+  label: string;
+  step: number | null;
+  learners: number;
+  rains: number;
+  again: number;
+  saidLearners: number;
+  sayings: number;
+  corrections: number;
+  natural: number;
+};
+
+/** Every approved pattern of a language in the beginner's order, with how it is used. */
+export async function loadPatterns(lang: Lang, withExcluded: boolean): Promise<PatternUse[]> {
+  await requireAdmin();
+  const { data, error } = await createAdminClient().rpc("pl_admin_patterns", { p_lang: lang, with_excluded: withExcluded });
+  if (error) throw new Error(`[admin-usage] patterns: ${error.message}`);
+  return (
+    (data ?? []) as {
+      pattern_id: string;
+      form: string;
+      label: string;
+      step: number | null;
+      learners: number;
+      rains: number;
+      again: number;
+      said_learners: number;
+      sayings: number;
+      corrections: number;
+      said_naturally: number;
+    }[]
+  ).map((r) => ({
+    id: r.pattern_id,
+    form: r.form,
+    label: r.label,
+    step: r.step,
+    learners: r.learners,
+    rains: r.rains,
+    again: r.again,
+    saidLearners: r.said_learners,
+    sayings: r.sayings,
+    corrections: r.corrections,
+    natural: r.said_naturally,
   }));
 }

@@ -129,7 +129,15 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   `pl_app_hours`, capped like ことのね's `kn_ping` (`supabase/migrations/20261103000000_app_usage.sql`). ことのね's own
   `kn_hours` / `kn_days` are read in the same shape. `src/lib/admin-apps-core.ts` lists the apps and names their
   counts (keep it and the SQL's app list in step: `tests/admin-apps.test.mjs`); `admin-apps.ts` loads them. Their
-  accounts (`*_records` rows, excluded accounts left out) are counted too.
+  accounts (`*_records` rows, excluded accounts left out) are counted too. Each ping also says whether a ことのあめ
+  account is signed in there (a yes/no, never which) and the kind of device (`ios` / `android` / `pc` / `other`;
+  ことのね sends the kind too, in `kn_hours.platform`), so an app's page splits guests from signed-in devices and shows
+  the kinds, home screen or browser, how far devices got (opened → learn → say → 2 / 3 days), a weekday × hour grid
+  (`WeekHeat`) and whether they came back (`supabase/migrations/20261103120000_usage_insights.sql`).
+- 管理 › かたちごと (`/admin/patterns`): each approved pattern of a language in the beginner's order (`step`) with how
+  many learners bathed in it, the share kept from the first pattern and from the step just before (marked under 6割:
+  where learners stop), met it again, said something with it from its rain, and how many of those sentences came back
+  natural (`pl_admin_patterns`). 利用状況 also has its weekday × hour grid and whether learners came back.
 
 ## Commands
 

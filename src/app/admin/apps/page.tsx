@@ -51,6 +51,7 @@ export default async function AppsPage() {
                 <th scope="col">アプリ</th>
                 <th scope="col">今日</th>
                 <th scope="col">この7日</th>
+                <th scope="col">うちゲスト</th>
                 <th scope="col">この30日</th>
                 <th scope="col">これまで</th>
                 <th scope="col">この7日にはじめて</th>
@@ -75,6 +76,7 @@ export default async function AppsPage() {
                       <>
                         <td>{cell(ame.activeToday)}</td>
                         <td>{cell(ame.activeWeek)}</td>
+                        <td>—</td>
                         <td>{cell(ame.activeMonth)}</td>
                         <td>{cell(ame.learners)}</td>
                         <td>{cell(ame.joinedWeek)}</td>
@@ -85,6 +87,7 @@ export default async function AppsPage() {
                       <>
                         <td>{cell(c.today)}</td>
                         <td>{cell(c.week)}</td>
+                        <td>{cell(app.accounts ? c.week - c.signedWeek : c.week)}</td>
                         <td>{cell(c.month)}</td>
                         <td>{cell(c.devices)}</td>
                         <td>{cell(c.newWeek)}</td>
@@ -93,7 +96,7 @@ export default async function AppsPage() {
                       </>
                     ) : (
                       <>
-                        <td colSpan={6} className={styles.waiting}>
+                        <td colSpan={7} className={styles.waiting}>
                           {app.url ? "まだ数えていません（数える版を公開すると始まります）" : "公開先が決まると数えはじめます"}
                         </td>
                         <td>{app.accounts ? `${num(a?.accounts ?? 0)}人` : "—"}</td>

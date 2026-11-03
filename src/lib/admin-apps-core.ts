@@ -114,6 +114,8 @@ export type AppCounts = {
   month: number;
   newWeek: number;
   fromHomeWeek: number;
+  /** Devices of the last 7 days signed in to a ことのあめ account at some time (the rest are guests). */
+  signedWeek: number;
   opensWeek: number;
   learnsWeek: number;
   saysWeek: number;
@@ -128,10 +130,41 @@ export type AppDay = {
   devices: number;
   newDevices: number;
   fromHome: number;
+  signedIn: number;
   opens: number;
   learns: number;
   says: number;
 };
+
+/** The devices of a period, each counted once per kind (pl_admin_app_profile). */
+export type ProfileRow = { kind: "login" | "platform" | "home" | "reach"; key: string; devices: number };
+
+export const PLATFORMS: { key: string; label: string }[] = [
+  { key: "ios", label: "iPhone・iPad" },
+  { key: "android", label: "Android" },
+  { key: "pc", label: "パソコン" },
+  { key: "other", label: "その他" },
+  { key: "unknown", label: "分からない" },
+];
+
+/** A period's devices sorted into what the admin pages show; a kind with no row counts 0. */
+export function profileOf(rows: ProfileRow[]) {
+  const n = (kind: ProfileRow["kind"], key: string) => rows.find((r) => r.kind === kind && r.key === key)?.devices ?? 0;
+  return {
+    signed: n("login", "signed"),
+    guest: n("login", "guest"),
+    home: n("home", "home"),
+    browser: n("home", "browser"),
+    platforms: PLATFORMS.map((p) => ({ ...p, devices: n("platform", p.key) })).filter((p) => p.devices > 0),
+    reach: {
+      opened: n("reach", "opened"),
+      learned: n("reach", "learned"),
+      said: n("reach", "said"),
+      twoDays: n("reach", "two_days"),
+      threeDays: n("reach", "three_days"),
+    },
+  };
+}
 
 /** Devices first seen on a day, and how many came back: the next day, within 7 days, on any later day. */
 export type Cohort = { firstDay: string; devices: number; backNext: number | null; backWeek: number | null; backAny: number };
