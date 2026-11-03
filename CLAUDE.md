@@ -122,6 +122,14 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   `admin-usage-core.ts`. Accounts in `pl_admin_excluded` (the admin's own, tests; 集計から外す on a learner's page) are
   left out unless 含めて見る. Charts are server-drawn (`src/app/admin/_usage/charts.tsx`): two tones of the accent,
   a readout on hover and focus, and the numbers in 表で見る.
+- 管理 › 姉妹アプリ (`/admin/apps`, `/admin/apps/[id]`): the sisters' use, counted by device, not by person. ことのは,
+  ことのおと, ことのめ, ことのえだ, ことのかげ and ことのみ each send `pl_app_ping` (anon key, no session) with a random
+  number made on the device and one of `open` / `learn` (its own input step done) / `say` (something of the learner's
+  own taken in), only from their public address and unless switched off in their settings; it counts by the hour in
+  `pl_app_hours`, capped like ことのね's `kn_ping` (`supabase/migrations/20261103000000_app_usage.sql`). ことのね's own
+  `kn_hours` / `kn_days` are read in the same shape. `src/lib/admin-apps-core.ts` lists the apps and names their
+  counts (keep it and the SQL's app list in step: `tests/admin-apps.test.mjs`); `admin-apps.ts` loads them. Their
+  accounts (`*_records` rows, excluded accounts left out) are counted too.
 
 ## Commands
 

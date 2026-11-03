@@ -103,6 +103,8 @@
 }
 .badge[data-kind="excluded"] { background: var(--danger-tint); color: var(--danger); }
 .empty { margin: 0; padding: 24px 0; text-align: center; font-size: 14px; color: var(--muted); }
+/* 姉妹アプリ: an app that has not counted anything yet says why across its number columns. */
+.table .waiting { text-align: left; white-space: normal; color: var(--muted); }
 
 .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 0; font-size: 14px; }
 @media (min-width: 1024px) {
