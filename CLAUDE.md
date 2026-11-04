@@ -12,7 +12,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   `kn_hours`, `kn_ping`, `kn_hourly`, `kn_stats`, `kn_summary`) belong to the sister app ことのね (its usage counts; schema in that repo's `supabase/usage.sql`). Never touch the old tables
   or the old `tts-audio` bucket (the old app's cron empties it). Schema: `supabase/migrations/`.
 - AI (`src/lib/ai.ts`): OpenAI `gpt-6.1-sol` for corrections (one call per attempt, also returns which library patterns the
-  corrected sentence uses) and `text-embedding-3-small` for finding close example sentences. The one other runtime call
+  corrected sentence uses) and `text-embedding-3-small` for library sentences as they are published (nothing searches
+  them at runtime since 自由に添削 replaced 書いてみる's hints). The one other runtime call
   is 詳しく解説 on a learner's own correction (`explainSentence`, action `explainCorrection`): each word with its plain
   meaning and its part of the translation, made only when they press the button and kept in
   `pl_corrections.result.breakdown`, so at most once per correction. Library sentences get no AI explanation.
@@ -101,15 +102,16 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   marked as on its own page (`SaidPair` in views.tsx).
   学習の記録 (`/app/me/export`, `loadExport` + `src/lib/export.ts`): all of it as one Markdown text to copy or save, opening
   with a request the learner can paste into an AI of their choice. The app itself makes no AI call for it. Rain before `pl_rain_days` existed shows only on each pattern's last day.
-- `src/lib/corpus.ts`: the sentence library (search for 書いてみる hints, examples by pattern). RLS hides drafts.
-  書いてみる hints (`searchCorpus` → `pl_hint_sentences`) are one sentence per function (かたち), ranked by the
-  sentence's closeness in meaning plus the function's average meaning, so they share a way of saying with the intent
-  rather than only its topic words; weak or far-behind ones are left out, and the page names each hint's かたち.
+- `src/lib/corpus.ts`: the sentence library (examples by pattern, sentences by id or word). RLS hides drafts.
+- 自由に添削 (`/app/write`, the tab beside 浴びる; `correctFreely`): a sentence written in the language learned (unknown
+  words may stay Japanese), with what they meant in Japanese if they like (`intent`, optional), corrected at once on one
+  screen. It was 書いてみる: a Japanese intent first, then close library sentences as hints (`pl_hint_sentences`, still
+  in the database, no longer called), then writing. Old sayings left at that step still show their stored hints.
 - `src/lib/reading.ts`: pinyin over Chinese text. Library sentences use their checked `zh_pinyin`; anything else
   (corrections, memo words) falls back to pinyin-pro, which misreads polyphones such as 得・只・长.
 - `src/lib/metering.ts`: daily limits through `pl_consume_for` / `pl_refund_for`, callable by the service role only.
 - `src/lib/i18n/`: UI copy per learner language. Only `ja` exists; launch is Japanese speakers → ko / en / zh.
-- `src/app/app/`: the learner app — `/app` shower, `/app/write` 書いてみる (history can be deleted: a saying takes its
+- `src/app/app/`: the learner app — `/app` shower, `/app/write` 自由に添削 (history can be deleted: a saying takes its
   corrections and their みんなの雨 rows with it), `/app/s/[id]` a correction, `/app/memo` typed words (`/app/memo/look`
   例文から探す: library sentences containing a word typed in either language, `lookUp` in corpus.ts; no definitions),
   `/app/me` 自分.
@@ -176,7 +178,7 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
     (BottomNav: icons over names, the app icon, the language learned), clear of the notch. The page is one column in a
     720 px measure, and sheets open as centred dialogs.
   - 1024 px (a PC): a 1080 px measure, and pages with two halves use `.split` with `.col` groups (`display: contents`
-    below this, so the narrower order is the DOM order): 書いてみる, a correction, メモ. 浴びる puts the rain (`.rain`)
+    below this, so the narrower order is the DOM order): 自由に添削, a correction, メモ. 浴びる puts the rain (`.rain`)
     and its controls (`.side`) side by side; narrower, `order` keeps the switches above the rain and the after part
     below. The tutorial puts each step's words and action on the left and what it shows on the right.
   - 1280 px: the column widens to the name, the tab names beside their icons and the whole language pair, and the app

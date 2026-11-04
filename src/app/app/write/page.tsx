@@ -1,12 +1,13 @@
 import { requireUser } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { langClass } from "@/lib/langs";
+import { LIMITS, usesLeft } from "@/lib/metering";
 import { requireSettings } from "@/lib/settings";
 import styles from "../app.module.css";
 import { SayForm } from "./SayForm";
 import { WriteHistory } from "./WriteHistory";
 
-export const metadata = { title: "書いてみる" };
+export const metadata = { title: "自由に添削" };
 
 type Row = {
   id: string;
@@ -17,18 +18,21 @@ type Row = {
 
 export default async function WritePage() {
   const settings = await requireSettings();
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const t = getDict(settings.nativeLang);
   const target = settings.targetLang;
 
-  const { data } = await supabase
-    .from("pl_sayings")
-    .select("id, intent, pl_patterns(form), pl_corrections(corrected)")
-    .eq("target_lang", target)
-    .order("created_at", { ascending: false })
-    .order("created_at", { referencedTable: "pl_corrections", ascending: false })
-    .limit(1, { referencedTable: "pl_corrections" })
-    .limit(20);
+  const [{ data }, left] = await Promise.all([
+    supabase
+      .from("pl_sayings")
+      .select("id, intent, pl_patterns(form), pl_corrections(corrected)")
+      .eq("target_lang", target)
+      .order("created_at", { ascending: false })
+      .order("created_at", { referencedTable: "pl_corrections", ascending: false })
+      .limit(1, { referencedTable: "pl_corrections" })
+      .limit(20),
+    usesLeft(user.id, "corrections"),
+  ]);
   const rows = (data ?? []) as unknown as Row[];
 
   return (
@@ -37,14 +41,19 @@ export default async function WritePage() {
       <SayForm
         labels={{
           title: t.write.title,
-          lead: t.write.lead,
-          steps: t.write.steps(t.common.langs[target]),
-          stepsLabel: t.write.stepsLabel,
-          input: t.write.inputLabel,
+          lead: t.write.lead(t.common.langs[target]),
+          text: t.saying.writeLabel(t.common.langs[target]),
+          textHint: t.saying.writeHint,
+          intent: t.write.intentLabel,
+          intentHint: t.write.intentHint,
           placeholder: t.write.placeholder,
-          submit: t.write.submit,
-          pending: t.write.pending,
+          submit: t.saying.submit,
+          pending: t.saying.pending,
+          left: t.saying.left(left),
+          out: t.saying.outOfUses(LIMITS.corrections.user),
         }}
+        left={left}
+        targetClass={langClass(target)}
         nativeClass={langClass(settings.nativeLang)}
       />
       </div>

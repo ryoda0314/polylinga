@@ -57,6 +57,8 @@ button.iconLink { padding: 0; border: 0; background: none; cursor: pointer; }
   border: 1.5px solid var(--ink); border-radius: var(--radius);
   font-size: 17px; line-height: 1.6; background: var(--paper);
 }
+/* A field that may stay empty (自由に添削's 言いたかったこと): about two lines. */
+.textareaShort { min-height: 80px; }
 
 /* Lists with hairlines */
 .listHead {
@@ -259,15 +261,6 @@ button.iconLink { padding: 0; border: 0; background: none; cursor: pointer; }
   flex: 1; min-width: 0; min-height: 52px; padding: 0 14px;
   border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--paper); font-size: 18px;
 }
-/* 書いてみる's three steps: numbered, plain. */
-.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 8px; }
-.steps li { counter-increment: step; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; font-size: 14px; line-height: 1.6; color: var(--ink-2); }
-.steps li::before {
-  content: counter(step); width: 24px; height: 24px; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--tint); color: var(--accent); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
-}
-
 /* 学習の記録: the whole text as it will be copied, in its own scrolling box. */
 .exportText {
   margin: 4px 0 0; max-height: 60vh; overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius);

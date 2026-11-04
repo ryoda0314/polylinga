@@ -1,6 +1,5 @@
 import "server-only";
 import { cache } from "react";
-import { embed } from "@/lib/ai";
 import { audioUrl } from "@/lib/audio";
 import { getSession } from "@/lib/auth";
 import type { Lang } from "@/lib/langs";
@@ -34,14 +33,6 @@ export type ShownSentence = {
 };
 export type Audio = { src: string; fallback: string | null } | null;
 
-/**
- * A hint's own sentence must be at least this close in meaning. Measured on everyday intents: related hints 0.5 and up,
- * the best match for something the library has nothing on (日本に来て3年になる) about 0.45.
- */
-const MIN_SIMILARITY = 0.5;
-/** How far (in meaning + way of saying) a hint may trail the best one. Related sets measured within about 0.25. */
-const MAX_BEHIND = 0.3;
-
 async function db() {
   return (await getSession()).supabase;
 }
@@ -72,28 +63,6 @@ function show(sentence: Sentence, marks: Mark[], glossMarks: Mark[], target: Lan
     reading: readingFor(text, target, sentence.zhPinyin),
     audio: sentenceAudio(text, target, sentence.id),
   };
-}
-
-/**
- * Hints for 書いてみる: up to three ways of saying something close to the learner's intent, one sentence per function
- * (かたち), each the function's sentence closest in meaning. Ranked by that closeness plus how close the function's
- * average meaning is (pl_hint_sentences), so hints share a way of saying with the intent, not only its topic words.
- */
-export async function searchCorpus(intent: string, nativeLang: Lang, targetLang: Lang) {
-  const vector = await embed(intent);
-  const { data, error } = await (await db()).rpc("pl_hint_sentences", {
-    query_embedding: vector,
-    query_lang: nativeLang,
-    target_lang: targetLang,
-    match_count: 3,
-  });
-  if (error) throw error;
-  const found = (data ?? []) as { sentence_id: string; similarity: number; form_similarity: number }[];
-  // Drop hints far behind the best one: next to a near-exact match, a loose one (ない in 行かない？ and 出ない) misleads.
-  const best = found.length ? found[0].similarity + found[0].form_similarity : 0;
-  return found
-    .filter((m) => m.similarity >= MIN_SIMILARITY && m.similarity + m.form_similarity >= best - MAX_BEHIND)
-    .map((m) => ({ sentence_id: m.sentence_id, similarity: Math.round(m.similarity * 1000) / 1000 }));
 }
 
 /** Sentences by id, in the given order, with their marks in the target language. */

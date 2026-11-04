@@ -5,7 +5,7 @@ import { redirect, RedirectType } from "next/navigation";
 import { after } from "next/server";
 import { correctSentence, explainSentence, type CorrectionResult, type ExplainedPart } from "@/lib/ai";
 import { requireUser, saveUsername } from "@/lib/auth";
-import { approvedPatterns, searchCorpus } from "@/lib/corpus";
+import { approvedPatterns } from "@/lib/corpus";
 import { getDict } from "@/lib/i18n";
 import { isAccent, isLang, type Accent, type Lang } from "@/lib/langs";
 import { consume, LIMITS, refund } from "@/lib/metering";
@@ -266,33 +266,35 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
   return { error: null };
 }
 
-/** "書いてみる": record what the learner wants to say, look for close examples once, open its page. */
-export async function startSaying(_prev: FormState, formData: FormData): Promise<FormState> {
+/**
+ * "自由に添削": a sentence the learner wrote in the language they are learning, with what they meant in their own if they
+ * gave it, corrected at once; then its page opens.
+ */
+export async function correctFreely(_prev: FormState, formData: FormData): Promise<FormState> {
   const settings = await requireSettings();
   const t = getDict(settings.nativeLang);
-  const intent = cleanText(formData.get("intent"));
-  if (!intent) return { error: t.write.empty };
-  if (intent.length > MAX_TEXT) return { error: t.write.tooLong };
+  const text = cleanText(formData.get("text"));
+  const intent = cleanText(formData.get("intent")) || null;
+  if (!text) return { error: t.saying.empty };
+  if (text.length > MAX_TEXT || (intent && intent.length > MAX_TEXT)) return { error: t.write.tooLong };
 
   const { supabase, user } = await requireUser();
-  let matches: { sentence_id: string; similarity: number }[] = [];
-  try {
-    matches = await searchCorpus(intent, settings.nativeLang, settings.targetLang);
-  } catch (err) {
-    // Hints are a bonus; the learner can still write and get a correction.
-    console.error("[search]", err);
-  }
-
-  const { data, error } = await supabase
+  const { data: saying, error } = await supabase
     .from("pl_sayings")
-    .insert({ user_id: user.id, native_lang: settings.nativeLang, target_lang: settings.targetLang, intent, matches })
-    .select("id")
+    .insert({ user_id: user.id, native_lang: settings.nativeLang, target_lang: settings.targetLang, intent, matches: [] })
+    .select("id, intent, native_lang, target_lang, pattern_id")
     .single();
-  if (error || !data) {
+  if (error || !saying) {
     console.error("[saying]", error?.message);
     return { error: t.write.failed };
   }
-  redirect(`/app/s/${data.id}`);
+
+  const res = await runCorrection(user.id, saying as SayingRow, text);
+  if (res.error) {
+    await supabase.from("pl_sayings").delete().eq("id", saying.id);
+    return res;
+  }
+  redirect(`/app/s/${saying.id}`);
 }
 
 /** The sentences a pattern is tried with: a rain's (the library's, or other learners' in みんなの雨), or those 自分 shows. */
@@ -402,7 +404,7 @@ export async function explainCorrection(correctionId: string): Promise<{ parts: 
 
 /**
  * Delete one thing the learner wrote, with its corrections (and so anything of it raining in みんなの雨). `leave`
- * goes back to 書いてみる afterwards, for when they delete it from its own page.
+ * goes back to 自由に添削 afterwards, for when they delete it from its own page.
  */
 export async function deleteSaying(sayingId: string, leave = false) {
   const { supabase, user } = await requireUser();

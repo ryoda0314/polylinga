@@ -13,11 +13,6 @@ function openai() {
   return client;
 }
 
-export async function embed(text: string): Promise<number[]> {
-  const res = await openai().embeddings.create({ model: EMBEDDING_MODEL, input: text });
-  return res.data[0].embedding;
-}
-
 export async function embedMany(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
   const res = await openai().embeddings.create({ model: EMBEDDING_MODEL, input: texts });

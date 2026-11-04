@@ -3,7 +3,7 @@
 
 export const ja = {
   app: { name: "ことのあめ", kanji: "言の雨", tagline: "例文の雨を浴びて、使える言葉へ。" },
-  nav: { shower: "浴びる", write: "書いてみる", memo: "メモ", me: "自分", label: "メイン" },
+  nav: { shower: "浴びる", write: "自由に添削", memo: "メモ", me: "自分", label: "メイン" },
   common: {
     back: "戻る",
     close: "閉じる",
@@ -146,20 +146,13 @@ export const ja = {
     },
   },
   write: {
-    title: "何て言いたい？",
-    lead: "友だちに送るつもりで、言いたい文を日本語で書いてください。",
-    steps: (target: string) => [
-      "言いたい文を日本語で書く",
-      `近い言い方の例文を見ながら、${target}で書いてみる（分からないところは日本語のままで大丈夫）`,
-      "AI が直す。直った文はコピーしてそのまま送れる",
-    ],
-    stepsLabel: "書いてみるの流れ",
+    title: "自由に添削",
+    lead: (target: string) =>
+      `言いたいことを、友だちに送るつもりで${target}で書いてみてください。AI が直して、どこを直したか教えてくれます。直った文はコピーしてそのまま送れます。`,
+    intentLabel: "言いたかったこと（日本語・なくても大丈夫）",
+    intentHint: "書いておくと、言いたかったことに合わせて直してもらえます。",
     placeholder: "例：明日、カフェ行かない？",
-    inputLabel: "言いたい文（日本語）",
-    submit: "次へ",
-    pending: "例文を探しています…",
     tooLong: "200文字までにしてください。",
-    empty: "言いたいことを書いてください。",
     failed: "うまく受け付けられませんでした。もう一度お試しください。",
     recentTitle: "これまでに書いた文",
     recentNone: "まだありません。",
@@ -341,7 +334,7 @@ export const ja = {
     lookSeenNone: "まだありません。",
     lookMinna: "みんなの雨で出会った文",
     saidTitle: "言ってみた文",
-    saidNone: "まだありません。浴びたかたちで言ってみたり、「書いてみる」で言いたいことを書いたりすると、ここに並びます。",
+    saidNone: "まだありません。浴びたかたちで言ってみたり、「自由に添削」で言いたいことを書いたりすると、ここに並びます。",
     wrote: "書いた文",
     fixed: "直した文",
     natural: "直しなし",

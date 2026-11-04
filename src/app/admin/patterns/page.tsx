@@ -123,7 +123,7 @@ export default async function PatternsPage({ searchParams }: PageProps<"/admin/p
       </div>
       <p className={styles.help}>
         「前のかたちから」は順番がすぐ前のかたちと比べた割合で、6割を切ったところに印を付けています（前の順番のかたちをだれも浴びていなければ「—」）。「そのまま自然」は、そのかたちで言ってみた文のうち、添削で直すところがなかった割合です。
-        「言ってみた人」は、そのかたちの雨から言ってみた人だけ（書いてみるで自由に書いた文は入りません）。
+        「言ってみた人」は、そのかたちの雨から言ってみた人だけ（自由に添削で書いた文は入りません）。
       </p>
       {unreached.length > 0 ? (
         <details className={styles.tableView}>

@@ -30,7 +30,10 @@ export const metadata = { title: "言ってみる" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type CorrectionRow = { id: string; input: string; corrected: string; result: CorrectionResult; created_at: string };
-/** What a saying keeps of the sentences it came with: 書いてみる's hints, or the rain a way of saying was tried with. */
+/**
+ * What a saying keeps of the sentences it came with: the rain a way of saying was tried with, or the hints of the old
+ * 書いてみる (a Japanese intent first; 自由に添削 keeps none).
+ */
 type Match = { sentence_id?: unknown; shared_id?: unknown };
 
 export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
@@ -68,7 +71,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const material = tried.map((s) => ({ ...s, memoHits: findMemoHits(s.text, memo) }));
   const corrections = (correctionRows ?? []) as CorrectionRow[];
   const latest = corrections[0];
-  const title = saying.intent ?? (patternId ? t.write.fromShower : "");
+  const title = saying.intent ?? (patternId ? t.write.fromShower : t.write.title);
 
   const writeForm = (
     <WriteForm
@@ -286,7 +289,7 @@ async function Hints({
     functionLabels(),
   ]);
   if (patternId && hints.length === 0) return null;
-  // Each hint is a different way of saying (searchCorpus picks one per function): name it, as the rain does.
+  // Each hint is a different way of saying (the old 書いてみる search picked one per function): name it, as the rain does.
   const labelOf = (s: ShownSentence) => {
     const pattern = patterns.find((p) => p.id === s.marks[0]?.patternId);
     return pattern ? (labels.get(pattern.functionId)?.[native] ?? null) : null;

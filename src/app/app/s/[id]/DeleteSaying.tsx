@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { deleteSaying } from "../../actions";
 import styles from "../../app.module.css";
 
-/** A quiet way to delete this from the learner's history: asked twice, then back to 書いてみる. */
+/** A quiet way to delete this from the learner's history: asked twice, then back to 自由に添削. */
 export function DeleteSaying({
   sayingId,
   labels,
