@@ -12,6 +12,7 @@ export const metadata = { title: "自由に添削" };
 type Row = {
   id: string;
   intent: string | null;
+  word: string | null;
   pl_patterns: { form: string } | null;
   pl_corrections: { corrected: string }[];
 };
@@ -25,7 +26,7 @@ export default async function WritePage() {
   const [{ data }, left] = await Promise.all([
     supabase
       .from("pl_sayings")
-      .select("id, intent, pl_patterns(form), pl_corrections(corrected)")
+      .select("id, intent, word, pl_patterns(form), pl_corrections(corrected)")
       .eq("target_lang", target)
       .order("created_at", { ascending: false })
       .order("created_at", { referencedTable: "pl_corrections", ascending: false })
@@ -63,7 +64,7 @@ export default async function WritePage() {
         rows={rows.map((row) => ({
           id: row.id,
           main: row.pl_corrections[0]?.corrected ?? t.write.notTried,
-          sub: row.intent ?? (row.pl_patterns ? t.write.fromShower : ""),
+          sub: row.intent ?? (row.pl_patterns ? t.write.fromShower : row.word ? t.write.fromWord : ""),
         }))}
         targetClass={langClass(target)}
         nativeClass={langClass(settings.nativeLang)}

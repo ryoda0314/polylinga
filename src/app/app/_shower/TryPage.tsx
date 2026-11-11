@@ -5,7 +5,8 @@ import { Icon } from "@/components/Icon";
 import { getDict } from "@/lib/i18n";
 import type { Lang } from "@/lib/langs";
 import type { ShowerCluster } from "@/lib/shower";
-import { tryAfterRain } from "../actions";
+import { rainKey } from "@/lib/shower-core";
+import { tryAfterRain, tryAfterWord } from "../actions";
 import app from "../app.module.css";
 import { Material } from "./Material";
 import { TryForm } from "./TryForm";
@@ -37,17 +38,17 @@ export function TryPage({
   rate: number;
 }) {
   const t = getDict(native);
-  const action = useMemo(
-    () => tryAfterRain.bind(null, cluster.patternId, { source, ids: cluster.sentences.map((s) => s.id) }),
-    [cluster, source],
-  );
+  const action = useMemo(() => {
+    const material = { source, ids: cluster.sentences.map((s) => s.id) };
+    return cluster.word ? tryAfterWord.bind(null, cluster.word, material) : tryAfterRain.bind(null, cluster.patternId, material);
+  }, [cluster, source]);
   return (
     <>
       <header className={app.subbar}>
         <button type="button" className={app.iconLink} onClick={onBack} aria-label={t.common.back}>
           <Icon name="back" size={22} />
         </button>
-        <h1 className={app.subtitleStrong}>{t.shower.tryTitle}</h1>
+        <h1 className={app.subtitleStrong}>{cluster.word ? t.shower.wordTryTitle : t.shower.tryTitle}</h1>
       </header>
       <div className={`${app.bodyTight} ${app.split}`}>
         <div className={`${app.col} ${app.stick}`}>
@@ -65,7 +66,7 @@ export function TryPage({
           />
         </div>
         <div className={app.col}>
-          <TryForm action={action} patternId={cluster.patternId} refId={REF_ID} native={native} target={target} focus />
+          <TryForm action={action} patternId={rainKey(cluster)} refId={REF_ID} native={native} target={target} focus />
         </div>
       </div>
     </>

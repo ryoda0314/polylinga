@@ -60,7 +60,24 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   Chinese first the everyday verbs in their plain form, one per rain with only the noun changing (eat … sleep: 밥 먹어,
   빵 먹어), then saying things about oneself, then fixed phrases after a noun, before (으)/아·어 forms and clauses), and a pattern's unseen
   sentences rain plainest first (`pl_sentence_patterns.extra`, what else a beginner would not know yet, judged by hand
-  for each language's opening patterns; unjudged ones count as one), then shortest (`rainOrder`).
+  for each language's opening patterns; unjudged ones count as one), then, among equally plain ones, those with a memo
+  word, then shortest (`rainOrder`).
+- ことばの雨 (`pickRain` → `pickWordCluster`, `recordWordCluster`): every third library rain (`wordRainTurn`) is four
+  sentences of different ways of saying that share a word, by its dictionary form in `pl_sentence_parts`; the shared
+  part lit once asked is the word, named in the language learned. Words: due ones (`pl_word_exposures`, the same
+  spacing as patterns), then the learner's own words they could not guess, then `src/lib/rain-words.json` (words that go
+  with many ways of saying: 今日, 一緒に, まだ; not topics), only once the library has 4+ split sentences with them.
+  Sentences of ways of saying already bathed in come first, so the word is the one new thing. Logged per day in
+  `pl_word_rain_days`; 言ってみる after it (`tryAfterWord`) keeps the word in `pl_sayings.word`, and its correction page
+  shows the sentences and 次の雨 (`?after_word=`). When no word is ready, the rain is of a way of saying.
+- 語のまとまり (`pl_sentence_parts`, `partsOf`): each library sentence split into the pieces a learner picks out, with
+  the dictionary form, kind (`function`: a small grammar piece, hard to guess by comparing), and per learner language
+  its meaning in that sentence and its part of the translation. Prepared by Claude in batches, never at runtime (see
+  Commands). The word sheet's chips come from it (the browser's Intl.Segmenter, which keeps Korean particles on their
+  nouns, only where a sentence is not split yet), and memo words are met by form (`memoSpans`: 먹다 picked from 먹을래
+  is met in 먹었어). The word sheet asks for a guess (`pl_words.note`) or 予想できなかった (`stuck_at`); such a word rains
+  first in ことばの雨, and its meaning here is shown only when the learner chooses 答え合わせ (`answered_at`). The memo's
+  stages are はじめて → 前に見た → 使った (the 意味が分かる mark is gone), with a filter for words not guessed.
 - Habit, without streaks (habits form from a cue repeated, and a missed day barely slows that): after the first rain the
   learner is asked once when they will bathe (`pl_settings.rain_cue`, e.g. 電車に乗ったら; `CuePrompt`, settings; not
   again on the rains a correction's 次の雨 leads to), and the rain shows 「〜、ひと雨。」. The first rain of a day ends with
@@ -96,7 +113,11 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   no learner policies and are read with the service role only. 「これ言いたかった」 (`pl_shared_hearts`) is never counted on
   screen; the author hears once that a sentence reached someone. A report hides the sentence at once (`pl_shared_reports`).
 - `src/lib/me.ts`: 自分, a place to look back (`/app/me`, settings on their own page `/app/me/settings`). The learner's
-  own counts (never compared with anyone), then 日ごと (days with something in them, from `pl_rain_days`, which
+  own counts (never compared with anyone), then ことばの網 (`src/lib/network.ts` + pure `network-core.ts`, drawn by
+  `me/WordNetwork.tsx`): the words and ways of saying of the sentences they bathed in, joined where they came together
+  (a way of saying to each word of its sentence, each word to the next), thin when heard, solid when said in their own
+  corrected sentence, lit when first met today, fainter when not met for a while; all in the language learned (a way of
+  saying named by its part as it appears), meanings only when a point is pressed. Then 日ごと (days with something in them, from `pl_rain_days`, which
   `pl_log_rain` fills as each rain finishes; days are in Japan time like the limits), かたち (patterns met, whether
   they used them; `/app/me/f/[id]` shows the lit part, their sentences with it and the ones they bathed in, and lets them
   try it again) and 自分の文 (corrections, sentences hearted in みんなの雨, their own shared ones; withdraw hides every
@@ -171,7 +192,8 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   whether it is a hard-to-guess grammar piece; rules in `scripts/lib/parts.mjs`). For the word sheet's chips
   (Intl.Segmenter keeps Korean particles and endings on their words), memo words met in other inflections, and the
   answer once a learner could not guess a word. Batches follow the beginner's order (the first ~10 per language cover
-  the opening ways of saying). Not stored yet: the table and apply step come with the word sheet.
+  the opening ways of saying). `node --env-file=.env.local scripts/apply-parts.mjs [batches] [--dry-run]` stores them in
+  `pl_sentence_parts` (a sentence failing the checks is skipped; meaning and gloss go under "ja").
 
 ## Conventions
 

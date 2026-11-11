@@ -429,7 +429,7 @@ export async function loadExport(
       .limit(EXPORT_SAID),
     supabase
       .from("pl_words")
-      .select("text, note, encounters, uses, understood, created_at")
+      .select("text, note, encounters, uses, stuck_at, answered_at, created_at")
       .eq("user_id", userId)
       .eq("lang", target)
       .order("created_at", { ascending: false })
@@ -490,7 +490,9 @@ export async function loadExport(
     words: (words ?? []).map((w) => ({
       text: String(w.text),
       note: (w.note as string | null) ?? null,
-      stage: wordStage({ encounters: w.encounters as number, uses: w.uses as number, understood: w.understood === true }),
+      stuck: Boolean(w.stuck_at),
+      answered: Boolean(w.answered_at),
+      stage: wordStage({ encounters: w.encounters as number, uses: w.uses as number }),
       encounters: w.encounters as number,
       uses: w.uses as number,
       since: dayOf(w.created_at),

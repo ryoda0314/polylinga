@@ -15,7 +15,7 @@ import { LIMITS, usesLeft } from "@/lib/metering";
 import { sharedSentences } from "@/lib/minna";
 import { readingFor } from "@/lib/reading";
 import { requireSettings } from "@/lib/settings";
-import type { ShowerSentence } from "@/lib/shower";
+import { partsOf, type ShowerSentence } from "@/lib/shower";
 import { findMemoHits } from "@/lib/shower-core";
 import { Material } from "../../_shower/Material";
 import { correctSaying } from "../../actions";
@@ -44,7 +44,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const { supabase, user } = await requireUser();
   const { data: saying } = await supabase
     .from("pl_sayings")
-    .select("id, intent, nuance, native_lang, target_lang, matches, pattern_id")
+    .select("id, intent, nuance, native_lang, target_lang, matches, pattern_id, word")
     .eq("id", id)
     .maybeSingle();
   if (!saying || !isLang(saying.native_lang) || !isLang(saying.target_lang)) notFound();
@@ -54,6 +54,9 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const t = getDict(native);
 
   const patternId = typeof saying.pattern_id === "string" ? saying.pattern_id : null;
+  // Said after ことばの雨: the word its sentences shared (its dictionary form).
+  const word = !patternId && typeof saying.word === "string" ? saying.word : null;
+  const fromRain = Boolean(patternId || word);
   const matches = (Array.isArray(saying.matches) ? saying.matches : []) as Match[];
   const [{ data: correctionRows }, left, { data: memoRows }, tried, way] = await Promise.all([
     supabase
@@ -64,14 +67,18 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
     usesLeft(user.id, "corrections"),
     // Memo words show where they turn up here too: the same dotted violet as in the rain.
     supabase.from("pl_words").select("text").eq("user_id", user.id).eq("lang", target),
-    patternId ? triedWith(matches, patternId, target, native, user.id) : [],
-    patternId ? wayOf(patternId, target, native) : null,
+    patternId
+      ? triedWith(matches, patternId, target, native, user.id)
+      : word
+        ? triedWithWord(matches, word, target, native)
+        : [],
+    patternId ? wayOf(patternId, target, native) : word,
   ]);
   const memo = (memoRows ?? []).map((w) => String(w.text));
   const material = tried.map((s) => ({ ...s, memoHits: findMemoHits(s.text, memo) }));
   const corrections = (correctionRows ?? []) as CorrectionRow[];
   const latest = corrections[0];
-  const title = saying.intent ?? (patternId ? t.write.fromShower : t.write.title);
+  const title = saying.intent ?? (patternId ? t.write.fromShower : word ? t.write.fromWord : t.write.title);
 
   const writeForm = (
     <WriteForm
@@ -92,7 +99,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
 
   const header = (
     <header className={styles.subbar}>
-      <Link href={patternId ? "/app" : "/app/write"} className={styles.iconLink} aria-label={t.common.back}>
+      <Link href={fromRain ? "/app" : "/app/write"} className={styles.iconLink} aria-label={t.common.back}>
         <Icon name="back" size={22} />
       </Link>
       <h1 className={`${styles.subtitle} ${langClass(native)}`}>{title}</h1>
@@ -121,6 +128,10 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const fromMinna = matches.some((m) => typeof m.shared_id === "string");
   const nextRain = patternId ? (
     <Link href={`/app?${fromMinna ? "rain=minna&" : ""}after=${encodeURIComponent(patternId)}`} className="btn">
+      {t.saying.nextRain}
+    </Link>
+  ) : word ? (
+    <Link href={`/app?after_word=${encodeURIComponent(word)}`} className="btn">
       {t.saying.nextRain}
     </Link>
   ) : null;
@@ -256,6 +267,28 @@ async function triedWith(matches: Match[], patternId: string, target: Lang, nati
     }),
     ...shared,
   ];
+}
+
+/** The sentences of the ことばの雨 a word was tried with, in the order they fell, lit where the word is. */
+async function triedWithWord(matches: Match[], word: string, target: Lang, native: Lang): Promise<ShowerSentence[]> {
+  const ids = matches.flatMap((m) => (typeof m.sentence_id === "string" ? [m.sentence_id] : []));
+  const [library, parts] = await Promise.all([loadSentences(ids, target, native), partsOf(ids, target, native)]);
+  return library.map((s) => {
+    const own = parts.get(s.id) ?? null;
+    const piece = own?.find((p) => p.base.toLowerCase() === word.toLowerCase()) ?? null;
+    return {
+      id: s.id,
+      text: s.text,
+      gloss: s.gloss,
+      reading: s.reading,
+      audio: s.audio,
+      mark: piece ? { start: piece.start, end: piece.end } : null,
+      glossMark: piece?.gloss ?? null,
+      seenBefore: true,
+      memoHits: [],
+      parts: own,
+    };
+  });
 }
 
 /** What a way of saying does, in the learner's own words (誘う). */

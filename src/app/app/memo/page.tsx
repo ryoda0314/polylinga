@@ -20,7 +20,9 @@ type WordRow = {
   memo_count: number;
   encounters: number;
   uses: number;
-  understood: boolean;
+  base: string | null;
+  stuck_at: string | null;
+  answered_at: string | null;
   created_at: string;
   last_met_at: string | null;
 };
@@ -36,7 +38,9 @@ function toMemoWords(rows: WordRow[], target: Lang): MemoWord[] {
     memoCount: w.memo_count,
     encounters: w.encounters,
     uses: w.uses,
-    understood: w.understood,
+    base: w.base,
+    stuck: Boolean(w.stuck_at),
+    answered: Boolean(w.answered_at),
     stage: wordStage(w),
     reading: readingFor(w.text, target),
     since: w.created_at,
@@ -50,7 +54,7 @@ export default async function MemoPage() {
   const t = getDict(settings.nativeLang);
   const { data } = await supabase
     .from("pl_words")
-    .select("id, text, note, memo_count, encounters, uses, understood, created_at, last_met_at")
+    .select("id, text, note, memo_count, encounters, uses, base, stuck_at, answered_at, created_at, last_met_at")
     .eq("user_id", user.id)
     .eq("lang", settings.targetLang)
     .order("last_seen_at", { ascending: false })

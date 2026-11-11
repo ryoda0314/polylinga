@@ -10,6 +10,7 @@ import { SentenceText, type Highlight } from "@/components/SentenceText";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
 import type { ShowerCluster, ShowerSentence } from "@/lib/shower";
+import { rainKey } from "@/lib/shower-core";
 import Link from "next/link";
 import { heartMinna, markReachedSeen, recordFinished, reportMinna } from "../actions";
 import app from "../app.module.css";
@@ -19,7 +20,7 @@ import { TryPage } from "./TryPage";
 import { WordSheet } from "./WordSheet";
 
 const GAP_MS = 700;
-/** The browser's history entry of a rain's 言ってみる page, marked with the rain's pattern. */
+/** The browser's history entry of a rain's 言ってみる page, marked with the rain's pattern (or word: rainKey). */
 const TRY_ENTRY = "kotonoameTry";
 
 function triedAt(state: unknown): string | null {
@@ -111,7 +112,10 @@ export function ShowerPlayer({
   useEffect(() => {
     if (!cluster || shown < cluster.sentences.length || recorded.current) return;
     recorded.current = true;
-    void recordFinished({ patternId: cluster.patternId, sentenceIds: cluster.sentences.map((s) => s.id) }, source).catch(() => {});
+    void recordFinished(
+      { patternId: cluster.patternId, word: cluster.word, sentenceIds: cluster.sentences.map((s) => s.id) },
+      source,
+    ).catch(() => {});
   }, [cluster, shown, source]);
 
   function element() {
@@ -175,7 +179,7 @@ export function ShowerPlayer({
     stopAudio(audioRef.current);
     setPlaying(null);
     rainScroll.current = window.scrollY;
-    window.history.pushState({ [TRY_ENTRY]: cluster.patternId }, "");
+    window.history.pushState({ [TRY_ENTRY]: rainKey(cluster) }, "");
     tryEntry.current = true;
     setTrying(true);
   }
@@ -187,7 +191,7 @@ export function ShowerPlayer({
 
   useEffect(() => {
     function onPop(e: PopStateEvent) {
-      const open = cluster !== null && triedAt(e.state) === cluster.patternId;
+      const open = cluster !== null && triedAt(e.state) === rainKey(cluster);
       tryEntry.current = open;
       setTrying(open);
     }
@@ -254,11 +258,16 @@ export function ShowerPlayer({
   const metWords = wordsIn(visible);
   // Before the first tap: what is about to fall (never what it has in common: that is for the learner to find).
   const comingWords = wordsIn(cluster.sentences);
+  const days = cluster.againDays && cluster.againDays >= 1 ? t.shower.againDays(cluster.againDays) : "";
   const badge = minna
     ? t.shower.minnaBadge(cluster.again)
-    : cluster.again
-      ? t.shower.again + (cluster.againDays && cluster.againDays >= 1 ? t.shower.againDays(cluster.againDays) : "")
-      : t.shower.fresh;
+    : cluster.word
+      ? cluster.again
+        ? t.shower.wordAgain + days
+        : t.shower.wordFresh
+      : cluster.again
+        ? t.shower.again + days
+        : t.shower.fresh;
 
   return page(
     <div className={styles.wrap}>
@@ -381,7 +390,9 @@ export function ShowerPlayer({
           {revealed ? (
             <section className={styles.answer}>
               <h2 className="label">{t.shower.revealed}</h2>
-              {cluster.label ? <p className={`${styles.answerMain} ${nativeClass}`}>{cluster.label}</p> : null}
+              {cluster.label ? (
+                <p className={`${styles.answerMain} ${cluster.word ? targetClass : nativeClass}`}>{cluster.label}</p>
+              ) : null}
               <p className={styles.answerNote}>{t.shower.answerNote}</p>
             </section>
           ) : (

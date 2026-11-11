@@ -89,6 +89,8 @@ export async function correctSentence(args: {
   nuance?: string | null;
   /** The pattern the learner is trying out, when they came from the shower. */
   practicing?: string | null;
+  /** The word the learner is trying out, when they came from ことばの雨 (its dictionary form). */
+  word?: string | null;
   nativeLang: Lang;
   targetLang: Lang;
   patterns: PatternRef[];
@@ -116,6 +118,7 @@ export async function correctSentence(args: {
     args.intent ? `What the learner wanted to say (in ${native}): ${args.intent}` : null,
     args.nuance ? `How the learner wants it to sound (in ${native}): ${args.nuance}` : null,
     args.practicing ? `The learner is trying out this pattern: ${args.practicing}` : null,
+    args.word ? `The learner is trying out this word: ${args.word}` : null,
     `The learner's attempt: ${args.text}`,
   ]
     .filter(Boolean)

@@ -12,7 +12,7 @@ import { consume, LIMITS, refund } from "@/lib/metering";
 import { LAUNCH_NATIVE, LAUNCH_TARGETS, requireSettings } from "@/lib/settings";
 import { heartShared, recordMinna, reportShared, shareCorrection } from "@/lib/minna";
 import { withdrawShared } from "@/lib/me";
-import { findMemoHits, recordCluster, sentencesWith } from "@/lib/shower";
+import { findMemoHits, recordCluster, recordWordCluster, sentencesWith } from "@/lib/shower";
 import { createAdminClient } from "@/lib/supabase/server";
 import { ensureClip } from "@/lib/tts";
 import { cleanUsername, USERNAME_MAX } from "@/lib/username";
@@ -42,12 +42,17 @@ export type FormState = { error: string | null };
  * Record a cluster once all of it has fallen. It counts as bathed in then, whatever the learner does next (say
  * something with it, or leave), so the same pattern does not come straight back next time.
  */
-export async function recordFinished(finished: { patternId: string; sentenceIds: string[] }, source: "library" | "minna" = "library") {
+export async function recordFinished(
+  finished: { patternId: string; word?: string | null; sentenceIds: string[] },
+  source: "library" | "minna" = "library",
+) {
   const { user } = await requireUser();
   const settings = await requireSettings();
   if (typeof finished?.patternId !== "string" || !Array.isArray(finished.sentenceIds)) return;
-  const ids = finished.sentenceIds.map(String);
-  if (source === "minna") await recordMinna(user.id, finished.patternId, ids.filter((id) => UUID.test(id)));
+  const ids = finished.sentenceIds.map(String).filter((id) => UUID.test(id));
+  const word = typeof finished.word === "string" ? cleanText(finished.word).slice(0, 60) : "";
+  if (source === "minna") await recordMinna(user.id, finished.patternId, ids);
+  else if (word) await recordWordCluster(user.id, settings.targetLang, word, ids);
   else await recordCluster(user.id, settings.targetLang, finished.patternId, ids);
 }
 
@@ -84,58 +89,121 @@ export async function markReachedSeen() {
   await supabase.from("pl_settings").update({ reached_seen_at: new Date().toISOString() }).eq("user_id", user.id);
 }
 
-/** Other sentences with the word, for the word sheet. */
-export async function findSentencesWith(word: string, currentSentenceId: string | null) {
+/** The learner's own memo of a word, as the word sheet shows it: their last guess, and whether they could not guess. */
+export type MemoOf = { id: string; text: string; note: string | null; stuck: boolean; answered: boolean };
+
+/**
+ * Other sentences with the word, for the word sheet (by its dictionary form when it was picked from a split sentence),
+ * and the learner's memo of it if they have one, so the sheet can show their last guess.
+ */
+export async function findSentencesWith(
+  word: string,
+  currentSentenceId: string | null,
+  base: string | null = null,
+): Promise<{ others: Awaited<ReturnType<typeof sentencesWith>>; memo: MemoOf | null }> {
   const settings = await requireSettings();
+  const { supabase, user } = await requireUser();
   const w = cleanText(word).slice(0, 40);
-  if (!w) return [];
-  return sentencesWith(w, settings.targetLang, settings.nativeLang, currentSentenceId);
+  const b = typeof base === "string" ? cleanText(base).slice(0, 60) || null : null;
+  if (!w) return { others: [], memo: null };
+  const mine = (q: ReturnType<typeof supabase.from>) =>
+    q.select("id, text, note, stuck_at, answered_at").eq("user_id", user.id).eq("lang", settings.targetLang).limit(1);
+  const [others, { data: byText }, { data: byBase }] = await Promise.all([
+    sentencesWith(w, settings.targetLang, settings.nativeLang, currentSentenceId, b),
+    mine(supabase.from("pl_words")).in("text", b ? [w, b] : [w]),
+    b ? mine(supabase.from("pl_words")).eq("base", b) : Promise.resolve({ data: [] }),
+  ]);
+  const row = (byText ?? [])[0] ?? (byBase ?? [])[0];
+  return {
+    others,
+    memo: row
+      ? { id: String(row.id), text: String(row.text), note: row.note ?? null, stuck: Boolean(row.stuck_at), answered: Boolean(row.answered_at) }
+      : null,
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Memo: words the learner types in themselves
 // ---------------------------------------------------------------------------
 
-export type WordState = { error: string | null; saved: string | null };
+export type WordState = { error: string | null; saved: string | null; wordId: string | null; stuck: boolean };
 
+/**
+ * メモする: a word the learner typed in themselves, with their guess at its meaning (note), or marked as one they could
+ * not guess (予想できなかった: the button sends stuck=1; a guess written as well wins). Picked from a split sentence,
+ * it keeps that piece's dictionary form, but only when they typed the piece or its form, so a word typed some other
+ * way is not met by a form it does not have.
+ */
 export async function saveWord(_prev: WordState, formData: FormData): Promise<WordState> {
   const settings = await requireSettings();
   const t = getDict(settings.nativeLang);
   const { supabase, user } = await requireUser();
   const text = cleanText(formData.get("word"));
   const note = cleanText(formData.get("note")) || null;
-  if (!text) return { error: t.words.needWord, saved: null };
-  if (text.length > 40 || (note && note.length > 120)) return { error: t.words.tooLong, saved: null };
+  const stuck = formData.get("stuck") === "1" && !note;
+  const from = cleanText(formData.get("from")).toLowerCase();
+  const picked = cleanText(formData.get("base")).slice(0, 60);
+  const base = picked && [from, picked.toLowerCase()].includes(text.toLowerCase()) ? picked : null;
+  const failed = (error: string) => ({ error, saved: null, wordId: null, stuck: false });
+  if (!text) return failed(t.words.needWord);
+  if (text.length > 40 || (note && note.length > 120)) return failed(t.words.tooLong);
 
   const { data: existing } = await supabase
     .from("pl_words")
-    .select("id, memo_count, encounters, note")
+    .select("id, memo_count, encounters, note, base, stuck_at")
     .eq("user_id", user.id)
     .eq("lang", settings.targetLang)
     .eq("text", text)
     .maybeSingle();
 
+  const now = new Date().toISOString();
   // Typing the same word again is welcome: it is one more meeting.
-  const { error } = existing
+  const { data: saved, error } = existing
     ? await supabase
         .from("pl_words")
         .update({
           memo_count: existing.memo_count + 1,
           encounters: existing.encounters + 1,
           note: note ?? existing.note,
-          last_seen_at: new Date().toISOString(),
+          base: base ?? existing.base,
+          stuck_at: note ? null : stuck ? (existing.stuck_at ?? now) : existing.stuck_at,
+          last_seen_at: now,
         })
         .eq("id", existing.id)
-    : await supabase.from("pl_words").insert({ user_id: user.id, lang: settings.targetLang, text, note });
-  if (error) return { error: t.words.failed, saved: null };
+        .select("id")
+        .single()
+    : await supabase
+        .from("pl_words")
+        .insert({ user_id: user.id, lang: settings.targetLang, text, note, base, stuck_at: stuck ? now : null })
+        .select("id")
+        .single();
+  if (error || !saved) return failed(t.words.failed);
 
   revalidatePath("/app/memo");
-  return { error: null, saved: existing ? t.words.savedAgain(text, existing.memo_count + 1) : t.words.saved(text) };
+  return {
+    error: null,
+    saved: stuck ? t.words.savedStuck(text) : existing ? t.words.savedAgain(text, existing.memo_count + 1) : t.words.saved(text),
+    wordId: String(saved.id),
+    stuck,
+  };
 }
 
-export async function setUnderstood(wordId: string, understood: boolean) {
+/** 予想できなかった, marked later on the memo page: the word then rains first in ことばの雨. */
+export async function markStuck(wordId: string) {
   const { supabase, user } = await requireUser();
-  await supabase.from("pl_words").update({ understood }).eq("id", wordId).eq("user_id", user.id);
+  if (typeof wordId !== "string" || !UUID.test(wordId)) return;
+  await supabase.from("pl_words").update({ stuck_at: new Date().toISOString() }).eq("id", wordId).eq("user_id", user.id).is("stuck_at", null);
+  revalidatePath("/app/memo");
+}
+
+/**
+ * 答え合わせ, when the learner chooses it for a word they could not guess. The meaning itself is already on their screen
+ * (語のまとまり); this keeps that they looked, and when.
+ */
+export async function answerWord(wordId: string) {
+  const { supabase, user } = await requireUser();
+  if (typeof wordId !== "string" || !UUID.test(wordId)) return;
+  await supabase.from("pl_words").update({ answered_at: new Date().toISOString() }).eq("id", wordId).eq("user_id", user.id).is("answered_at", null);
   revalidatePath("/app/memo");
 }
 
@@ -152,21 +220,30 @@ export async function updateWordNote(wordId: string, raw: string): Promise<{ err
   const { supabase, user } = await requireUser();
   const note = cleanText(raw) || null;
   if (note && note.length > 120) return { error: t.words.tooLong };
-  const { error } = await supabase.from("pl_words").update({ note }).eq("id", wordId).eq("user_id", user.id);
+  // A guess written now means they could make one after all.
+  const { error } = await supabase
+    .from("pl_words")
+    .update(note ? { note, stuck_at: null } : { note })
+    .eq("id", wordId)
+    .eq("user_id", user.id);
   if (error) return { error: t.words.failed };
   revalidatePath("/app/memo");
   return { error: null };
 }
 
-/** Where a memo word lives: library sentences that contain it, and the learner's own corrected sentences that used it. */
-export async function wordPlaces(word: string) {
+/**
+ * Where a memo word lives: library sentences that contain it (by its dictionary form, when it has one), and the
+ * learner's own corrected sentences that used it.
+ */
+export async function wordPlaces(word: string, base: string | null = null) {
   const settings = await requireSettings();
   const { supabase, user } = await requireUser();
   const w = cleanText(word).slice(0, 40);
+  const b = typeof base === "string" ? cleanText(base).slice(0, 60) || null : null;
   if (!w) return { rain: [], mine: [] };
   const needle = w.replace(/[%_\\]/g, (c) => `\\${c}`);
   const [rain, { data: mine }] = await Promise.all([
-    sentencesWith(w, settings.targetLang, settings.nativeLang, null),
+    sentencesWith(w, settings.targetLang, settings.nativeLang, null, b),
     supabase
       .from("pl_corrections")
       .select("id, saying_id, corrected, created_at")
@@ -198,8 +275,10 @@ type SayingRow = {
   native_lang: Lang;
   target_lang: Lang;
   pattern_id: string | null;
+  /** The word of the ことばの雨 it was said after. */
+  word: string | null;
 };
-const SAYING_COLUMNS = "id, intent, nuance, native_lang, target_lang, pattern_id";
+const SAYING_COLUMNS = "id, intent, nuance, native_lang, target_lang, pattern_id, word";
 
 /** One correction for a saying, with metering, refunds on failure and memo-word "used" counting. */
 async function runCorrection(userId: string, saying: SayingRow, text: string): Promise<FormState> {
@@ -223,6 +302,7 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
       intent: saying.intent,
       nuance: saying.nuance,
       practicing,
+      word: saying.word,
       nativeLang: native,
       targetLang: target,
       patterns: patterns.map((p) => ({ id: p.id, form: p.form, meaning: p.meaning[native] ?? p.meaning.en ?? "" })),
@@ -320,7 +400,7 @@ const MATERIAL_SIZE = 4;
  * correction.
  */
 async function sayWithPattern(
-  patternId: string,
+  start: { patternId: string } | { word: string },
   material: TryMaterial,
   formData: FormData,
   history: (typeof RedirectType)[keyof typeof RedirectType],
@@ -332,12 +412,24 @@ async function sayWithPattern(
   if (text.length > MAX_TEXT) return { error: t.write.tooLong };
 
   const { supabase, user } = await requireUser();
-  const { data: pattern } = await supabase.from("pl_patterns").select("id").eq("id", patternId).maybeSingle();
-  if (!pattern) return { error: t.saying.failed };
-
   const ids = (Array.isArray(material?.ids) ? material.ids : [])
     .filter((id): id is string => typeof id === "string" && UUID.test(id))
     .slice(0, MATERIAL_SIZE);
+  // What the rain shared: a way of saying that exists, or a word its sentences really carry.
+  let patternId: string | null = null;
+  let word: string | null = null;
+  if ("patternId" in start) {
+    const { data: pattern } = await supabase.from("pl_patterns").select("id").eq("id", start.patternId).maybeSingle();
+    patternId = pattern?.id ?? null;
+  } else {
+    const base = typeof start.word === "string" ? cleanText(start.word).slice(0, 60) : "";
+    const { data: piece } = base
+      ? await supabase.from("pl_sentence_parts").select("base").eq("lang", settings.targetLang).eq("base", base).limit(1).maybeSingle()
+      : { data: null };
+    word = piece ? base : null;
+  }
+  if (!patternId && !word) return { error: t.saying.failed };
+
   const { data: saying, error } = await supabase
     .from("pl_sayings")
     .insert({
@@ -345,7 +437,8 @@ async function sayWithPattern(
       native_lang: settings.nativeLang,
       target_lang: settings.targetLang,
       intent: null,
-      pattern_id: pattern.id,
+      pattern_id: patternId,
+      word,
       matches: ids.map((id) => (material?.source === "minna" ? { shared_id: id } : { sentence_id: id })),
     })
     .select(SAYING_COLUMNS)
@@ -365,12 +458,17 @@ async function sayWithPattern(
  * said takes its place in the browser's history: back from there returns to the rain.
  */
 export async function tryAfterRain(patternId: string, material: TryMaterial, _prev: FormState, formData: FormData): Promise<FormState> {
-  return sayWithPattern(patternId, material, formData, RedirectType.replace);
+  return sayWithPattern({ patternId }, material, formData, RedirectType.replace);
+}
+
+/** "これで言ってみる" after ことばの雨: something said with the word the sentences shared. */
+export async function tryAfterWord(word: string, material: TryMaterial, _prev: FormState, formData: FormData): Promise<FormState> {
+  return sayWithPattern({ word }, material, formData, RedirectType.replace);
 }
 
 /** "このかたちで言ってみる" in 自分: back from what they said returns to the pattern's page. */
 export async function tryPattern(patternId: string, material: TryMaterial, _prev: FormState, formData: FormData): Promise<FormState> {
-  return sayWithPattern(patternId, material, formData, RedirectType.push);
+  return sayWithPattern({ patternId }, material, formData, RedirectType.push);
 }
 
 /**

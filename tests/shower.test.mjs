@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { findMemoHits, isDue, nextReturn, rainOrder, returnAfterRain, sentenceLength, wordStage } from "../src/lib/shower-core.ts";
+import {
+  findMemoHits,
+  isDue,
+  memoSpans,
+  nextReturn,
+  rainOrder,
+  returnAfterRain,
+  sentenceLength,
+  wordRainTurn,
+  wordStage,
+} from "../src/lib/shower-core.ts";
 
 const DAY = 86_400_000;
 const now = new Date("2026-10-09T00:00:00Z");
@@ -27,11 +37,40 @@ test("blank memo words never match", () => {
   assert.deepEqual(findMemoHits("明天要不要去咖啡厅？", ["", "  "]), []);
 });
 
-test("memo stage: はじめて → 前に見た → 意味が分かる → 使った", () => {
-  assert.equal(wordStage({ encounters: 1, uses: 0, understood: false }), "new");
-  assert.equal(wordStage({ encounters: 3, uses: 0, understood: false }), "seen");
-  assert.equal(wordStage({ encounters: 3, uses: 0, understood: true }), "understood");
-  assert.equal(wordStage({ encounters: 1, uses: 1, understood: false }), "used");
+test("memo stage: はじめて → 前に見た → 使った", () => {
+  assert.equal(wordStage({ encounters: 1, uses: 0 }), "new");
+  assert.equal(wordStage({ encounters: 3, uses: 0 }), "seen");
+  assert.equal(wordStage({ encounters: 1, uses: 1 }), "used");
+});
+
+test("a memo word picked from one inflection is met in another by its dictionary form", () => {
+  const text = "어제 친구랑 밥 먹었어.";
+  const parts = [{ start: 9, end: 12, base: "먹다" }];
+  const words = [{ text: "먹을래", base: "먹다" }];
+  assert.deepEqual(memoSpans(text, parts, words).map((h) => text.slice(h.start, h.end)), ["먹었어"]);
+  assert.deepEqual(memoSpans(text, null, words), []);
+});
+
+test("memo words typed in and found by form never light the same place twice", () => {
+  const text = "같이 밥 먹자";
+  const spans = memoSpans(text, [{ start: 0, end: 2, base: "같이" }], [{ text: "같이", base: "같이" }]);
+  assert.deepEqual(spans, [{ start: 0, end: 2 }]);
+});
+
+test("among equally plain unseen sentences, one with a memo word rains first", () => {
+  const order = rainOrder(
+    [
+      { id: "plain-short", extra: 0, length: 2, lastSeen: null },
+      { id: "plain-memo", extra: 0, length: 5, lastSeen: null, memo: true },
+      { id: "rich-memo", extra: 2, length: 2, lastSeen: null, memo: true },
+    ],
+    () => 0,
+  );
+  assert.deepEqual(order.map((c) => c.id), ["plain-memo", "plain-short", "rich-memo"]);
+});
+
+test("every third rain is ことばの雨", () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map(wordRainTurn), [false, false, true, false, false, true]);
 });
 
 test("a pattern also comes back after 3, 8, 20, 50 ... other rains, capped at 120", () => {

@@ -27,7 +27,10 @@ const base = {
     { form: "-(으)ㄹ래?", label: "誘う", times: 2, used: false, lastDay: "2026-10-17" },
     { form: "-고 싶어요", label: "〜したい", times: 5, used: true, lastDay: "2026-10-19" },
   ],
-  words: [{ text: "주말", note: "週末 | 土日", stage: "seen", encounters: 3, uses: 0, since: "2026-10-15" }],
+  words: [
+    { text: "주말", note: "週末 | 土日", stuck: false, answered: false, stage: "seen", encounters: 3, uses: 0, since: "2026-10-15" },
+    { text: "아직", note: null, stuck: true, answered: true, stage: "new", encounters: 1, uses: 0, since: "2026-10-18" },
+  ],
   days: [
     { day: "2026-10-19", rains: 4, said: 1, words: 0 },
     { day: "2026-10-15", rains: 2, said: 0, words: 1 },
@@ -54,7 +57,13 @@ test("tables are sorted, and a bar in the learner's own words does not break a c
   const md = formatExport(base, ja.exportDoc);
   const rows = md.split("\n").filter((l) => l.startsWith("| -"));
   assert.deepEqual(rows, ["| -고 싶어요 | 〜したい | 5 | 使った | 2026-10-19 |", "| -(으)ㄹ래? | 誘う | 2 | まだ | 2026-10-17 |"]);
-  assert.match(md, /\| 주말 \| 週末 ｜ 土日 \| 前に見た \| 3 \| 0 \| 2026-10-15 \|/);
+  assert.match(md, /\| 주말 \| 週末 ｜ 土日 \| 予想した \| 前に見た \| 3 \| 0 \| 2026-10-15 \|/);
+});
+
+test("words the learner could not guess come first, marked so", () => {
+  const md = formatExport(base, ja.exportDoc);
+  assert.ok(md.indexOf("| 아직 |") < md.indexOf("| 주말 |"));
+  assert.match(md, /\| 아직 \| {2}\| 予想できなかった（答え合わせ済み） \| はじめて \| 1 \| 0 \| 2026-10-18 \|/);
 });
 
 test("an empty record still reads, section by section", () => {

@@ -1,0 +1,46 @@
+/* ことばの網: points and lines in the app's tokens, no gradients. A thin grey line is heard, a solid accent line said,
+   the colour of a word met again for a line first met today. */
+.net { display: flex; flex-direction: column; gap: 12px; }
+.svg {
+  width: 100%; height: auto; display: block; touch-action: manipulation;
+  background: var(--surface); border-radius: var(--radius);
+}
+
+.line { stroke: var(--line-2); stroke-linecap: round; }
+.lineSaid { stroke: var(--accent); stroke-linecap: round; }
+.lineFresh { stroke: var(--again); stroke-linecap: round; }
+
+.point { cursor: pointer; outline: none; }
+.word { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1.5; }
+.form { fill: var(--tint); stroke: var(--accent); stroke-width: 1.5; }
+.said.word { fill: var(--accent); stroke: var(--accent); }
+.said.form { fill: var(--accent); }
+.on { stroke: var(--again); stroke-width: 3; }
+.point:focus-visible .word, .point:focus-visible .form { stroke: var(--again); stroke-width: 3; }
+/* A halo of the background under each name, so it reads over the lines. */
+.label {
+  font-size: 12px; font-weight: 500; fill: var(--ink);
+  paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round; pointer-events: none;
+}
+
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: 12px; color: var(--muted); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.keyHeard, .keySaid, .keyToday { display: inline-block; width: 18px; height: 0; border-top: 1.5px solid var(--line-2); }
+.keySaid { border-top: 3px solid var(--accent); }
+.keyToday { border-top: 2px solid var(--again); }
+
+.hint { margin: 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+.panel { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); }
+.panelWord { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.panelMeaning { margin: -4px 0 0; font-size: 14px; color: var(--ink-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 36px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 999px;
+  background: var(--paper); color: var(--ink); font-size: 15px; cursor: pointer;
+}
+.chipSaid { border-color: var(--accent); }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); color: var(--accent); font-weight: 600; }
+.sentences { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sentences li { display: flex; flex-direction: column; gap: 2px; font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.gloss { font-size: 13px; color: var(--muted); }
+.more { align-self: flex-start; font-size: 14px; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }

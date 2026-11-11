@@ -3,7 +3,7 @@ import type { Dict } from "@/lib/i18n";
 // The learning record written out as one Markdown text, for the learner to keep or to hand to an AI of their choice.
 // Pure: the data comes from loadExport (me.ts), the words from the dictionary, so it can be tested on its own.
 
-export type Stage = "new" | "seen" | "understood" | "used";
+export type Stage = "new" | "seen" | "used";
 
 export type ExportData = {
   /** Language names as the learner reads them (韓国語, 日本語). */
@@ -25,7 +25,8 @@ export type ExportData = {
   }[];
   saidAll: number;
   patterns: { form: string; label: string; times: number; used: boolean; lastDay: string | null }[];
-  words: { text: string; note: string | null; stage: Stage; encounters: number; uses: number; since: string }[];
+  /** note is the learner's guess at its meaning; stuck: they could not guess it (answered: they then chose to see it). */
+  words: { text: string; note: string | null; stuck: boolean; answered: boolean; stage: Stage; encounters: number; uses: number; since: string }[];
   days: { day: string; rains: number; said: number; words: number }[];
 };
 
@@ -88,7 +89,12 @@ export function formatExport(d: ExportData, L: Dict["exportDoc"]): string {
 
   out.push(`## ${L.wordsTitle}`);
   if (d.words.length === 0) out.push(L.none);
-  else out.push(...table(L.wordHead, d.words.map((w) => [w.text, w.note, L.stages[w.stage], w.encounters, w.uses, w.since])));
+  else {
+    // Words the learner could not guess come first: what they tried and could not get is what is worth going over.
+    const words = [...d.words].sort((a, b) => Number(b.stuck) - Number(a.stuck));
+    const guess = (w: ExportData["words"][number]) => (w.stuck ? (w.answered ? L.guessAnswered : L.guessStuck) : w.note ? L.guessMade : "");
+    out.push(...table(L.wordHead, words.map((w) => [w.text, w.note, guess(w), L.stages[w.stage], w.encounters, w.uses, w.since])));
+  }
   out.push("");
 
   out.push(`## ${L.daysTitle}`);

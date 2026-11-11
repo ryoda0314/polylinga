@@ -31,7 +31,7 @@ export function Gauge({ stage, label }: { stage: Stage; label: string }) {
  */
 export function MemoBoard({ words, native, target, rate }: { words: MemoWord[]; native: Lang; target: Lang; rate: number }) {
   const t = getDict(native);
-  const [stage, setStage] = useState<Stage | "all">("all");
+  const [stage, setStage] = useState<Stage | "all" | "stuck">("all");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -43,10 +43,16 @@ export function MemoBoard({ words, native, target, rate }: { words: MemoWord[]; 
         .slice(0, 8),
     [words],
   );
-  const counts = useMemo(() => Object.fromEntries(STAGES.map((s) => [s, words.filter((w) => w.stage === s).length])), [words]);
+  const counts = useMemo(
+    (): Record<Stage | "stuck", number> => ({
+      ...(Object.fromEntries(STAGES.map((s) => [s, words.filter((w) => w.stage === s).length])) as Record<Stage, number>),
+      stuck: words.filter((w) => w.stuck).length,
+    }),
+    [words],
+  );
   const q = query.trim().toLowerCase();
   const shown = words.filter(
-    (w) => (stage === "all" || w.stage === stage) && (!q || w.text.toLowerCase().includes(q) || (w.note ?? "").toLowerCase().includes(q)),
+    (w) => (stage === "all" || (stage === "stuck" ? w.stuck : w.stage === stage)) && (!q || w.text.toLowerCase().includes(q) || (w.note ?? "").toLowerCase().includes(q)),
   );
   const open = words.find((w) => w.id === openId) ?? null;
 
@@ -85,7 +91,8 @@ export function MemoBoard({ words, native, target, rate }: { words: MemoWord[]; 
         </div>
         <div className={styles.tools}>
           <div className={styles.filters} role="group" aria-label={t.words.gauge}>
-            {(["all", ...STAGES] as const).map((s) => (
+            {/* Words they could not guess are a filter of their own once there are any: the ones to bathe in. */}
+            {(counts.stuck ? (["all", ...STAGES, "stuck"] as const) : (["all", ...STAGES] as const)).map((s) => (
               <button
                 key={s}
                 type="button"
@@ -93,7 +100,7 @@ export function MemoBoard({ words, native, target, rate }: { words: MemoWord[]; 
                 aria-pressed={s === stage}
                 onClick={() => setStage(s)}
               >
-                {s === "all" ? t.words.all : t.words.stages[s]}
+                {s === "all" ? t.words.all : s === "stuck" ? t.words.stuck : t.words.stages[s]}
                 <span className={styles.filterCount}>{s === "all" ? words.length : counts[s]}</span>
               </button>
             ))}
@@ -123,6 +130,7 @@ export function MemoBoard({ words, native, target, rate }: { words: MemoWord[]; 
                       <SentenceText text={w.text} reading={w.reading} />
                     </span>
                     {w.note ? <span className={`${styles.note} ${langClass(native)}`}>{w.note}</span> : null}
+                    {w.stuck ? <span className={styles.stuckTag}>{w.answered ? t.words.answered : t.words.stuck}</span> : null}
                     <span className={styles.meta}>
                       {t.words.met(w.encounters)}
                       {w.uses > 0 ? `・${t.words.used(w.uses)}` : ""}

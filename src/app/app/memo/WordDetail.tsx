@@ -7,12 +7,21 @@ import { SentenceText } from "@/components/SentenceText";
 import { SpeakButton, type AudioSource } from "@/components/SpeakButton";
 import { getDict } from "@/lib/i18n";
 import { langClass, type Lang } from "@/lib/langs";
-import { deleteWord, setUnderstood, updateWordNote, wordPlaces } from "../actions";
+import { answerWord, deleteWord, markStuck, updateWordNote, wordPlaces } from "../actions";
 import { STAGES, type MemoWord } from "./words";
 import styles from "./memo.module.css";
 
 type Places = {
-  rain: { id: string; text: string; gloss: string; reading: string[] | null; audio: AudioSource; hits: { start: number; end: number }[] }[];
+  rain: {
+    id: string;
+    text: string;
+    gloss: string;
+    reading: string[] | null;
+    audio: AudioSource;
+    hits: { start: number; end: number }[];
+    /** What the word means in that sentence (語のまとまり), shown once the learner chooses 答え合わせ. */
+    meaning: string | null;
+  }[];
   mine: { id: string; sayingId: string | null; text: string; hits: { start: number; end: number }[] }[];
 };
 
@@ -44,6 +53,8 @@ export function WordDetail({
   const [note, setNote] = useState(word.note ?? "");
   const [noteState, setNoteState] = useState<"idle" | "saved" | string>("idle");
   const [confirming, setConfirming] = useState(false);
+  // 答え合わせ: shown once the learner chooses it (and from then on, for a word they have checked).
+  const [showAnswer, setShowAnswer] = useState(word.answered);
   const [pending, startTransition] = useTransition();
   const dialogRef = useRef<HTMLDivElement>(null);
   const level = STAGES.indexOf(word.stage);
@@ -58,11 +69,16 @@ export function WordDetail({
   useEffect(() => {
     dialogRef.current?.focus();
     let live = true;
-    wordPlaces(word.text).then((p) => live && setPlaces(p));
+    wordPlaces(word.text, word.base).then((p) => live && setPlaces(p));
     return () => {
       live = false;
     };
-  }, [word.text]);
+  }, [word.text, word.base]);
+
+  function answer() {
+    setShowAnswer(true);
+    void answerWord(word.id).catch(() => {});
+  }
 
   function saveNote() {
     startTransition(async () => {
@@ -126,22 +142,25 @@ export function WordDetail({
           </div>
         </dl>
 
-        <label className={styles.understood}>
-          <input
-            type="checkbox"
-            checked={word.understood}
-            disabled={pending}
-            onChange={(e) => {
-              const value = e.target.checked;
-              startTransition(() => setUnderstood(word.id, value));
-            }}
-          />
-          {t.words.understood}
-        </label>
+        {/* A word they could not guess: it rains again in other sentences, and its meaning is theirs to ask for. */}
+        {word.stuck ? (
+          <div className={styles.stuckBox}>
+            <p className={styles.hint}>{t.words.stuckNote}</p>
+            {showAnswer ? null : (
+              <button type="button" className="btn-quiet" onClick={answer}>
+                {t.words.answer}
+              </button>
+            )}
+          </div>
+        ) : word.note ? null : (
+          <button type="button" className={styles.quietAction} disabled={pending} onClick={() => startTransition(() => markStuck(word.id))}>
+            {t.words.markStuck}
+          </button>
+        )}
 
         <div className={styles.noteBox}>
           <label htmlFor="word-note" className="label">
-            {t.word.note}
+            {t.words.guess}
           </label>
           <textarea
             id="word-note"
@@ -165,6 +184,7 @@ export function WordDetail({
 
         <section className={styles.places} aria-busy={places === null}>
           <h3 className="label">{t.words.inRain}</h3>
+          {showAnswer && places?.rain.some((s) => s.meaning) ? <p className={styles.hint}>{t.words.answerLead}</p> : null}
           {places === null ? null : places.rain.length === 0 ? (
             <p className={styles.none}>{t.words.inRainNone}</p>
           ) : (
@@ -175,6 +195,9 @@ export function WordDetail({
                     <SentenceText text={s.text} highlights={s.hits.map((h) => ({ ...h, kind: "memo" as const }))} reading={s.reading} />
                   </span>
                   <span className={`${styles.note} ${langClass(native)}`}>{s.gloss}</span>
+                  {showAnswer && s.meaning ? (
+                    <span className={`${styles.answerLine} ${langClass(native)}`}>{t.word.answerHere(s.meaning)}</span>
+                  ) : null}
                 </div>
                 <SpeakButton text={s.text} lang={target} audio={s.audio} rate={rate} label={t.common.play} failedLabel={t.common.playFailed} />
               </div>

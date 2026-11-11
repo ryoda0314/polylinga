@@ -8,7 +8,7 @@ import { rainSoFar } from "@/lib/me";
 import { pickMinnaCluster, reachedSomeone } from "@/lib/minna";
 import { readingFor } from "@/lib/reading";
 import { requireSettings } from "@/lib/settings";
-import { pickCluster } from "@/lib/shower";
+import { pickRain } from "@/lib/shower";
 import { ShowerPlayer } from "./_shower/ShowerPlayer";
 import { WordRain } from "./_shower/WordRain";
 import showerStyles from "./_shower/shower.module.css";
@@ -22,16 +22,17 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
   // Three rains: the library's (ことのあめ), other learners' corrected sentences (みんなの雨), and the learner's own memo
   // words with their meanings (単語の雨).
   const source = params.rain === "minna" ? "minna" : params.rain === "words" ? "words" : "library";
-  // The rain a correction's 次の雨 leads to (`after` the way of saying just tried): another way of saying, and the
-  // question of when to bathe is left to the first rain of a sitting.
+  // The rain a correction's 次の雨 leads to (`after` the way of saying just tried, `after_word` the word of ことばの雨):
+  // something else, and the question of when to bathe is left to the first rain of a sitting.
   const after = typeof params.after === "string" ? params.after : null;
+  const afterWord = typeof params.after_word === "string" ? params.after_word : null;
   // The day so far is read before this visit's rain is recorded: it says whether this is today's first rain.
   const [first, reached, sofar, { data: memo }] = await Promise.all([
     source === "words"
       ? null
       : source === "minna"
         ? pickMinnaCluster(user.id, settings.targetLang, settings.nativeLang, after)
-        : pickCluster(user.id, settings.targetLang, settings.nativeLang, after),
+        : pickRain(user.id, settings.targetLang, settings.nativeLang, { patternId: after, word: afterWord }),
     reachedSomeone(user.id, settings.reachedSeenAt),
     rainSoFar(user.id, settings.targetLang),
     source === "words"
@@ -106,7 +107,7 @@ export default async function ShowerPage({ searchParams }: PageProps<"/app">) {
       sharing={settings.shareRain}
       habit={{
         cue: settings.rainCue,
-        ask: !after && !settings.rainCueAsked && !settings.rainCue,
+        ask: !after && !afterWord && !settings.rainCueAsked && !settings.rainCue,
         firstToday: !sofar.today,
         back: sofar.back,
       }}

@@ -154,6 +154,8 @@
   background: var(--paper); color: var(--ink); font-size: 16px; cursor: pointer;
 }
 .chipOn { border-color: var(--accent); background: var(--tint); color: var(--accent); font-weight: 600; }
+/* A small grammar piece (에, 了, the): quieter, as it is a part of a way of saying rather than a word to look up. */
+.chipPiece:not(.chipOn) { border-style: dashed; color: var(--ink-2); }
 .others { display: flex; flex-direction: column; }
 .otherRow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .otherText { font-size: 18px; line-height: 1.7; overflow-wrap: anywhere; }
@@ -163,6 +165,12 @@
   font-size: 17px; background: var(--paper);
 }
 .subLabel { font-size: 12px; color: var(--muted); }
+/* The learner's last guess at the word, or that they could not make one: theirs, so in the colour of a word met again. */
+.before { margin: 0; font-size: 14px; line-height: 1.6; color: var(--again); font-weight: 500; }
+.memoActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.memoActions > * { flex: 1 1 auto; }
+/* 答え合わせ, once chosen: what the word means in this sentence. */
+.answerBox { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: var(--surface); border-radius: var(--radius); }
 
 @media (prefers-reduced-motion: reduce) {
   .item { animation: none; }

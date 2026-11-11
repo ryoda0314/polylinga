@@ -10,7 +10,7 @@ import styles from "./memo.module.css";
 /** Type a word in yourself (never filled in for you); the same word again simply counts as another meeting. */
 export function WordAddForm({ native, target }: { native: Lang; target: Lang }) {
   const t = getDict(native);
-  const [state, action, pending] = useActionState<WordState, FormData>(saveWord, { error: null, saved: null });
+  const [state, action, pending] = useActionState<WordState, FormData>(saveWord, { error: null, saved: null, wordId: null, stuck: false });
   // Typing again after a save clears the "saved" look, so it always speaks of the word just sent.
   const [typing, setTyping] = useState(false);
   const done = !pending && Boolean(state.saved) && !typing;

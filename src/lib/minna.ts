@@ -136,6 +136,7 @@ export async function pickMinnaCluster(
   const sentences = chosen.map((r) => sharedSentence(r, target, seen.has(r.id), memo));
   return {
     patternId,
+    word: null,
     label: ((fn?.label ?? {}) as Record<string, string>)[native] ?? null,
     again: met.has(patternId),
     againDays: null,
