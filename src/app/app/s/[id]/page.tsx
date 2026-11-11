@@ -44,7 +44,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
   const { supabase, user } = await requireUser();
   const { data: saying } = await supabase
     .from("pl_sayings")
-    .select("id, intent, native_lang, target_lang, matches, pattern_id")
+    .select("id, intent, nuance, native_lang, target_lang, matches, pattern_id")
     .eq("id", id)
     .maybeSingle();
   if (!saying || !isLang(saying.native_lang) || !isLang(saying.target_lang)) notFound();
@@ -163,7 +163,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
             {latest ? (
               <>
                 <div className={styles.result}>
-                  <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+                  <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} nuance={saying.nuance} />
                   {nextRain}
                 </div>
                 {rewrite}
@@ -198,7 +198,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
         {latest ? (
           <>
             <div className={styles.col}>
-              <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} />
+              <CorrectionView correction={latest} target={target} native={native} rate={settings.speechRate} t={t} memo={memo} nuance={saying.nuance} />
               {nextRain}
             </div>
             <div className={styles.col}>
@@ -386,6 +386,7 @@ function CorrectionView({
   rate,
   t,
   memo,
+  nuance,
 }: {
   correction: CorrectionRow;
   target: Lang;
@@ -393,6 +394,8 @@ function CorrectionView({
   rate: number;
   t: Dict;
   memo: string[];
+  /** How the learner asked it to sound (自由に添削's ニュアンス), shown with what they wrote. */
+  nuance: string | null;
 }) {
   const result = correction.result;
   const { removed, added } = diffRanges(correction.input, correction.corrected, target);
@@ -411,6 +414,7 @@ function CorrectionView({
         <p className={`${styles.yours} ${langClass(target)}`}>
           <SentenceText text={correction.input} highlights={removed.map((r) => ({ ...r, kind: "del" }))} />
         </p>
+        {nuance ? <p className={`${styles.note} ${langClass(native)}`}>{t.saying.nuance(nuance)}</p> : null}
       </section>
 
       <section className={`${styles.stackSm} ${styles.divider}`}>

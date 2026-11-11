@@ -57,8 +57,12 @@ button.iconLink { padding: 0; border: 0; background: none; cursor: pointer; }
   border: 1.5px solid var(--ink); border-radius: var(--radius);
   font-size: 17px; line-height: 1.6; background: var(--paper);
 }
-/* A field that may stay empty (自由に添削's 言いたかったこと): about two lines. */
+/* A field that may stay empty (自由に添削's 日本語訳 and ニュアンス): about two lines. */
 .textareaShort { min-height: 80px; }
+/* 自由に添削's options: ＋ adds one (a chip, tall enough for a thumb), × in its head takes it away again. The × keeps
+   its full tap area without pushing the field down. */
+.optionAdd { min-height: 40px; padding: 0 14px; font-size: 14px; cursor: pointer; }
+.optionHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -12px -10px -10px 0; }
 
 /* Lists with hairlines */
 .listHead {

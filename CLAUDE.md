@@ -104,8 +104,11 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   with a request the learner can paste into an AI of their choice. The app itself makes no AI call for it. Rain before `pl_rain_days` existed shows only on each pattern's last day.
 - `src/lib/corpus.ts`: the sentence library (examples by pattern, sentences by id or word). RLS hides drafts.
 - 自由に添削 (`/app/write`, the tab beside 浴びる; `correctFreely`): a sentence written in the language learned (unknown
-  words may stay Japanese), with what they meant in Japanese if they like (`intent`, optional), corrected at once on one
-  screen. It was 書いてみる: a Japanese intent first, then close library sentences as hints (`pl_hint_sentences`, still
+  words may stay Japanese), corrected at once on one screen. With ＋ the learner may add how they want it corrected: its
+  Japanese translation (`pl_sayings.intent`) and/or the nuance it should carry (`pl_sayings.nuance`, e.g. 軽く誘う感じ,
+  which outweighs the register they wrote in). Both are kept with the saying, so もう一度書く is corrected the same way,
+  and the correction page shows the nuance under what they wrote. A saying needs neither an intent nor a pattern
+  (`supabase/migrations/20261111000000_free_correction.sql` dropped `pl_sayings_has_start`). It was 書いてみる: a Japanese intent first, then close library sentences as hints (`pl_hint_sentences`, still
   in the database, no longer called), then writing. Old sayings left at that step still show their stored hints.
 - `src/lib/reading.ts`: pinyin over Chinese text. Library sentences use their checked `zh_pinyin`; anything else
   (corrections, memo words) falls back to pinyin-pro, which misreads polyphones such as 得・只・长.

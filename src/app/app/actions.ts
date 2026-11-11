@@ -191,7 +191,15 @@ export async function wordPlaces(word: string) {
 // Writing and corrections
 // ---------------------------------------------------------------------------
 
-type SayingRow = { id: string; intent: string | null; native_lang: Lang; target_lang: Lang; pattern_id: string | null };
+type SayingRow = {
+  id: string;
+  intent: string | null;
+  nuance: string | null;
+  native_lang: Lang;
+  target_lang: Lang;
+  pattern_id: string | null;
+};
+const SAYING_COLUMNS = "id, intent, nuance, native_lang, target_lang, pattern_id";
 
 /** One correction for a saying, with metering, refunds on failure and memo-word "used" counting. */
 async function runCorrection(userId: string, saying: SayingRow, text: string): Promise<FormState> {
@@ -213,6 +221,7 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
     result = await correctSentence({
       text,
       intent: saying.intent,
+      nuance: saying.nuance,
       practicing,
       nativeLang: native,
       targetLang: target,
@@ -267,22 +276,24 @@ async function runCorrection(userId: string, saying: SayingRow, text: string): P
 }
 
 /**
- * "自由に添削": a sentence the learner wrote in the language they are learning, with what they meant in their own if they
- * gave it, corrected at once; then its page opens.
+ * "自由に添削": a sentence the learner wrote in the language they are learning, corrected at once; then its page opens.
+ * Added with ＋ if they like: its Japanese translation (`intent`) and how it should sound (`nuance`), both kept with
+ * the saying so a rewrite is corrected the same way.
  */
 export async function correctFreely(_prev: FormState, formData: FormData): Promise<FormState> {
   const settings = await requireSettings();
   const t = getDict(settings.nativeLang);
   const text = cleanText(formData.get("text"));
   const intent = cleanText(formData.get("intent")) || null;
+  const nuance = cleanText(formData.get("nuance")) || null;
   if (!text) return { error: t.saying.empty };
-  if (text.length > MAX_TEXT || (intent && intent.length > MAX_TEXT)) return { error: t.write.tooLong };
+  if ([text, intent, nuance].some((s) => s && s.length > MAX_TEXT)) return { error: t.write.tooLong };
 
   const { supabase, user } = await requireUser();
   const { data: saying, error } = await supabase
     .from("pl_sayings")
-    .insert({ user_id: user.id, native_lang: settings.nativeLang, target_lang: settings.targetLang, intent, matches: [] })
-    .select("id, intent, native_lang, target_lang, pattern_id")
+    .insert({ user_id: user.id, native_lang: settings.nativeLang, target_lang: settings.targetLang, intent, nuance, matches: [] })
+    .select(SAYING_COLUMNS)
     .single();
   if (error || !saying) {
     console.error("[saying]", error?.message);
@@ -337,7 +348,7 @@ async function sayWithPattern(
       pattern_id: pattern.id,
       matches: ids.map((id) => (material?.source === "minna" ? { shared_id: id } : { sentence_id: id })),
     })
-    .select("id, intent, native_lang, target_lang, pattern_id")
+    .select(SAYING_COLUMNS)
     .single();
   if (error || !saying) return { error: t.saying.failed };
 
@@ -429,7 +440,7 @@ export async function correctSaying(sayingId: string, _prev: FormState, formData
   const { supabase, user } = await requireUser();
   const { data: saying } = await supabase
     .from("pl_sayings")
-    .select("id, intent, native_lang, target_lang, pattern_id")
+    .select(SAYING_COLUMNS)
     .eq("id", sayingId)
     .maybeSingle();
   const native: Lang = isLang(saying?.native_lang) ? saying.native_lang : LAUNCH_NATIVE;
