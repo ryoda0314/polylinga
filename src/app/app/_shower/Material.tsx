@@ -25,6 +25,7 @@ export function Material({
   native,
   target,
   rate,
+  compact = false,
 }: {
   /** For the field to bring the sentences into view with it once a phone's keyboard is up. */
   id: string;
@@ -39,11 +40,20 @@ export function Material({
   native: Lang;
   target: Lang;
   rate: number;
+  /**
+   * Set close on a phone, so all of them fit above the field once the keyboard is up (言ってみる). Always, not only
+   * while typing: a list that grew back as the field let go would move the button being pressed.
+   */
+  compact?: boolean;
 }) {
   const t = getDict(native);
   const [sheetFor, setSheetFor] = useState<ShowerSentence | null>(null);
   return (
-    <section id={id} className={styles.material} aria-labelledby={`${id}-label`}>
+    <section
+      id={id}
+      className={compact ? `${styles.material} ${styles.compact}` : styles.material}
+      aria-labelledby={`${id}-label`}
+    >
       <div className={styles.materialHead}>
         <h2 id={`${id}-label`} className="label">
           {label}
@@ -85,7 +95,7 @@ export function Material({
           );
         })}
       </ul>
-      <p className={styles.note}>{t.shower.tryTap}</p>
+      <p className={`${styles.note} ${styles.tapNote}`}>{t.shower.tryTap}</p>
       {sheetFor
         ? createPortal(
             <WordSheet sentence={sheetFor} native={native} target={target} rate={rate} onClose={() => setSheetFor(null)} />,

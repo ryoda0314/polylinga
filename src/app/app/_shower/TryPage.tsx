@@ -61,6 +61,7 @@ export function TryPage({
             native={native}
             target={target}
             rate={rate}
+            compact
           />
         </div>
         <div className={app.col}>

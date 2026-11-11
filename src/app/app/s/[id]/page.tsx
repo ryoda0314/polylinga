@@ -157,6 +157,7 @@ export default async function SayingPage({ params }: PageProps<"/app/s/[id]">) {
               native={native}
               target={target}
               rate={settings.speechRate}
+              compact
             />
           </div>
           <div className={styles.col}>

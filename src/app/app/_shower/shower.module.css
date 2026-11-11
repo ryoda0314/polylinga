@@ -109,6 +109,19 @@
   overflow-wrap: anywhere; border-radius: 6px;
 }
 .materialText:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* 言ってみる on a phone: once the keyboard is up, little more than 330-450 px is left, and the four sentences have to fit
+   there above the field, at a glance and without scrolling. So they are set close: smaller type, the translation
+   tight under each, a smaller speaker, no hint, and a lower field. A wide screen has them beside the field instead. */
+@media (max-width: 1023px) {
+  .compact { gap: 4px; }
+  .compact .materialItem { gap: 8px; padding: 6px 0; }
+  .compact .itemMain { gap: 0; }
+  .compact .materialText { font-size: 17px; line-height: 1.5; }
+  .compact .gloss { font-size: 12.5px; line-height: 1.5; }
+  .compact .materialItem > :last-child { width: 36px; height: 36px; }
+  .compact .tapNote { display: none; }
+  .try .textarea { min-height: 72px; }
+}
 .textarea {
   width: 100%; min-height: 96px; padding: 14px; resize: vertical;
   border: 1.5px solid var(--ink); border-radius: var(--radius); font-size: 18px; line-height: 1.6; background: var(--paper);

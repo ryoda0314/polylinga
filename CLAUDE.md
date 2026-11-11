@@ -76,7 +76,9 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   sentences): the next rain is another way of saying than the one just tried.
 - 言ってみる after a rain (`_shower/TryPage.tsx`): a page of its own with no route. ShowerPlayer swaps the whole page and
   pushes a history entry, so back returns to the rain as it was left. The rain's sentences (`Material`: play, tap for
-  the word sheet) sit beside the field, or above it on a phone. `tryAfterRain` keeps them with the saying in
+  the word sheet) sit beside the field, or above it on a phone, set close there (`compact`: smaller type, no hint) so
+  all four still fit above the field once the keyboard leaves 330-450 px; always, not only while typing, since a list
+  that grew back as the field let go would move the button being pressed. `tryAfterRain` keeps them with the saying in
   `pl_sayings.matches` (`sentence_id`, or `shared_id` for みんなの雨), and the correction page shows them beside every
   correction. On a phone they come after the correction, right above もう一度書く. The rain's way of saying is lit there
   and not listed again under 同じかたちの文. The correction takes the 言ってみる entry's place in the history; 自分's
@@ -162,6 +164,14 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
 - `node --env-file=.env.local scripts/prepare-plain.mjs [--langs=ko,zh,en] [function ids]` → judge
   `scripts/library/work/plain/<lang>.json` by hand (`<lang>.out.json`) → `scripts/apply-plain.mjs [langs] [--dry-run]`:
   how plain each sentence is (default: each language's opening patterns); it lists patterns with too few plain ones.
+- `node --env-file=.env.local scripts/prepare-parts.mjs [--langs=ko,zh,en] [--size=60] [--batches=N]` → split each
+  `scripts/library/work/parts/<lang>-NNN.json` by hand (Claude, not the API: the rules ride in the batch, the answer goes
+  in `<batch>.out.json`) → `node scripts/check-parts.mjs [batches]` (placement checks, a readable `<batch>.md`):
+  語のまとまり, the pieces a learner picks out (dictionary form, meaning in this sentence, its part of the translation,
+  whether it is a hard-to-guess grammar piece; rules in `scripts/lib/parts.mjs`). For the word sheet's chips
+  (Intl.Segmenter keeps Korean particles and endings on their words), memo words met in other inflections, and the
+  answer once a learner could not guess a word. Batches follow the beginner's order (the first ~10 per language cover
+  the opening ways of saying). Not stored yet: the table and apply step come with the word sheet.
 
 ## Conventions
 
