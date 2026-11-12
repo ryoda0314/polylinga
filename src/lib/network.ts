@@ -32,7 +32,7 @@ export async function loadNetwork(userId: string, target: Lang, native: Lang): P
     functionLabels(),
   ]);
   const ids = (seenRows ?? []).map((r) => String(r.sentence_id));
-  if (ids.length === 0) return { nodes: [], edges: [], sentences: [] };
+  if (ids.length === 0) return { nodes: [], edges: [], sentences: [], pending: 0 };
 
   const [{ data: sentenceRows }, { data: markRows }, { data: partRows }] = await Promise.all([
     supabase.from("pl_sentences").select(`id, ${target}, ${native}`).in("id", ids),
@@ -93,5 +93,5 @@ export async function loadNetwork(userId: string, target: Lang, native: Lang): P
     text: String(c.corrected ?? ""),
     patternIds: ((c.result as Partial<CorrectionResult> | null)?.patterns ?? []).map((p) => p.id),
   }));
-  return buildNetwork(seen, said, forms, { now: Date.now(), maxNodes: MAX_NODES });
+  return { ...buildNetwork(seen, said, forms, { now: Date.now(), maxNodes: MAX_NODES }), pending: seen.filter((s) => s.pieces.length === 0).length };
 }

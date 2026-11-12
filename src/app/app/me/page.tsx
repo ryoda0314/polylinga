@@ -96,6 +96,7 @@ export default async function MePage({ searchParams }: PageProps<"/app/me">) {
           ) : (
             <p className={styles.note}>{t.me.net.empty}</p>
           )}
+          {net.pending > 0 ? <p className={styles.note}>{t.me.net.pending(net.pending)}</p> : null}
         </section>
 
         <nav className={styles.views} aria-label={t.me.viewsLabel}>

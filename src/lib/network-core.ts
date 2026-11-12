@@ -52,7 +52,8 @@ export type NetEdge = {
   daysAgo: number;
 };
 export type NetSentence = { text: string; gloss: string; nodes: string[] };
-export type Network = { nodes: NetNode[]; edges: NetEdge[]; sentences: NetSentence[] };
+/** pending: sentences bathed in whose words are not in the web yet (not split into 語のまとまり so far). */
+export type Network = { nodes: NetNode[]; edges: NetEdge[]; sentences: NetSentence[]; pending: number };
 
 const formId = (patternId: string) => `form:${patternId}`;
 const wordId = (base: string) => `word:${base.toLowerCase()}`;
@@ -183,6 +184,7 @@ export function buildNetwork(
         daysAgo: Math.max(0, Math.floor((opts.now - e.lastAt) / DAY)),
       })),
     sentences: sentences.map((s) => ({ ...s, nodes: s.nodes.filter((id) => keep.has(id)) })),
+    pending: 0,
   };
 }
 
