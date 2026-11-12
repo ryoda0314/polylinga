@@ -117,7 +117,11 @@ Read [CONCEPT.md](CONCEPT.md) before adding anything. A feature that does not fi
   `me/WordNetwork.tsx`): the words and ways of saying of the sentences they bathed in, joined where they came together
   (a way of saying to each word of its sentence, each word to the next), thin when heard, solid when said in their own
   corrected sentence, lit when first met today, fainter when not met for a while; all in the language learned (a way of
-  saying named by its part as it appears), meanings only when a point is pressed. Then 日ごと (days with something in them, from `pl_rain_days`, which
+  saying named by its part as it appears, and a word written just like it is that same point), meanings only when a
+  point is pressed. Drawn like Obsidian's graph: a live force layout (`simulate`, positions written to the SVG directly,
+  not through React), points dragged, the web panned and zoomed (pinch; the wheel with ctrl on the page, plain in the
+  大きく見る full view), the hovered or pressed point lit with its neighbours, names only for the 14 points met most
+  until zoomed in. Sentences not split yet (語のまとまり) bring only their ways of saying. Then 日ごと (days with something in them, from `pl_rain_days`, which
   `pl_log_rain` fills as each rain finishes; days are in Japan time like the limits), かたち (patterns met, whether
   they used them; `/app/me/f/[id]` shows the lit part, their sentences with it and the ones they bathed in, and lets them
   try it again) and 自分の文 (corrections, sentences hearted in みんなの雨, their own shared ones; withdraw hides every

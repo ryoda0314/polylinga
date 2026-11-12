@@ -7,19 +7,8 @@ import { buildNetwork, type NetMark, type NetPiece, type Network, type SaidSente
 
 /** The sentences the web is grown from: the ones bathed in most lately (a long `in` list would not fit a request). */
 const RECENT_SENTENCES = 150;
-/** Points kept, so the web stays readable on a phone. */
-const MAX_NODES = 48;
-
-/** The browser-side split, for a sentence 語のまとまり has not reached yet: each word its own dictionary form. */
-function roughPieces(text: string, lang: Lang): NetPiece[] {
-  try {
-    return [...new Intl.Segmenter(lang, { granularity: "word" }).segment(text)]
-      .filter((s) => s.isWordLike)
-      .map((s) => ({ start: s.index, end: s.index + s.segment.length, base: s.segment, kind: "word" as const, meaning: null }));
-  } catch {
-    return [];
-  }
-}
+/** Points kept: enough to be a web, few enough to follow on a phone (the rest appear as the learner bathes on). */
+const MAX_NODES = 60;
 
 /**
  * ことばの網 for 自分: the words and ways of saying of the sentences the learner bathed in, in this language, joined where
@@ -84,7 +73,9 @@ export async function loadNetwork(userId: string, target: Lang, native: Lang): P
     const row = rows.get(id);
     if (!row) continue;
     const text = String(row[target] ?? "");
-    const own = pieces.get(id) ?? roughPieces(text, target);
+    // A sentence not split yet (語のまとまり) brings its ways of saying only: the browser's own split would put wrong
+    // pieces in the web (我想去 as one word).
+    const own = pieces.get(id) ?? [];
     // A sentence of this language's rains: of a way of saying bathed in here, or carrying a word of ことばの雨 here.
     const ofHere = (marks.get(id) ?? []).some((m) => bathed.has(m.patternId)) || own.some((p) => words.has(p.base.toLowerCase()));
     if (!ofHere) continue;

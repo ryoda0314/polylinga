@@ -101,27 +101,34 @@ export function buildNetwork(
     edges.set(k, e);
   };
 
+  // What each way of saying is called: its usual part. A word written just like one (吃 of N + 吃, 去 of N + 去) is the
+  // same point, not a second one beside it.
+  const known = (s: SeenSentence) => s.marks.filter((m) => forms.has(m.patternId));
   for (const s of seen) {
-    const marks = s.marks.filter((m) => forms.has(m.patternId));
+    for (const m of known(s)) labels.set(formId(m.patternId), [...(labels.get(formId(m.patternId)) ?? []), s.text.slice(m.start, m.end).trim()]);
+  }
+  const formOf = new Map<string, string>();
+  for (const [id, names] of labels) formOf.set((mostCommon(names) ?? "").toLowerCase(), id);
+  const pointOf = (base: string) => formOf.get(base.toLowerCase()) ?? wordId(base);
+
+  for (const s of seen) {
+    const marks = known(s);
     const inMark = (p: NetPiece) => marks.some((m) => p.start >= m.start && p.end <= m.end);
     const words = s.pieces.filter((p) => p.kind === "word" && !inMark(p)).sort((a, b) => a.start - b.start);
-    const here = new Set<string>();
-    for (const m of marks) {
-      const id = formId(m.patternId);
-      labels.set(id, [...(labels.get(id) ?? []), s.text.slice(m.start, m.end).trim()]);
-      here.add(id);
-    }
+    const here = new Set<string>(marks.map((m) => formId(m.patternId)));
     for (const p of words) {
-      const id = wordId(p.base);
-      labels.set(id, [...(labels.get(id) ?? []), p.base]);
-      if (p.meaning) meanings.set(id, [...(meanings.get(id) ?? []), p.meaning]);
+      const id = pointOf(p.base);
+      if (id.startsWith("word:")) {
+        labels.set(id, [...(labels.get(id) ?? []), p.base]);
+        if (p.meaning) meanings.set(id, [...(meanings.get(id) ?? []), p.meaning]);
+      }
       surfaces.set(s.text.slice(p.start, p.end).toLowerCase(), id);
       here.add(id);
     }
     for (const id of here) weight.set(id, (weight.get(id) ?? 0) + 1);
-    for (const m of marks) for (const p of words) join(formId(m.patternId), wordId(p.base), s);
+    for (const m of marks) for (const p of words) join(formId(m.patternId), pointOf(p.base), s);
     for (let i = 1; i < marks.length; i++) join(formId(marks[i - 1].patternId), formId(marks[i].patternId), s);
-    for (let i = 1; i < words.length; i++) join(wordId(words[i - 1].base), wordId(words[i].base), s);
+    for (let i = 1; i < words.length; i++) join(pointOf(words[i - 1].base), pointOf(words[i].base), s);
     sentences.push({ text: s.text, gloss: s.gloss, nodes: [...here] });
   }
 
@@ -179,65 +186,106 @@ export function buildNetwork(
   };
 }
 
-/**
- * Where each point sits: a force layout (points push apart, lines pull together, everything drifts to the middle),
- * started on a spiral by the points' order, so the same web always comes out the same and only grows as it grows.
- */
-export function layoutNetwork(
-  nodes: { id: string }[],
-  edges: { a: string; b: string; weight: number }[],
-  width: number,
-  height: number,
-  iterations = 300,
-): Map<string, { x: number; y: number }> {
-  const n = nodes.length;
-  const pos = nodes.map((_, i) => {
-    const r = 12 * Math.sqrt(i + 0.5);
+/** A point as the web settles: where it is, how it moves, its size; fx/fy hold it where a finger holds it. */
+export type SimNode = { x: number; y: number; vx: number; vy: number; r: number; fx: number | null; fy: number | null };
+export type SimLink = { i: number; j: number; w: number };
+
+const CHARGE = 260; // how hard points push apart
+const LINK_DISTANCE = 46; // the length a line pulls towards
+const GRAVITY = 0.035; // the pull towards the middle, so the web stays together
+const VELOCITY_DECAY = 0.4; // how much of its speed a point loses each step
+const PADDING = 6; // room kept between two points
+
+/** Where the points start: a spiral by their order (most met first, in the middle), so the same web starts the same. */
+export function seedNodes(radii: number[]): SimNode[] {
+  return radii.map((r, i) => {
+    const d = 18 * Math.sqrt(i + 0.5);
     const a = i * 2.399963; // the golden angle
-    return { x: width / 2 + r * Math.cos(a), y: height / 2 + r * Math.sin(a) };
+    return { x: d * Math.cos(a), y: d * Math.sin(a), vx: 0, vy: 0, r, fx: null, fy: null };
   });
-  const index = new Map(nodes.map((node, i) => [node.id, i]));
-  const links = edges.flatMap((e) => (index.has(e.a) && index.has(e.b) ? [{ i: index.get(e.a)!, j: index.get(e.b)!, w: e.weight }] : []));
-  const k = Math.sqrt((width * height) / Math.max(n, 1)) * 0.75;
-  const margin = 24;
-  let temperature = width / 8;
-  for (let step = 0; step < iterations; step++) {
-    const move = pos.map(() => ({ x: 0, y: 0 }));
-    for (let i = 0; i < n; i++) {
-      for (let j = i + 1; j < n; j++) {
-        let dx = pos[i].x - pos[j].x;
-        let dy = pos[i].y - pos[j].y;
-        if (Math.hypot(dx, dy) < 0.01) {
-          dx = 0.01 * (i - j);
-          dy = 0.01;
-        }
-        const d = Math.hypot(dx, dy);
-        const f = (k * k) / d;
-        move[i].x += (dx / d) * f;
-        move[i].y += (dy / d) * f;
-        move[j].x -= (dx / d) * f;
-        move[j].y -= (dy / d) * f;
+}
+
+/**
+ * One step of the web settling, around (0, 0): points push apart, lines pull their ends to a length (weaker for a
+ * point with many lines), everything drifts to the middle, and points never overlap. alpha (1 → 0) is how lively it
+ * still is. The same model as d3-force, small enough to run here for a few dozen points.
+ */
+export function simulate(nodes: SimNode[], links: SimLink[], alpha: number): void {
+  const n = nodes.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = nodes[i], b = nodes[j];
+      const dx = b.x - a.x || 0.01 * (j - i);
+      const dy = b.y - a.y || 0.01;
+      const d2 = dx * dx + dy * dy;
+      const f = (CHARGE * alpha) / d2;
+      a.vx -= dx * f;
+      a.vy -= dy * f;
+      b.vx += dx * f;
+      b.vy += dy * f;
+    }
+  }
+  const degree = new Array<number>(n).fill(0);
+  for (const l of links) {
+    degree[l.i]++;
+    degree[l.j]++;
+  }
+  for (const l of links) {
+    const a = nodes[l.i], b = nodes[l.j];
+    const dx = b.x + b.vx - a.x - a.vx;
+    const dy = b.y + b.vy - a.y - a.vy;
+    const d = Math.hypot(dx, dy) || 0.01;
+    const strength = Math.min(1, 0.6 / Math.min(degree[l.i], degree[l.j])) * Math.min(1 + Math.log(l.w) * 0.3, 1.6);
+    const f = ((d - LINK_DISTANCE) / d) * alpha * strength;
+    const share = degree[l.i] / (degree[l.i] + degree[l.j]); // the point with more lines moves less
+    b.vx -= dx * f * share;
+    b.vy -= dy * f * share;
+    a.vx += dx * f * (1 - share);
+    a.vy += dy * f * (1 - share);
+  }
+  for (const p of nodes) {
+    p.vx -= p.x * GRAVITY * alpha;
+    p.vy -= p.y * GRAVITY * alpha;
+  }
+  for (const p of nodes) {
+    if (p.fx !== null && p.fy !== null) {
+      p.x = p.fx;
+      p.y = p.fy;
+      p.vx = 0;
+      p.vy = 0;
+    } else {
+      p.vx *= 1 - VELOCITY_DECAY;
+      p.vy *= 1 - VELOCITY_DECAY;
+      p.x += p.vx;
+      p.y += p.vy;
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = nodes[i], b = nodes[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.hypot(dx, dy) || 0.01;
+      const min = a.r + b.r + PADDING;
+      if (d >= min) continue;
+      const push = (min - d) / d / 2;
+      const aHeld = a.fx !== null, bHeld = b.fx !== null;
+      if (!aHeld) {
+        a.x -= dx * push * (bHeld ? 2 : 1);
+        a.y -= dy * push * (bHeld ? 2 : 1);
+      }
+      if (!bHeld) {
+        b.x += dx * push * (aHeld ? 2 : 1);
+        b.y += dy * push * (aHeld ? 2 : 1);
       }
     }
-    for (const { i, j, w } of links) {
-      const dx = pos[i].x - pos[j].x;
-      const dy = pos[i].y - pos[j].y;
-      const d = Math.max(Math.hypot(dx, dy), 0.01);
-      const f = ((d * d) / k) * Math.min(1 + Math.log(w), 3) * 0.5;
-      move[i].x -= (dx / d) * f;
-      move[i].y -= (dy / d) * f;
-      move[j].x += (dx / d) * f;
-      move[j].y += (dy / d) * f;
-    }
-    for (let i = 0; i < n; i++) {
-      move[i].x += (width / 2 - pos[i].x) * 0.005 * k;
-      move[i].y += (height / 2 - pos[i].y) * 0.005 * k;
-      const d = Math.max(Math.hypot(move[i].x, move[i].y), 0.01);
-      const by = Math.min(d, temperature);
-      pos[i].x = Math.min(width - margin, Math.max(margin, pos[i].x + (move[i].x / d) * by));
-      pos[i].y = Math.min(height - margin, Math.max(margin, pos[i].y + (move[i].y / d) * by));
-    }
-    temperature = Math.max(temperature * 0.985, 0.5);
   }
-  return new Map(nodes.map((node, i) => [node.id, pos[i]]));
+}
+
+/** The zoom and offset that show the whole web in a box of this size, with a margin, at most life size × 1.6. */
+export function fitView(nodes: { x: number; y: number; r: number }[], width: number, height: number, margin = 36) {
+  if (nodes.length === 0) return { k: 1, x: width / 2, y: height / 2 };
+  const minX = Math.min(...nodes.map((p) => p.x - p.r)), maxX = Math.max(...nodes.map((p) => p.x + p.r));
+  const minY = Math.min(...nodes.map((p) => p.y - p.r)), maxY = Math.max(...nodes.map((p) => p.y + p.r));
+  const k = Math.min((width - 2 * margin) / Math.max(maxX - minX, 1), (height - 2 * margin) / Math.max(maxY - minY, 1), 1.6);
+  return { k, x: width / 2 - ((minX + maxX) / 2) * k, y: height / 2 - ((minY + maxY) / 2) * k };
 }

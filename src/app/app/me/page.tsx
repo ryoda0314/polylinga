@@ -78,6 +78,8 @@ export default async function MePage({ searchParams }: PageProps<"/app/me">) {
               target={settings.targetLang}
               labels={{
                 title: t.me.net.title,
+                legendForm: t.me.net.legendForm,
+                legendWord: t.me.net.legendWord,
                 legendHeard: t.me.net.legendHeard,
                 legendSaid: t.me.net.legendSaid,
                 legendToday: t.me.net.legendToday,
@@ -85,6 +87,10 @@ export default async function MePage({ searchParams }: PageProps<"/app/me">) {
                 with: t.me.net.with,
                 sentences: t.me.net.sentences,
                 formPage: t.me.net.formPage,
+                full: t.me.net.full,
+                close: t.me.net.close,
+                fit: t.me.net.fit,
+                howTo: t.me.net.howTo,
               }}
             />
           ) : (
